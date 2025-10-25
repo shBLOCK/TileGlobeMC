@@ -1,0 +1,7 @@
+[package]
+name = "tileglobe-rp2350"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tileglobe = { path = "../../tileglobe" }
