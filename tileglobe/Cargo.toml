@@ -1,6 +1,20 @@
 [package]
 name = "tileglobe"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
+embassy-executor = { workspace = true }
+embassy-time = { workspace = true }
+embassy-sync = { workspace = true }
+embassy-net = { workspace = true }
+embedded-io-async = { workspace = true }
+embedded-io-adapters = { workspace = true }
+
+defmt-or-log = { workspace = true }
+defmt = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+
+[features]
+defmt = ["dep:defmt", "defmt-or-log/defmt"]
+log = ["dep:log", "defmt-or-log/log"]

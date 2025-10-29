@@ -1,7 +1,11 @@
 [package]
-name = "tileglobe-rp2350"
+name = "tileglobe-runtime-rp2350"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
 tileglobe = { path = "../../tileglobe" }
+
+embassy-rp = { version = "0.8.0", features = ["rp235xb", "critical-section-impl"] }
+
+embedded-alloc = "0.6.0"

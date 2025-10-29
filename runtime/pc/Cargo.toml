@@ -1,7 +1,27 @@
 [package]
-name = "tileglobe-pc"
+name = "tileglobe-runtime-pc"
 version = "0.1.0"
-edition = "2024"
+edition.workspace = true
 
 [dependencies]
-tileglobe = { path = "../../tileglobe" }
+tileglobe = { path = "../../tileglobe", features = ["log"] }
+
+embassy-executor = { workspace = true, features = ["arch-std", "executor-thread"] }
+embassy-time = { workspace = true, features = ["std"] }
+embassy-net = { workspace = true, features = ["log"] }
+embassy-net-tuntap = "0.1.0"
+
+heapless = { workspace = true }
+static_cell = { workspace = true }
+
+defmt-or-log = { workspace = true }
+defmt = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+env_logger = "0.11.8"
+
+rand_core = { version = "0.9.3", features = ["std", "os_rng"] }
+
+[features]
+default = ["log"]
+defmt = ["dep:defmt", "defmt-or-log/defmt"]
+log = ["dep:log", "defmt-or-log/log"]
