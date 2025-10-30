@@ -15,7 +15,6 @@ embassy-time = { version = "0.5.0" }
 embassy-sync = { version = "0.7.2" }
 embassy-net = { version = "0.7.1", features = ["alloc", "tcp", "proto-ipv4", "medium-ethernet"] }
 embedded-io-async = "0.6.1"
-embedded-io-adapters = { version = "0.6.1", features = ["futures-03"] }
 
 heapless = "0.8.0"
 static_cell = "2.1.1"

@@ -1,8 +1,9 @@
 #![no_std]
+extern crate alloc;
 
 use embassy_executor::Spawner;
 
 pub mod master_node;
-pub use master_node::master_node_start;
+mod network;
 
 pub async fn node_start(spawner: Spawner) {}

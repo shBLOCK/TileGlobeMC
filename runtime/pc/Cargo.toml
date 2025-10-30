@@ -9,7 +9,6 @@ tileglobe = { path = "../../tileglobe", features = ["log"] }
 embassy-executor = { workspace = true, features = ["arch-std", "executor-thread"] }
 embassy-time = { workspace = true, features = ["std"] }
 embassy-net = { workspace = true, features = ["log"] }
-embassy-net-tuntap = "0.1.0"
 
 heapless = { workspace = true }
 static_cell = { workspace = true }

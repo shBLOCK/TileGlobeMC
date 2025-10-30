@@ -9,7 +9,6 @@ embassy-time = { workspace = true }
 embassy-sync = { workspace = true }
 embassy-net = { workspace = true }
 embedded-io-async = { workspace = true }
-embedded-io-adapters = { workspace = true }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }
