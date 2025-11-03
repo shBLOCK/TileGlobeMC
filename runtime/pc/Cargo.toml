@@ -6,21 +6,16 @@ edition.workspace = true
 [dependencies]
 tileglobe = { path = "../../tileglobe", features = ["log"] }
 
-embassy-executor = { workspace = true, features = ["arch-std", "executor-thread"] }
-embassy-time = { workspace = true, features = ["std"] }
-embassy-net = { workspace = true, features = ["log"] }
+embassy-executor = { workspace = true, features = ["arch-std", "executor-thread", "log"] }
+embassy-time = { workspace = true, features = ["std", "log"] }
+embedded-io-async = { workspace = true }
+embedded-io-adapters = { version = "0.6.1", features = ["std", "futures-03"] }
 
 heapless = { workspace = true }
 static_cell = { workspace = true }
 
-defmt-or-log = { workspace = true }
-defmt = { workspace = true, optional = true }
-log = { workspace = true, optional = true }
+log = { workspace = true }
 env_logger = "0.11.8"
 
 rand_core = { version = "0.9.3", features = ["std", "os_rng"] }
-
-[features]
-default = ["log"]
-defmt = ["dep:defmt", "defmt-or-log/defmt"]
-log = ["dep:log", "defmt-or-log/log"]
+async-net = "2.0.0"

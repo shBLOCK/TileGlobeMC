@@ -2,7 +2,8 @@
 #![no_main]
 
 use cyw43_pio::RM2_CLOCK_DIVIDER;
-use defmt_or_log::*;
+use defmt::info;
+use defmt::unwrap;
 use embassy_executor::Spawner;
 use embassy_rp::bind_interrupts;
 use embassy_rp::gpio::Level;

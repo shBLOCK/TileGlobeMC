@@ -4,6 +4,12 @@ version = "0.1.0"
 edition.workspace = true
 #forced-target = "thumbv8m.main-none-eabihf"
 
+[[bin]]
+name = "main"
+path = "src/main.rs"
+test = false
+bench = false
+
 [dependencies]
 tileglobe = { path = "../../tileglobe", features = ["defmt"] }
 
@@ -24,7 +30,11 @@ embassy-rp = { version = "0.8.0", features = [
 
 static_cell = { workspace = true }
 
-defmt-or-log = { workspace = true }
+defmt = { workspace = true }
+
+embedded-alloc = "0.6.0"
+
+defmt-rtt = "1.1.0"
 
 cortex-m = { version = "0.7.6", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
@@ -32,11 +42,6 @@ panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 
 cyw43 = { version = "0.5.0", features = ["defmt", "firmware-logs"] }
 cyw43-pio = { version = "0.8.0", features = ["defmt"] }
-
-defmt = { workspace = true }
-defmt-rtt = "1.1.0"
-
-embedded-alloc = "0.6.0"
 
 [package.metadata.embassy]
 build = [

@@ -1,5 +1,11 @@
+#![allow(private_bounds)]
+
+use crate::network::{EIOError, ReadExt};
+use alloc::boxed::Box;
+use core::error::Error;
+use core::fmt::Formatter;
+use core::fmt::{Debug, Display};
 use core::ops::{BitAnd, BitOrAssign, Shl, ShrAssign};
-use embedded_io_async::ReadExactError;
 
 trait VarIntType<const MAX_BYTES: usize>:
     Copy
@@ -11,41 +17,52 @@ trait VarIntType<const MAX_BYTES: usize>:
     + BitAnd<Output = Self>
     + Eq
 {
-    async fn read_varint<IOE: embedded_io_async::Error>(
-        reader: &mut impl embedded_io_async::Read<Error = IOE>,
-    ) -> Result<Self, VarIntError<ReadExactError<IOE>>> {
-        let mut num: Self = 0u8.into();
-        let mut buf = [0u8; 1];
+}
+impl VarIntType<5> for i32 {}
+impl VarIntType<5> for i64 {}
+impl VarIntType<10> for u32 {}
+impl VarIntType<10> for u64 {}
+
+pub trait ReadVarInt<const MAX_BYTES: usize>: embedded_io_async::Read {
+    async fn read_varint<I: VarIntType<MAX_BYTES>>(mut self: &mut Self) -> Result<I, ReadVarIntError>
+    where
+        Self::Error: 'static,
+    {
+        let mut num: I = 0u8.into();
 
         for i in 0..MAX_BYTES {
-            reader
-                .read_exact(&mut buf[..])
+            let byte = self
+                .read_bytes::<1>()
                 .await
-                .map_err(|err| VarIntError::Other(err))?;
-
-            let byte = buf[0];
-            num |= Self::from(byte & 0x7F) << (i * 7);
+                .map_err(|err| ReadVarIntError::IOError(err.into()))?[0];
+            num |= I::from(byte & 0x7F) << (i * 7);
             if byte & 0x80 == 0 {
                 return Ok(num);
             }
         }
 
-        Err(VarIntError::TooBig {
+        Err(ReadVarIntError::TooBig {
             max_bytes: MAX_BYTES,
         })
     }
+}
 
-    async fn write_varint<IOE: embedded_io_async::Error>(
-        &self,
-        writer: &mut impl embedded_io_async::Write<Error = IOE>,
-    ) -> Result<usize, IOE> {
+impl<T: embedded_io_async::Read, const MAX_BYTES: usize> ReadVarInt<MAX_BYTES> for T {}
+
+pub trait WriteVarInt<IOE: embedded_io_async::Error, const MAX_BYTES: usize>:
+    embedded_io_async::Write<Error = IOE>
+{
+    async fn write_varint<I: VarIntType<MAX_BYTES>>(
+        &mut self,
+        num: I,
+    ) -> Result<usize, EIOError<IOE>> {
         let mut buf = [0u8; MAX_BYTES];
-        let mut num = *self;
+        let mut num = num;
         for i in 0..MAX_BYTES {
             buf[i] = unsafe { (num & 0x7F.into()).try_into().unwrap_unchecked() };
             num >>= 7;
             if num == 0.into() {
-                writer.write_all(&buf[..=i]).await?;
+                self.write_all(&buf[..=i]).await?;
                 return Ok(i + 1);
             } else {
                 buf[i] |= 0x80;
@@ -55,12 +72,31 @@ trait VarIntType<const MAX_BYTES: usize>:
     }
 }
 
-impl VarIntType<5> for i32 {}
-impl VarIntType<5> for i64 {}
-impl VarIntType<10> for u32 {}
-impl VarIntType<10> for u64 {}
+impl<
+    T: embedded_io_async::Write<Error = IOE>,
+    IOE: embedded_io_async::Error,
+    const MAX_BYTES: usize,
+> WriteVarInt<IOE, MAX_BYTES> for T
+{
+}
 
-enum VarIntError<E> {
+#[derive(Debug)]
+pub enum ReadVarIntError {
     TooBig { max_bytes: usize },
-    Other(E),
+    IOError(Box<dyn Error>),
+}
+
+impl Display for ReadVarIntError {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        write!(f, "{self:?}")
+    }
+}
+
+impl Error for ReadVarIntError {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            ReadVarIntError::TooBig { .. } => None,
+            ReadVarIntError::IOError(err) => Some(err.as_ref()),
+        }
+    }
 }
