@@ -603,7 +603,9 @@
     }
   },
   "libraries": {
-    "pinned_footprint_libs": [],
+    "pinned_footprint_libs": [
+      "Project"
+    ],
     "pinned_symbol_libs": []
   },
   "meta": {
@@ -734,6 +736,18 @@
           "label": "Link",
           "name": "Link",
           "show": true
+        },
+        {
+          "group_by": false,
+          "label": "Sim.Device",
+          "name": "Sim.Device",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Sim.Pins",
+          "name": "Sim.Pins",
+          "show": false
         }
       ],
       "filter_string": "",
@@ -787,6 +801,18 @@
     [
       "08ffd9c7-c176-4c79-9da2-f9ecc5f167d5",
       "Root"
+    ],
+    [
+      "4d2f3909-3194-436d-b594-3997d4b0c147",
+      "Core"
+    ],
+    [
+      "d5554ef8-2fc0-42ee-9dd0-d87990cf669e",
+      "Power"
+    ],
+    [
+      "0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3",
+      "Peripheral"
     ]
   ],
   "text_variables": {}
