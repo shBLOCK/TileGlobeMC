@@ -606,7 +606,9 @@
     "pinned_footprint_libs": [
       "Project"
     ],
-    "pinned_symbol_libs": []
+    "pinned_symbol_libs": [
+      "Project"
+    ]
   },
   "meta": {
     "filename": "TileGlobeMC_Node.kicad_pro",
@@ -805,10 +807,6 @@
     [
       "4d2f3909-3194-436d-b594-3997d4b0c147",
       "Core"
-    ],
-    [
-      "d5554ef8-2fc0-42ee-9dd0-d87990cf669e",
-      "Power"
     ],
     [
       "0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3",
