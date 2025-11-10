@@ -48,7 +48,7 @@
         "silk_text_thickness": 0.1,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.1
+          "min_clearance": 0.15
         }
       },
       "diff_pair_dimensions": [
@@ -58,7 +58,80 @@
           "width": 0.0
         }
       ],
-      "drc_exclusions": [],
+      "drc_exclusions": [
+        [
+          "copper_edge_clearance|20000000|-2000000|29ada0b0-7e52-4810-8a89-a8ab7dc42b3b|b1d4e2e0-c93c-4685-8fa7-ce10d6f6fc1f",
+          ""
+        ],
+        [
+          "copper_edge_clearance|20400000|-1800000|c51eaaf9-4f21-456a-a8d3-87eb3f5398cd|c55ea222-523f-40fd-b387-986db6e58322",
+          ""
+        ],
+        [
+          "copper_edge_clearance|20400000|1800000|9bef9b10-db51-44af-b5f5-c207824cb4a6|cec35bd4-10cd-4c88-9913-d5fbd9102bdd",
+          ""
+        ],
+        [
+          "copper_edge_clearance|20400000|2000000|9bef9b10-db51-44af-b5f5-c207824cb4a6|46a92dc6-ca17-4e2f-b7c5-12a15b771115",
+          ""
+        ],
+        [
+          "copper_edge_clearance|25600000|-1800000|c51eaaf9-4f21-456a-a8d3-87eb3f5398cd|c53afcc2-0a98-44b4-a8c0-68e9c1823162",
+          ""
+        ],
+        [
+          "copper_edge_clearance|25600000|1800000|9bef9b10-db51-44af-b5f5-c207824cb4a6|42323127-9896-486e-bb6e-3f75bcb675d7",
+          ""
+        ],
+        [
+          "copper_edge_clearance|25600000|2000000|9bef9b10-db51-44af-b5f5-c207824cb4a6|b37d3332-ce1e-4582-8a57-f7416a31d163",
+          ""
+        ],
+        [
+          "copper_edge_clearance|26000000|-2000000|42d2bd3e-0cc4-49a1-8e2f-72e243a54bd6|4af86570-90a9-4623-8026-63496adde36c",
+          ""
+        ],
+        [
+          "courtyards_overlap|-12435000|-9305000|59e9fa7b-be67-4c25-9178-b16c1d24c883|e383c369-ff97-49bc-a343-57fd5f21c871",
+          ""
+        ],
+        [
+          "courtyards_overlap|8795000|12808043|9af66376-a296-4b23-820d-e3ae638081e3|f8c94b08-1914-4545-8823-705a5db59b15",
+          ""
+        ],
+        [
+          "via_dangling|20400000|-360000|c30f2359-351a-4c51-a654-2b09db6d8ef2|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|20400000|1080000|ecc89026-7db2-4a1d-9f2b-e2a20c046414|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|20400000|1800000|46a92dc6-ca17-4e2f-b7c5-12a15b771115|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|20400000|360000|4e8b9682-1b32-4193-86fb-773a6e68b8bc|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|25600000|-1080000|187d8c9c-cf05-4018-9ffc-5635b2badf5a|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|25600000|-1800000|4af86570-90a9-4623-8026-63496adde36c|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|25600000|1080000|9275a6b3-2f07-4fd1-9678-1353caa968b5|00000000-0000-0000-0000-000000000000",
+          ""
+        ],
+        [
+          "via_dangling|25600000|1800000|b37d3332-ce1e-4582-8a57-f7416a31d163|00000000-0000-0000-0000-000000000000",
+          ""
+        ]
+      ],
       "meta": {
         "version": 2
       },
@@ -100,9 +173,9 @@
         "padstack": "warning",
         "pth_inside_courtyard": "ignore",
         "shorting_items": "error",
-        "silk_edge_clearance": "warning",
-        "silk_over_copper": "warning",
-        "silk_overlap": "warning",
+        "silk_edge_clearance": "ignore",
+        "silk_over_copper": "ignore",
+        "silk_overlap": "ignore",
         "skew_out_of_range": "error",
         "solder_mask_bridge": "error",
         "starved_thermal": "error",
@@ -131,7 +204,7 @@
         "min_hole_to_hole": 0.0,
         "min_microvia_diameter": 0.2,
         "min_microvia_drill": 0.1,
-        "min_resolved_spokes": 2,
+        "min_resolved_spokes": 1,
         "min_silk_clearance": 0.0,
         "min_text_height": 0.8,
         "min_text_thickness": 0.08,
@@ -193,10 +266,14 @@
         0.2,
         0.25,
         0.3,
+        0.4,
         0.5,
         0.6,
         0.8,
-        1.0
+        1.0,
+        1.5,
+        1.8,
+        2.0
       ],
       "tuning_pattern_settings": {
         "diff_pair_defaults": {
@@ -236,10 +313,6 @@
         {
           "diameter": 0.5,
           "drill": 0.3
-        },
-        {
-          "diameter": 0.6,
-          "drill": 0.5
         },
         {
           "diameter": 0.8,
