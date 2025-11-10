@@ -5,6 +5,703 @@
 	(uuid "2fd023fa-1b6d-4498-867b-f405faec9baa")
 	(paper "A4")
 	(lib_symbols
+		(symbol "Connector:USB_C_Receptacle_USB2.0_16P"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom yes)
+			(on_board yes)
+			(property "Reference" "J"
+				(at 0 22.225 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "USB_C_Receptacle_USB2.0_16P"
+				(at 0 19.685 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 3.81 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "https://www.usb.org/sites/default/files/documents/usb_type-c.zip"
+				(at 3.81 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "USB 2.0-only 16P Type-C Receptacle connector"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "usb universal serial bus type-C USB2.0"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "USB*C*Receptacle*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "USB_C_Receptacle_USB2.0_16P_0_0"
+				(rectangle
+					(start -0.254 -17.78)
+					(end 0.254 -16.764)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 15.494)
+					(end 9.144 14.986)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 10.414)
+					(end 9.144 9.906)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 7.874)
+					(end 9.144 7.366)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 2.794)
+					(end 9.144 2.286)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 0.254)
+					(end 9.144 -0.254)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 -2.286)
+					(end 9.144 -2.794)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 -4.826)
+					(end 9.144 -5.334)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 -12.446)
+					(end 9.144 -12.954)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start 10.16 -14.986)
+					(end 9.144 -15.494)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(symbol "USB_C_Receptacle_USB2.0_16P_0_1"
+				(rectangle
+					(start -10.16 17.78)
+					(end 10.16 -17.78)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type background)
+					)
+				)
+				(polyline
+					(pts
+						(xy -8.89 -3.81) (xy -8.89 3.81)
+					)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(rectangle
+					(start -7.62 -3.81)
+					(end -6.35 3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(arc
+					(start -7.62 3.81)
+					(mid -6.985 4.4423)
+					(end -6.35 3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -7.62 3.81)
+					(mid -6.985 4.4423)
+					(end -6.35 3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(arc
+					(start -8.89 3.81)
+					(mid -6.985 5.7067)
+					(end -5.08 3.81)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -5.08 -3.81)
+					(mid -6.985 -5.7067)
+					(end -8.89 -3.81)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -6.35 -3.81)
+					(mid -6.985 -4.4423)
+					(end -7.62 -3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(arc
+					(start -6.35 -3.81)
+					(mid -6.985 -4.4423)
+					(end -7.62 -3.81)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy -5.08 3.81) (xy -5.08 -3.81)
+					)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center -2.54 1.143)
+					(radius 0.635)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy -1.27 4.318) (xy 0 6.858) (xy 1.27 4.318) (xy -1.27 4.318)
+					)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -2.032) (xy 2.54 0.508) (xy 2.54 1.778)
+					)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -3.302) (xy -2.54 -0.762) (xy -2.54 0.508)
+					)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(polyline
+					(pts
+						(xy 0 -5.842) (xy 0 4.318)
+					)
+					(stroke
+						(width 0.508)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+				(circle
+					(center 0 -5.842)
+					(radius 1.27)
+					(stroke
+						(width 0)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+				(rectangle
+					(start 1.905 1.778)
+					(end 3.175 3.048)
+					(stroke
+						(width 0.254)
+						(type default)
+					)
+					(fill
+						(type outline)
+					)
+				)
+			)
+			(symbol "USB_C_Receptacle_USB2.0_16P_1_1"
+				(pin passive line
+					(at -7.62 -22.86 90)
+					(length 5.08)
+					(name "SHIELD"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "S1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -22.86 90)
+					(length 5.08)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -22.86 90)
+					(length 5.08)
+					(hide yes)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A12"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -22.86 90)
+					(length 5.08)
+					(hide yes)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 0 -22.86 90)
+					(length 5.08)
+					(hide yes)
+					(name "GND"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B12"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 15.24 180)
+					(length 5.08)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 15.24 180)
+					(length 5.08)
+					(hide yes)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 15.24 180)
+					(length 5.08)
+					(hide yes)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B4"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin passive line
+					(at 15.24 15.24 180)
+					(length 5.08)
+					(hide yes)
+					(name "VBUS"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B9"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 10.16 180)
+					(length 5.08)
+					(name "CC1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 7.62 180)
+					(length 5.08)
+					(name "CC2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B5"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 2.54 180)
+					(length 5.08)
+					(name "D-"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 0 180)
+					(length 5.08)
+					(name "D-"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B7"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 -2.54 180)
+					(length 5.08)
+					(name "D+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 -5.08 180)
+					(length 5.08)
+					(name "D+"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B6"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 -12.7 180)
+					(length 5.08)
+					(name "SBU1"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "A8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+				(pin bidirectional line
+					(at 15.24 -15.24 180)
+					(length 5.08)
+					(name "SBU2"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+					(number "B8"
+						(effects
+							(font
+								(size 1.27 1.27)
+							)
+						)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Connector_Generic_MountingPin:Conn_01x12_MountingPin"
 			(pin_names
 				(offset 1.016)
@@ -1608,6 +2305,89 @@
 			)
 			(embedded_fonts no)
 		)
+		(symbol "Mechanical:MountingHole"
+			(pin_names
+				(offset 1.016)
+			)
+			(exclude_from_sim no)
+			(in_bom no)
+			(on_board yes)
+			(property "Reference" "H"
+				(at 0 5.08 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Value" "MountingHole"
+				(at 0 3.175 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+				)
+			)
+			(property "Footprint" ""
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Datasheet" "~"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "Description" "Mounting Hole without connection"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_keywords" "mounting hole"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(property "ki_fp_filters" "MountingHole*"
+				(at 0 0 0)
+				(effects
+					(font
+						(size 1.27 1.27)
+					)
+					(hide yes)
+				)
+			)
+			(symbol "MountingHole_0_1"
+				(circle
+					(center 0 0)
+					(radius 1.27)
+					(stroke
+						(width 1.27)
+						(type default)
+					)
+					(fill
+						(type none)
+					)
+				)
+			)
+			(embedded_fonts no)
+		)
 		(symbol "Sensor_Motion:LSM6DS3"
 			(exclude_from_sim no)
 			(in_bom yes)
@@ -2268,6 +3048,18 @@
 		)
 		(uuid "7489d95a-ffe1-42cb-8cae-53a352f7578f")
 	)
+	(text "USB-C"
+		(exclude_from_sim no)
+		(at 53.086 181.356 0)
+		(effects
+			(font
+				(size 2.54 2.54)
+				(thickness 0.508)
+				(bold yes)
+			)
+		)
+		(uuid "dce614c4-463e-4b7f-9339-89daa4175966")
+	)
 	(junction
 		(at 245.11 83.82)
 		(diameter 0)
@@ -2281,16 +3073,16 @@
 		(uuid "0bda1ac9-bd99-4713-98e5-74d94c39dbb9")
 	)
 	(junction
-		(at 229.87 114.3)
-		(diameter 0)
-		(color 0 0 0 0)
-		(uuid "15dbe3b0-9207-4703-b750-2bbf14913499")
-	)
-	(junction
 		(at 245.11 114.3)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "2f99676a-3912-4620-a13f-01f1972c1e82")
+	)
+	(junction
+		(at 67.31 154.94)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "409104dd-a4d2-4d46-96cd-461ac310351a")
 	)
 	(junction
 		(at 236.22 96.52)
@@ -2299,10 +3091,22 @@
 		(uuid "75e91dde-0bec-4d6d-812c-aee625a9c39c")
 	)
 	(junction
+		(at 52.07 173.99)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "7ecaa264-7d7e-49d4-9ed1-0ebc439c2666")
+	)
+	(junction
 		(at 236.22 105.41)
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "8061ad64-36c2-46b3-8e57-6726c9c462ca")
+	)
+	(junction
+		(at 229.87 114.3)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "882da734-bdd4-4ce4-8c40-d6ea4a145bb8")
 	)
 	(junction
 		(at 130.81 45.72)
@@ -2327,6 +3131,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "94504c1a-13a5-41e9-a245-9d943a5387db")
+	)
+	(junction
+		(at 67.31 149.86)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "9ddfa8ad-fb20-4cc9-8e83-891accf3644d")
 	)
 	(junction
 		(at 72.39 92.71)
@@ -2363,6 +3173,12 @@
 		(diameter 0)
 		(color 0 0 0 0)
 		(uuid "b8fd349b-cf08-4849-8330-e153efc8cd71")
+	)
+	(junction
+		(at 72.39 142.24)
+		(diameter 0)
+		(color 0 0 0 0)
+		(uuid "c3322eb1-da8d-478f-9984-d055676c36b5")
 	)
 	(junction
 		(at 151.13 149.86)
@@ -2450,6 +3266,14 @@
 		(at 143.51 160.02)
 		(uuid "d43931ff-6b1f-4f2f-a99d-73666ef1d673")
 	)
+	(no_connect
+		(at 67.31 163.83)
+		(uuid "d925c3b1-7155-4f52-8ad8-875c5c2ce132")
+	)
+	(no_connect
+		(at 67.31 166.37)
+		(uuid "f1892c85-337b-49fc-891a-42b58adb1f47")
+	)
 	(wire
 		(pts
 			(xy 236.22 83.82) (xy 245.11 83.82)
@@ -2482,13 +3306,23 @@
 	)
 	(wire
 		(pts
-			(xy 229.87 114.3) (xy 236.22 114.3)
+			(xy 228.6 114.3) (xy 229.87 114.3)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
 		(uuid "07c1bdf7-52a8-473e-80d9-8005aa410047")
+	)
+	(wire
+		(pts
+			(xy 68.58 149.86) (xy 67.31 149.86)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "099547f8-2c27-4036-b1f2-e1f911cf5101")
 	)
 	(wire
 		(pts
@@ -2512,6 +3346,16 @@
 	)
 	(wire
 		(pts
+			(xy 101.6 87.63) (xy 104.14 87.63)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "0c05f755-b4bf-4c91-943e-4a43e352a122")
+	)
+	(wire
+		(pts
 			(xy 73.66 92.71) (xy 72.39 92.71)
 		)
 		(stroke
@@ -2529,6 +3373,16 @@
 			(type default)
 		)
 		(uuid "12ac4c61-7bc6-4746-ae93-1ef49941d51a")
+	)
+	(wire
+		(pts
+			(xy 67.31 154.94) (xy 67.31 156.21)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "1381ef06-c172-4021-ad2f-0295492a3f9d")
 	)
 	(wire
 		(pts
@@ -2602,6 +3456,16 @@
 	)
 	(wire
 		(pts
+			(xy 72.39 142.24) (xy 72.39 143.51)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4967c25b-49a0-40a2-aaa9-52a8c0729496")
+	)
+	(wire
+		(pts
 			(xy 236.22 114.3) (xy 245.11 114.3)
 		)
 		(stroke
@@ -2619,6 +3483,16 @@
 			(type default)
 		)
 		(uuid "53a6a3f0-5620-40db-b0db-20e6dc537090")
+	)
+	(wire
+		(pts
+			(xy 68.58 154.94) (xy 67.31 154.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "56f22dcf-9588-4be6-964a-87daa908f0d3")
 	)
 	(wire
 		(pts
@@ -2722,6 +3596,16 @@
 	)
 	(wire
 		(pts
+			(xy 67.31 153.67) (xy 67.31 154.94)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "7ace5078-6c01-4db3-8e61-369bb72699a3")
+	)
+	(wire
+		(pts
 			(xy 133.35 115.57) (xy 137.16 115.57)
 		)
 		(stroke
@@ -2752,13 +3636,23 @@
 	)
 	(wire
 		(pts
-			(xy 228.6 114.3) (xy 229.87 114.3)
+			(xy 229.87 114.3) (xy 236.22 114.3)
 		)
 		(stroke
 			(width 0)
 			(type default)
 		)
-		(uuid "944a2cf9-da59-4a4d-b027-16e87fdf85dc")
+		(uuid "9afd38aa-a1a9-49da-9526-e8a1078002e4")
+	)
+	(wire
+		(pts
+			(xy 44.45 173.99) (xy 52.07 173.99)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "a1e87d29-3280-4356-b2f8-397bdf0de4ca")
 	)
 	(wire
 		(pts
@@ -2769,6 +3663,16 @@
 			(type default)
 		)
 		(uuid "b2b1dc31-ab76-454f-9462-e7ccde13fe7b")
+	)
+	(wire
+		(pts
+			(xy 67.31 148.59) (xy 67.31 149.86)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "b32af704-beb0-4a4a-9108-21fcf9e6925b")
 	)
 	(wire
 		(pts
@@ -2832,6 +3736,16 @@
 	)
 	(wire
 		(pts
+			(xy 67.31 149.86) (xy 67.31 151.13)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ca173b3a-e8e6-480d-8338-ecf8f2bc4f1b")
+	)
+	(wire
+		(pts
 			(xy 69.85 88.9) (xy 69.85 90.17)
 		)
 		(stroke
@@ -2869,6 +3783,16 @@
 			(type default)
 		)
 		(uuid "f181cb85-28c8-45b9-94f8-0c4723c7e5d1")
+	)
+	(wire
+		(pts
+			(xy 72.39 140.97) (xy 72.39 142.24)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "f2066713-9d9f-4704-88ba-d5186a8dc493")
 	)
 	(wire
 		(pts
@@ -3832,6 +4756,39 @@
 		)
 		(uuid "1f8060b6-2e07-45f3-8a9c-466f4f376c41")
 	)
+	(hierarchical_label "VIN"
+		(shape bidirectional)
+		(at 67.31 135.89 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "2f2ea7a1-86e9-4caf-93ba-dd25246ca097")
+	)
+	(hierarchical_label "USB_D+"
+		(shape bidirectional)
+		(at 68.58 154.94 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "352ba9c2-d143-443a-9034-a8c9d889e9f5")
+	)
+	(hierarchical_label "+3V3"
+		(shape input)
+		(at 102.87 87.63 90)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "3c30a5a0-edae-4eb4-a6f3-33590255584f")
+	)
 	(hierarchical_label "VBUS"
 		(shape input)
 		(at 260.35 114.3 0)
@@ -3909,6 +4866,17 @@
 		)
 		(uuid "5b3b6d0d-4a6a-41c9-b804-62a4bfedaca3")
 	)
+	(hierarchical_label "I2C_SDA"
+		(shape bidirectional)
+		(at 104.14 92.71 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "5bbbe5ea-2fbe-4ab6-b6e5-4e8d34f73920")
+	)
 	(hierarchical_label "+3V3"
 		(shape input)
 		(at 53.34 76.2 90)
@@ -3941,6 +4909,17 @@
 			(justify right)
 		)
 		(uuid "69e18d87-685f-414f-aef2-adfbcd4aee42")
+	)
+	(hierarchical_label "I2C_SCL"
+		(shape output)
+		(at 101.6 92.71 270)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right)
+		)
+		(uuid "6c5e4c34-84d7-46e5-be8a-556952ad9f4a")
 	)
 	(hierarchical_label "+3V3"
 		(shape input)
@@ -4096,6 +5075,17 @@
 		)
 		(uuid "ebeaf772-31cb-4c5c-a0ce-c8672af2e5d7")
 	)
+	(hierarchical_label "USB_D-"
+		(shape bidirectional)
+		(at 68.58 149.86 0)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify left)
+		)
+		(uuid "ec75c102-fea2-4ed4-aac9-013a53c52d17")
+	)
 	(symbol
 		(lib_id "Device:C_Small")
 		(at 130.81 43.18 0)
@@ -4166,6 +5156,70 @@
 		)
 	)
 	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 228.6 142.24 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "01ec9b92-9226-4aef-be01-0741dafcaaff")
+		(property "Reference" "H5"
+			(at 231.14 140.9699 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 231.14 143.5099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
+			(at 228.6 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 228.6 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 228.6 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "H5")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "Device:R_Small")
 		(at 72.39 86.36 0)
 		(unit 1)
@@ -4191,7 +5245,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 72.39 86.36 0)
 			(effects
 				(font
@@ -4469,7 +5523,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 247.65 78.74 0)
 			(effects
 				(font
@@ -4726,6 +5780,160 @@
 		)
 	)
 	(symbol
+		(lib_id "Device:R_Small")
+		(at 101.6 90.17 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "211e94ba-eb5a-4787-9ece-b2a58ba0cd47")
+		(property "Reference" "R36"
+			(at 100.076 90.17 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "10k"
+			(at 101.6 90.17 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 101.6 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 101.6 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 101.6 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" ""
+			(at 101.6 90.17 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "be9a1cf4-0791-4ab5-8648-edd16dd7302c")
+		)
+		(pin "2"
+			(uuid "f4093b70-d475-4225-ab6e-851f7e8d2f80")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "R36")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 69.85 140.97 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "22edf18e-36e6-4680-baef-961f38900d7f")
+		(property "Reference" "R33"
+			(at 69.85 142.494 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "5.1k"
+			(at 69.85 140.97 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 69.85 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 69.85 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 69.85 140.97 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" ""
+			(at 69.85 140.97 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "a5d46651-aa86-4ec9-81ff-a554308364c8")
+		)
+		(pin "2"
+			(uuid "898cd7f8-8e8a-44f6-bf94-325eb727ec12")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "R33")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
 		(lib_id "power:GND")
 		(at 149.86 33.02 270)
 		(unit 1)
@@ -4856,6 +6064,118 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "SW1")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Connector:USB_C_Receptacle_USB2.0_16P")
+		(at 52.07 151.13 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "27b356fc-69b5-47e5-b9ca-ed32b93af5cc")
+		(property "Reference" "J11"
+			(at 52.07 129.032 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Value" "USB_C"
+			(at 52.07 131.572 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" "Connector_USB:USB_C_Receptacle_GCT_USB4105-xx-A_16P_TopMnt_Horizontal"
+			(at 55.88 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "https://www.usb.org/sites/default/files/documents/usb_type-c.zip"
+			(at 55.88 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "USB 2.0-only 16P Type-C Receptacle connector"
+			(at 52.07 151.13 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "A1"
+			(uuid "99cbfe47-502a-4637-bce0-d81fc2b68768")
+		)
+		(pin "A4"
+			(uuid "d7f0dd67-f0b0-402e-8481-c2c157e4da2b")
+		)
+		(pin "S1"
+			(uuid "62dc7972-f80f-4a7f-8155-084081c38ed8")
+		)
+		(pin "B8"
+			(uuid "9f59b35f-f5ec-4005-b56f-4012e8c0c516")
+		)
+		(pin "A8"
+			(uuid "b5c4f633-cddc-46aa-b1f9-39a308e6372f")
+		)
+		(pin "A5"
+			(uuid "a02d13c3-38e7-460c-8a52-6ac4d48b8a02")
+		)
+		(pin "B1"
+			(uuid "81dae88b-724a-4094-bfc8-e508d27cb029")
+		)
+		(pin "A12"
+			(uuid "6afcf7bb-c7ed-41dd-8ddc-e80b7f549ea3")
+		)
+		(pin "B4"
+			(uuid "61f6e35d-0a78-4cba-983e-32ef498232ed")
+		)
+		(pin "B5"
+			(uuid "b07d0537-9f50-4ba9-8b5e-281d35593442")
+		)
+		(pin "A7"
+			(uuid "0070b52d-bc9e-44d9-8268-03d3fb0e5630")
+		)
+		(pin "A6"
+			(uuid "648cc418-dfbf-4bed-95ba-da5f975a3ff2")
+		)
+		(pin "B12"
+			(uuid "31e748f4-3a56-45f8-b92a-0f3edfcff70e")
+		)
+		(pin "A9"
+			(uuid "578c18ad-7b76-4b3f-a60d-88c4955c3387")
+		)
+		(pin "B9"
+			(uuid "ea8047bb-4e53-44a6-8ef2-04996b219bb6")
+		)
+		(pin "B7"
+			(uuid "3edf6c10-4fa5-4fd8-8fc1-58c7c19fb60c")
+		)
+		(pin "B6"
+			(uuid "98bb4c07-934b-48d8-be6b-878f2b622c56")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "J11")
 					(unit 1)
 				)
 			)
@@ -5019,7 +6339,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 69.85 86.36 0)
 			(effects
 				(font
@@ -5096,7 +6416,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 247.65 105.41 0)
 			(effects
 				(font
@@ -5243,7 +6563,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 236.22 116.84 0)
 			(effects
 				(font
@@ -5289,6 +6609,70 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "R45")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 228.6 152.4 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "43db94df-7055-4642-831e-dbf32fe57654")
+		(property "Reference" "H7"
+			(at 231.14 151.1299 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 231.14 153.6699 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
+			(at 228.6 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 228.6 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 228.6 152.4 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "H7")
 					(unit 1)
 				)
 			)
@@ -5487,6 +6871,70 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "#PWR064")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 228.6 157.48 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "516650cf-149e-4fee-baed-93bd44279677")
+		(property "Reference" "H8"
+			(at 231.14 156.2099 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 231.14 158.7499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
+			(at 228.6 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 228.6 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 228.6 157.48 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "H8")
 					(unit 1)
 				)
 			)
@@ -5791,7 +7239,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 247.65 114.3 0)
 			(effects
 				(font
@@ -5837,6 +7285,72 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "R35")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 72.39 142.24 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "7b74c4e3-bf52-4b70-827d-008e36d291fd")
+		(property "Reference" "#PWR073"
+			(at 78.74 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND_PERI"
+			(at 75.946 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 72.39 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 72.39 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 72.39 142.24 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "b4890a47-5492-4c24-8c32-eff4b5c00c38")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "#PWR073")
 					(unit 1)
 				)
 			)
@@ -5987,9 +7501,9 @@
 		(in_bom yes)
 		(on_board yes)
 		(dnp no)
-		(uuid "853324cd-93ab-4053-b45e-875c2cabba2a")
+		(uuid "87e1d6f7-7098-4507-a42e-9582bd571264")
 		(property "Reference" "D3"
-			(at 230.886 116.586 90)
+			(at 231.394 116.586 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -5998,7 +7512,7 @@
 			)
 		)
 		(property "Value" "3V"
-			(at 230.886 118.364 90)
+			(at 231.394 118.364 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -6006,7 +7520,7 @@
 				(justify right)
 			)
 		)
-		(property "Footprint" "Diode_SMD:D_SOD-323_HandSoldering"
+		(property "Footprint" "Diode_SMD:D_SOD-523"
 			(at 229.87 116.84 90)
 			(effects
 				(font
@@ -6024,7 +7538,7 @@
 				(hide yes)
 			)
 		)
-		(property "Description" "BZT52C3V0S"
+		(property "Description" "BZT52C3V0T"
 			(at 229.87 116.84 0)
 			(effects
 				(font
@@ -6034,10 +7548,10 @@
 			)
 		)
 		(pin "1"
-			(uuid "59eac259-1f63-4b75-b9db-ddb83a599c52")
+			(uuid "675104f3-5169-4726-a04e-77232511b8d2")
 		)
 		(pin "2"
-			(uuid "c23b0d42-78dd-40bd-8cb6-bab6113872f6")
+			(uuid "4ee86006-5d68-49d9-8e39-363fe9701396")
 		)
 		(instances
 			(project "TileGlobeMC_Node"
@@ -6074,7 +7588,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 236.22 81.28 0)
 			(effects
 				(font
@@ -6151,7 +7665,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 247.65 96.52 0)
 			(effects
 				(font
@@ -6806,7 +8320,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 236.22 99.06 0)
 			(effects
 				(font
@@ -6852,6 +8366,213 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "R43")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Mechanical:MountingHole")
+		(at 228.6 147.32 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom no)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "ac158932-6d98-4f26-ba19-afd92c4d40a1")
+		(property "Reference" "H6"
+			(at 231.14 146.0499 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Value" "MountingHole"
+			(at 231.14 148.5899 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" "MountingHole:MountingHole_2.2mm_M2"
+			(at 228.6 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 228.6 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Mounting Hole without connection"
+			(at 228.6 147.32 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "H6")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:GND")
+		(at 52.07 173.99 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "ad6e0bff-5cf7-4d74-aa45-144550785730")
+		(property "Reference" "#PWR071"
+			(at 52.07 180.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "GND_PERI"
+			(at 52.07 177.546 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Footprint" ""
+			(at 52.07 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 52.07 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
+			(at 52.07 173.99 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "da8d0668-6298-49e6-9bd4-9c0cf8fe6a56")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "#PWR071")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 69.85 143.51 270)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "b13c4aa1-3597-46b9-bb26-ac0fb5f9a26a")
+		(property "Reference" "R32"
+			(at 69.85 145.034 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "5.1k"
+			(at 69.85 143.51 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 69.85 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 69.85 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 69.85 143.51 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" ""
+			(at 69.85 143.51 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "c939e018-17d7-4567-b78c-191b79c60c13")
+		)
+		(pin "2"
+			(uuid "2b9156b5-b95c-42ad-baca-6b81349841b9")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "R32")
 					(unit 1)
 				)
 			)
@@ -7019,7 +8740,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 236.22 90.17 0)
 			(effects
 				(font
@@ -7096,7 +8817,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 236.22 107.95 0)
 			(effects
 				(font
@@ -7479,7 +9200,7 @@
 				)
 			)
 		)
-		(property "Footprint" "Capacitor_SMD:C_0603_1608Metric"
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
 			(at 247.65 87.63 0)
 			(effects
 				(font
@@ -7661,6 +9382,83 @@
 			(project "TileGlobeMC_Node"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
 					(reference "C32")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "Device:R_Small")
+		(at 104.14 90.17 180)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(uuid "fd4a08f0-969e-4744-8d3e-a2627c0ae2f9")
+		(property "Reference" "R37"
+			(at 102.616 90.17 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "10k"
+			(at 104.14 90.17 90)
+			(effects
+				(font
+					(size 1.016 1.016)
+				)
+			)
+		)
+		(property "Footprint" "Resistor_SMD:R_0603_1608Metric"
+			(at 104.14 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 104.14 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Resistor, small symbol"
+			(at 104.14 90.17 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Link" ""
+			(at 104.14 90.17 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "88324a36-6c2d-44c3-96aa-ec0a32d68e9a")
+		)
+		(pin "2"
+			(uuid "b1885255-be5e-4952-8f52-7c470b2bda94")
+		)
+		(instances
+			(project "TileGlobeMC_Node"
+				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3"
+					(reference "R37")
 					(unit 1)
 				)
 			)
