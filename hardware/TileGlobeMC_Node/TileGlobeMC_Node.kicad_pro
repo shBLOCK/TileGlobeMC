@@ -60,38 +60,6 @@
       ],
       "drc_exclusions": [
         [
-          "copper_edge_clearance|20000000|-2000000|29ada0b0-7e52-4810-8a89-a8ab7dc42b3b|b1d4e2e0-c93c-4685-8fa7-ce10d6f6fc1f",
-          ""
-        ],
-        [
-          "copper_edge_clearance|20400000|-1800000|c51eaaf9-4f21-456a-a8d3-87eb3f5398cd|c55ea222-523f-40fd-b387-986db6e58322",
-          ""
-        ],
-        [
-          "copper_edge_clearance|20400000|1800000|9bef9b10-db51-44af-b5f5-c207824cb4a6|cec35bd4-10cd-4c88-9913-d5fbd9102bdd",
-          ""
-        ],
-        [
-          "copper_edge_clearance|20400000|2000000|9bef9b10-db51-44af-b5f5-c207824cb4a6|46a92dc6-ca17-4e2f-b7c5-12a15b771115",
-          ""
-        ],
-        [
-          "copper_edge_clearance|25600000|-1800000|c51eaaf9-4f21-456a-a8d3-87eb3f5398cd|c53afcc2-0a98-44b4-a8c0-68e9c1823162",
-          ""
-        ],
-        [
-          "copper_edge_clearance|25600000|1800000|9bef9b10-db51-44af-b5f5-c207824cb4a6|42323127-9896-486e-bb6e-3f75bcb675d7",
-          ""
-        ],
-        [
-          "copper_edge_clearance|25600000|2000000|9bef9b10-db51-44af-b5f5-c207824cb4a6|b37d3332-ce1e-4582-8a57-f7416a31d163",
-          ""
-        ],
-        [
-          "copper_edge_clearance|26000000|-2000000|42d2bd3e-0cc4-49a1-8e2f-72e243a54bd6|4af86570-90a9-4623-8026-63496adde36c",
-          ""
-        ],
-        [
           "courtyards_overlap|-12435000|-9305000|59e9fa7b-be67-4c25-9178-b16c1d24c883|e383c369-ff97-49bc-a343-57fd5f21c871",
           ""
         ],
@@ -100,35 +68,7 @@
           ""
         ],
         [
-          "via_dangling|20400000|-360000|c30f2359-351a-4c51-a654-2b09db6d8ef2|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|20400000|1080000|ecc89026-7db2-4a1d-9f2b-e2a20c046414|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|20400000|1800000|46a92dc6-ca17-4e2f-b7c5-12a15b771115|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|20400000|360000|4e8b9682-1b32-4193-86fb-773a6e68b8bc|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|25600000|-1080000|187d8c9c-cf05-4018-9ffc-5635b2badf5a|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|25600000|-1800000|4af86570-90a9-4623-8026-63496adde36c|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|25600000|1080000|9275a6b3-2f07-4fd1-9678-1353caa968b5|00000000-0000-0000-0000-000000000000",
-          ""
-        ],
-        [
-          "via_dangling|25600000|1800000|b37d3332-ce1e-4582-8a57-f7416a31d163|00000000-0000-0000-0000-000000000000",
+          "unconnected_items|19800000|-819840|F.Cu|4|882d6a36-748a-45dc-ba32-2fc114fac00b|f1bcc5ed-4b1a-450a-b75a-0c61e9e9492d",
           ""
         ]
       ],
@@ -220,14 +160,14 @@
           "td_onpthpad": true,
           "td_onroundshapesonly": false,
           "td_onsmdpad": true,
-          "td_ontrackend": false,
+          "td_ontrackend": true,
           "td_onvia": true
         }
       ],
       "teardrop_parameters": [
         {
           "td_allow_use_two_tracks": true,
-          "td_curve_segcount": 0,
+          "td_curve_segcount": 1,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,
@@ -238,7 +178,7 @@
         },
         {
           "td_allow_use_two_tracks": true,
-          "td_curve_segcount": 0,
+          "td_curve_segcount": 1,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,
@@ -249,7 +189,7 @@
         },
         {
           "td_allow_use_two_tracks": true,
-          "td_curve_segcount": 0,
+          "td_curve_segcount": 1,
           "td_height_ratio": 1.0,
           "td_length_ratio": 0.5,
           "td_maxheight": 2.0,

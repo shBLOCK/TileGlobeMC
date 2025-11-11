@@ -938,6 +938,26 @@
 		(color 0 0 0 0)
 		(uuid "c0ebd8fd-ed27-4a46-a5f4-ffe8f93a46ba")
 	)
+	(no_connect
+		(at 182.88 101.6)
+		(uuid "4805e966-7d88-461f-8852-c0d73654487c")
+	)
+	(no_connect
+		(at 182.88 99.06)
+		(uuid "4efb94e6-93e6-4f6c-a741-ce7a860d7e42")
+	)
+	(no_connect
+		(at 182.88 93.98)
+		(uuid "9d8049a8-72c6-49e4-bf66-05509d5df169")
+	)
+	(no_connect
+		(at 182.88 106.68)
+		(uuid "b40a6d4e-6dae-4353-9af6-70e97e5d7fe2")
+	)
+	(no_connect
+		(at 182.88 104.14)
+		(uuid "f4577f77-5864-4d26-a5b7-190890bfb7eb")
+	)
 	(wire
 		(pts
 			(xy 162.56 116.84) (xy 167.64 116.84)
@@ -957,6 +977,16 @@
 			(type default)
 		)
 		(uuid "24e6a542-37bb-4732-998d-877de5538a54")
+	)
+	(wire
+		(pts
+			(xy 182.88 124.46) (xy 187.96 124.46)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "38ea449a-f141-4752-8a6c-101e2d143416")
 	)
 	(wire
 		(pts
@@ -1000,6 +1030,16 @@
 	)
 	(wire
 		(pts
+			(xy 182.88 121.92) (xy 187.96 121.92)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "544ce8cd-9316-4304-a71c-6065e4efcb91")
+	)
+	(wire
+		(pts
 			(xy 162.56 81.28) (xy 167.64 81.28)
 		)
 		(stroke
@@ -1017,6 +1057,16 @@
 			(type default)
 		)
 		(uuid "5c2c3936-3561-4a9c-897f-7782a918f31e")
+	)
+	(wire
+		(pts
+			(xy 182.88 119.38) (xy 187.96 119.38)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "5fb27a03-7cd4-46bc-b707-4bcc84f168fd")
 	)
 	(wire
 		(pts
@@ -1080,6 +1130,16 @@
 	)
 	(wire
 		(pts
+			(xy 182.88 96.52) (xy 187.96 96.52)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8911540c-6999-4550-9c35-305736044b0f")
+	)
+	(wire
+		(pts
 			(xy 162.56 124.46) (xy 167.64 124.46)
 		)
 		(stroke
@@ -1087,6 +1147,16 @@
 			(type default)
 		)
 		(uuid "89dbb8b2-19a7-4996-a70d-942abc32b2cf")
+	)
+	(wire
+		(pts
+			(xy 182.88 109.22) (xy 187.96 109.22)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "8c96f60d-33f2-4174-97bb-217647442642")
 	)
 	(wire
 		(pts
@@ -1130,6 +1200,16 @@
 	)
 	(wire
 		(pts
+			(xy 182.88 114.3) (xy 187.96 114.3)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "ae97ddc9-bef9-4f9b-b6ac-92de81583336")
+	)
+	(wire
+		(pts
 			(xy 162.56 119.38) (xy 167.64 119.38)
 		)
 		(stroke
@@ -1160,6 +1240,16 @@
 	)
 	(wire
 		(pts
+			(xy 182.88 116.84) (xy 187.96 116.84)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "d908b0a7-0db9-4a06-98f6-e09260e0e133")
+	)
+	(wire
+		(pts
 			(xy 162.56 111.76) (xy 167.64 111.76)
 		)
 		(stroke
@@ -1167,6 +1257,16 @@
 			(type default)
 		)
 		(uuid "d9a01975-8651-4c31-b6c9-64315b4d828c")
+	)
+	(wire
+		(pts
+			(xy 182.88 111.76) (xy 187.96 111.76)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "dc36f225-7e1b-4235-b695-4dddab19dc0a")
 	)
 	(wire
 		(pts
@@ -2326,7 +2426,7 @@
 			)
 		)
 		(pin "BTN_CENTER" output
-			(at 187.96 92.71 180)
+			(at 187.96 96.52 180)
 			(uuid "2c1242e9-755b-409a-afaf-25d9dc33a02b")
 			(effects
 				(font
@@ -2346,7 +2446,7 @@
 			)
 		)
 		(pin "I2C_SCL" input
-			(at 187.96 96.52 180)
+			(at 187.96 109.22 180)
 			(uuid "1299e510-0042-4c0e-b9b4-614312d9c9de")
 			(effects
 				(font
@@ -2356,7 +2456,7 @@
 			)
 		)
 		(pin "I2C_SDA" bidirectional
-			(at 187.96 99.06 180)
+			(at 187.96 111.76 180)
 			(uuid "a18624ad-eb1e-400a-932b-126fc2ce0818")
 			(effects
 				(font
@@ -2366,7 +2466,7 @@
 			)
 		)
 		(pin "LCD_CS" input
-			(at 187.96 104.14 180)
+			(at 187.96 124.46 180)
 			(uuid "49fe7b9c-a5ec-4dc2-a258-660f1ae9f85d")
 			(effects
 				(font
@@ -2376,7 +2476,7 @@
 			)
 		)
 		(pin "LCD_DC" input
-			(at 187.96 106.68 180)
+			(at 187.96 116.84 180)
 			(uuid "646b2e32-535b-418d-aebc-576d8b79f26a")
 			(effects
 				(font
@@ -2386,7 +2486,7 @@
 			)
 		)
 		(pin "LCD_MOSI" input
-			(at 187.96 110.49 180)
+			(at 187.96 119.38 180)
 			(uuid "2c3f81af-940f-4ad9-a2c1-d1015c59d712")
 			(effects
 				(font
@@ -2396,7 +2496,7 @@
 			)
 		)
 		(pin "LCD_SCK" input
-			(at 187.96 113.03 180)
+			(at 187.96 121.92 180)
 			(uuid "d00e0266-a348-4e91-8121-f879c0704386")
 			(effects
 				(font
@@ -2406,7 +2506,7 @@
 			)
 		)
 		(pin "PERI_INT" output
-			(at 187.96 118.11 180)
+			(at 187.96 114.3 180)
 			(uuid "a684fac1-9575-4314-97d4-68c8e5a75c49")
 			(effects
 				(font
