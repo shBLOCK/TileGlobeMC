@@ -1279,7 +1279,7 @@
 		(property ki_fp_filters "Connector*:*_1x??-1MP*")
 		(path "/6cf70cf8-5e0f-403a-946d-9dfb103674e2")
 		(sheetname "/")
-		(sheetfile "TileGlobeMC_Node.kicad_sch")
+		(sheetfile "SnapNodes_RP2.kicad_sch")
 		(attr smd)
 		(fp_rect
 			(start -8.25 -1.5)
@@ -6970,6 +6970,88 @@
 				(xyz 0 0 0)
 			)
 		)
+	)
+	(footprint "kibuzzard-6913C2AE"
+		(layer "F.Cu")
+		(uuid "5f11e341-1a3c-4f8f-a0a5-8cc05ea40a7d")
+		(at 13.4427 -11.55)
+		(descr "Generated with KiBuzzard")
+		(tags "kb_params=eyJBbGlnbm1lbnRDaG9pY2UiOiAiQ2VudGVyIiwgIkNhcExlZnRDaG9pY2UiOiAiWyIsICJDYXBSaWdodENob2ljZSI6ICJdIiwgIkZvbnRDb21ib0JveCI6ICJVYnVudHVNb25vLUIiLCAiSGVpZ2h0Q3RybCI6IDEuMiwgIkxheWVyQ29tYm9Cb3giOiAiRi5TaWxrUyIsICJMaW5lU3BhY2luZ0N0cmwiOiAxLjAsICJNdWx0aUxpbmVUZXh0IjogIlYxIiwgIlBhZGRpbmdCb3R0b21DdHJsIjogMi4wLCAiUGFkZGluZ0xlZnRDdHJsIjogMS41LCAiUGFkZGluZ1JpZ2h0Q3RybCI6IDEuNSwgIlBhZGRpbmdUb3BDdHJsIjogMS41LCAiV2lkdGhDdHJsIjogMC4wLCAiYWR2YW5jZWRDaGVja2JveCI6IHRydWUsICJpbmxpbmVGb3JtYXRUZXh0Ym94IjogZmFsc2UsICJsaW5lb3ZlclN0eWxlQ2hvaWNlIjogIlNxdWFyZSIsICJsaW5lb3ZlclRoaWNrbmVzc0N0cmwiOiAxfQ==")
+		(property "Reference" "kibuzzard-6913C2AE"
+			(at 0 -3.930714 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "6136cbf3-9cf1-4859-9904-61561e885098")
+			(effects
+				(font
+					(size 0.001 0.001)
+				)
+			)
+		)
+		(property "Value" "G***"
+			(at 0 3.930714 0)
+			(layer "F.SilkS")
+			(hide yes)
+			(uuid "eb3b6022-bc54-43a9-804b-51cb46b26755")
+			(effects
+				(font
+					(size 0.001 0.001)
+				)
+			)
+		)
+		(property "Datasheet" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "fa575c91-6728-4837-a63c-f91008abd0c2")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(property "Description" ""
+			(at 0 0 0)
+			(layer "F.Fab")
+			(hide yes)
+			(uuid "e5fcfdfb-01ed-4421-aec4-cdffb2ba1a59")
+			(effects
+				(font
+					(size 1.27 1.27)
+					(thickness 0.15)
+				)
+			)
+		)
+		(attr board_only exclude_from_pos_files exclude_from_bom)
+		(fp_poly
+			(pts
+				(xy -0.916963 -0.882714) (xy -1.159289 -0.882714) (xy -1.159289 0.882714) (xy -0.916963 0.882714)
+				(xy -0.581583 0.882714) (xy -0.581583 0.559612) (xy -0.629564 0.417124) (xy -0.680452 0.257189)
+				(xy -0.714701 0.144857) (xy -0.747658 0.032741) (xy -0.779321 -0.07916) (xy -0.809262 -0.188907)
+				(xy -0.837049 -0.294561) (xy -0.862682 -0.396123) (xy -0.894669 -0.531826) (xy -0.916963 -0.640388)
+				(xy -0.664943 -0.640388) (xy -0.650404 -0.539822) (xy -0.630048 -0.424233) (xy -0.605574 -0.299192)
+				(xy -0.578675 -0.170275) (xy -0.549596 -0.040388) (xy -0.518578 0.087561) (xy -0.486834 0.207997)
+				(xy -0.455574 0.315347) (xy -0.424556 0.209451) (xy -0.393538 0.089499) (xy -0.363489 -0.038449)
+				(xy -0.33538 -0.168336) (xy -0.309208 -0.297496) (xy -0.284976 -0.423263) (xy -0.263651 -0.53958)
+				(xy -0.246204 -0.640388) (xy 0.003877 -0.640388) (xy -0.022052 -0.517286) (xy -0.053312 -0.380614)
+				(xy -0.089661 -0.233522) (xy -0.130856 -0.07916) (xy -0.160905 0.026817) (xy -0.192892 0.134087)
+				(xy -0.226817 0.242649) (xy -0.262143 0.350673) (xy -0.298331 0.456327) (xy -0.33538 0.559612) (xy -0.581583 0.559612)
+				(xy -0.581583 0.882714) (xy 0.916963 0.882714) (xy 0.916963 0.559612) (xy 0.188045 0.559612) (xy 0.188045 0.361874)
+				(xy 0.440065 0.361874) (xy 0.440065 -0.308885) (xy 0.315994 -0.240065) (xy 0.197738 -0.192569) (xy 0.120194 -0.390307)
+				(xy 0.221002 -0.434895) (xy 0.329564 -0.494992) (xy 0.43231 -0.564782) (xy 0.51567 -0.640388) (xy 0.678514 -0.640388)
+				(xy 0.678514 0.361874) (xy 0.916963 0.361874) (xy 0.916963 0.559612) (xy 0.916963 0.882714) (xy 1.159289 0.882714)
+				(xy 1.159289 -0.882714) (xy 0.916963 -0.882714) (xy -0.916963 -0.882714)
+			)
+			(stroke
+				(width 0)
+				(type solid)
+			)
+			(fill yes)
+			(layer "F.SilkS")
+			(uuid "c56e5a38-7ecd-4e58-988d-bf84c69a23bc")
+		)
+		(embedded_fonts no)
 	)
 	(footprint "Project:VQFN-16-1EP_3x3mm_P0.5mm_EP1.68x1.68mm_ThermalVias"
 		(layer "F.Cu")
@@ -27044,6 +27126,7 @@
 			(effects
 				(font
 					(size 0.001 0.001)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -27055,6 +27138,7 @@
 			(effects
 				(font
 					(size 0.001 0.001)
+					(thickness 0.15)
 				)
 			)
 		)
@@ -39742,7 +39826,7 @@
 		(property ki_fp_filters "Connector*:*_1x??-1MP*")
 		(path "/37f40cf2-45e2-45a5-9b0b-ad2343165ad2")
 		(sheetname "/")
-		(sheetfile "TileGlobeMC_Node.kicad_sch")
+		(sheetfile "SnapNodes_RP2.kicad_sch")
 		(attr smd)
 		(fp_rect
 			(start -8.25 1.5)
@@ -50295,19 +50379,7 @@
 		(layer "Edge.Cuts")
 		(uuid "ee97aa89-53df-4043-8b6b-e7abd9e39091")
 	)
-	(gr_text "V1"
-		(at 2.35 -10.95 0)
-		(layer "F.SilkS")
-		(uuid "b77e75ba-8529-46d4-8291-6a2790aa399d")
-		(effects
-			(font
-				(size 1 1)
-				(thickness 0.15)
-			)
-			(justify left bottom)
-		)
-	)
-	(gr_text "HangSu\n2025/11"
+	(gr_text "shBLOCK\n2025/11"
 		(at -3.3 12.65 90)
 		(layer "F.SilkS")
 		(uuid "d3f07b2f-8b6f-445e-89d1-fb2a72e20bc7")

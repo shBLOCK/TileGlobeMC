@@ -1366,7 +1366,7 @@
 			(uuid "95715cd6-6886-4cad-9fc9-7047e7e37024")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR049")
 					(unit 1)
@@ -1432,7 +1432,7 @@
 			(uuid "efb40314-fbe8-446d-a6d8-a8c1a5967a04")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR096")
 					(unit 1)
@@ -1582,7 +1582,7 @@
 			(uuid "b02f1a96-00e8-47b0-a9df-b53a214cdd2f")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "J21")
 					(unit 1)
@@ -1648,7 +1648,7 @@
 			(uuid "48c3dc2f-be2e-415d-8a01-a55771b11617")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR097")
 					(unit 1)
@@ -1714,7 +1714,7 @@
 			(uuid "277099f2-953a-4032-84e9-c36e04f1a387")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR099")
 					(unit 1)
@@ -1780,7 +1780,7 @@
 			(uuid "ea97697d-a508-4f37-a8d2-fb0776828d5a")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR052")
 					(unit 1)
@@ -1995,7 +1995,7 @@
 			(uuid "e7d627f8-cfdb-461e-8722-3fcd1d34cf04")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR0101")
 					(unit 1)
@@ -2061,7 +2061,7 @@
 			(uuid "9c7288aa-1161-4dca-80d9-45421754d784")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR098")
 					(unit 1)
@@ -2127,7 +2127,7 @@
 			(uuid "98803fb6-1408-4901-8ba2-ea359bde40b7")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR093")
 					(unit 1)
@@ -2193,7 +2193,7 @@
 			(uuid "4b9dd526-6b83-40c4-b43f-a66019762566")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR0100")
 					(unit 1)
@@ -2259,7 +2259,7 @@
 			(uuid "d0c6ea61-920a-463c-85f0-c213e06c4d3d")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR095")
 					(unit 1)
@@ -2325,7 +2325,7 @@
 			(uuid "d0ec669d-f643-4d61-8154-0926b9ca9c87")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR094")
 					(unit 1)
@@ -2391,7 +2391,7 @@
 			(uuid "de195211-4985-4961-bf71-bec633f5f419")
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(reference "#PWR0102")
 					(unit 1)
@@ -2584,7 +2584,7 @@
 			)
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(page "3")
 				)
@@ -2826,7 +2826,7 @@
 			)
 		)
 		(instances
-			(project "TileGlobeMC_Node"
+			(project "SnapNodes_RP2"
 				(path "/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5"
 					(page "2")
 				)

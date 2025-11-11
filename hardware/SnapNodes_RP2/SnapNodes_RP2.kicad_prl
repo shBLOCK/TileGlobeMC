@@ -1,6 +1,6 @@
 {
   "board": {
-    "active_layer": 0,
+    "active_layer": 5,
     "active_layer_preset": "No Fab",
     "auto_track_width": false,
     "hidden_netclasses": [],
@@ -59,7 +59,7 @@
     "ssh_key": ""
   },
   "meta": {
-    "filename": "TileGlobeMC_Node.kicad_prl",
+    "filename": "SnapNodes_RP2.kicad_prl",
     "version": 5
   },
   "net_inspector_panel": {

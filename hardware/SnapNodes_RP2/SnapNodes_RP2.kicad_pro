@@ -437,24 +437,7 @@
     "equivalence_files": []
   },
   "erc": {
-    "erc_exclusions": [
-      [
-        "pin_to_pin|2184400|419100|4fa4c00e-e659-495f-9e91-2cb23b9849ea|34a88e16-bcca-4ff0-9a7d-b6b9043b4013|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3",
-        ""
-      ],
-      [
-        "pin_to_pin|2184400|444500|2b5b7394-816d-4da9-8d01-91dc54307f93|34a88e16-bcca-4ff0-9a7d-b6b9043b4013|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/0c90cc1a-0ac7-4f69-a9fb-abfc4c2e13d3",
-        ""
-      ],
-      [
-        "pin_to_pin|762000|2463800|21628aa6-5af8-4425-b90f-710885aa2dab|eeb2e570-8b2a-4fc3-9740-476be9b74961|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147",
-        ""
-      ],
-      [
-        "pin_to_pin|762000|2463800|bcf7e498-8830-407f-9a5b-8e3e0db4a300|eeb2e570-8b2a-4fc3-9740-476be9b74961|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147|/08ffd9c7-c176-4c79-9da2-f9ecc5f167d5/4d2f3909-3194-436d-b594-3997d4b0c147",
-        ""
-      ]
-    ],
+    "erc_exclusions": [],
     "meta": {
       "version": 0
     },
@@ -683,7 +666,7 @@
     ]
   },
   "meta": {
-    "filename": "TileGlobeMC_Node.kicad_pro",
+    "filename": "SnapNodes_RP2.kicad_pro",
     "version": 3
   },
   "net_settings": {
