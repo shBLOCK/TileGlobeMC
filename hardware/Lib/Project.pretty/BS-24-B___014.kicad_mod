@@ -1,4 +1,4 @@
-(footprint "BS-24-B***014"
+(footprint "BS-24-B___014"
 	(version 20241229)
 	(generator "pcbnew")
 	(generator_version "9.0")
@@ -55,16 +55,107 @@
 		)
 	)
 	(attr smd)
-	(fp_circle
-		(center 0 0)
-		(end 14.75 0)
+	(fp_line
+		(start -15.25 -3.475)
+		(end -15.25 -2)
 		(stroke
 			(width 0.12)
 			(type solid)
 		)
-		(fill no)
 		(layer "F.SilkS")
-		(uuid "d927527f-31a9-46e2-878b-8f7506b1693a")
+		(uuid "b2c10cc8-e6bc-4e94-935e-b5587664d56d")
+	)
+	(fp_line
+		(start -15.25 -3.475)
+		(end -14.334813 -3.474997)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "cea29faa-0ae0-48b0-a629-9bcedc48ce87")
+	)
+	(fp_line
+		(start -15.25 3.475)
+		(end -15.25 2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "b29b3898-a68e-4622-9157-a1e8b28fd2f5")
+	)
+	(fp_line
+		(start -15.25 3.475)
+		(end -14.334813 3.474997)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "78e54b91-368b-4179-bbe1-d2423e1fe5f5")
+	)
+	(fp_line
+		(start 15.25 -3.475)
+		(end 14.334813 -3.475)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "e82e8dd3-f295-4bff-9379-b4a7ce73293f")
+	)
+	(fp_line
+		(start 15.25 -3.475)
+		(end 15.25 -2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "7fa570b7-ca09-4008-9f5f-3e7ef47af7e7")
+	)
+	(fp_line
+		(start 15.25 3.475)
+		(end 14.334813 3.475)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "ce864563-2cbe-44a6-b5ab-67cff36ed06d")
+	)
+	(fp_line
+		(start 15.25 3.475)
+		(end 15.25 2)
+		(stroke
+			(width 0.12)
+			(type solid)
+		)
+		(layer "F.SilkS")
+		(uuid "dff48368-d2fe-43d1-b5d0-1f5365459655")
+	)
+	(fp_arc
+		(start -14.334813 -3.475)
+		(mid 0 -14.75)
+		(end 14.334813 -3.475)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "ed2a7f65-c568-45eb-bebf-f3aa94d05f5f")
+	)
+	(fp_arc
+		(start 14.334813 3.475)
+		(mid 0 14.75)
+		(end -14.334813 3.475)
+		(stroke
+			(width 0.12)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "7a469a45-2bf7-4b86-a98a-0db3d70e679e")
 	)
 	(fp_text user "${REFERENCE}"
 		(at 0 2.5 0)
