@@ -1,0 +1,4 @@
+[submodule "embassy"]
+	path = embassy
+	url = https://github.com/embassy-rs/embassy.git
+	branch = main
