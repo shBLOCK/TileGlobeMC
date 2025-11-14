@@ -9,17 +9,21 @@ members = [
 [workspace.package]
 edition = "2024"
 
+[patch.crates-io]
+embassy-time-driver = { path = "embassy/embassy-time-driver" }
+embassy-rp = { path = "embassy/embassy-rp" }
+
 [workspace.dependencies]
-embassy-executor = { version = "0.9.1" }
-embassy-time = { version = "0.5.0" }
-embassy-sync = { version = "0.7.2" }
-embassy-net = { version = "0.7.1", features = ["alloc", "tcp", "proto-ipv4", "medium-ethernet"] }
+embassy-executor = { version = "0.9.1", path = "embassy/embassy-executor", features = ["executor-thread"] }
+embassy-time = { version = "0.5.0", path = "embassy/embassy-time" }
+embassy-sync = { version = "0.7.2", path = "embassy/embassy-sync" }
+embassy-net = { version = "0.7.1", path = "embassy/embassy-net", features = ["alloc", "tcp", "proto-ipv4", "medium-ethernet"] }
 embedded-io-async = "0.6.1"
 critical-section = "1.2.0"
 
 heapless = "0.8.0"
 static_cell = "2.1.1"
 
-defmt = "1.0.1"
+defmt = { version = "1.0.1", features = ["alloc"] }
 log = "0.4.28"
 defmt-or-log = "0.2.2"

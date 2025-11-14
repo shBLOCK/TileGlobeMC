@@ -25,9 +25,7 @@ async fn net_task(spawner: Spawner) {
         match tcp_listener.accept().await {
             Ok((socket, addr)) => {
                 info!("TCP accepted: {addr}");
-                if let Err(err) = spawner.spawn(client_task(socket, addr)) {
-                    warn!("Failed to spawn client task: {err}");
-                }
+                spawner.spawn(client_task(socket, addr).unwrap());
             }
             Err(err) => warn!("TCP accept failed: {err}"),
         }
@@ -36,7 +34,7 @@ async fn net_task(spawner: Spawner) {
 
 #[embassy_executor::task]
 async fn main_setup(spawner: Spawner) {
-    spawner.spawn(net_task(spawner)).unwrap();
+    spawner.spawn(net_task(spawner).unwrap());
 }
 
 fn main() {
@@ -50,6 +48,6 @@ fn main() {
 
     let executor = EXECUTOR.init(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(main_setup(spawner)).unwrap();
+        spawner.spawn(main_setup(spawner).unwrap());
     });
 }

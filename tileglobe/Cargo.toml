@@ -10,7 +10,7 @@ embassy-sync = { workspace = true }
 embassy-net = { workspace = true }
 embedded-io-async = { workspace = true }
 
-derive_more = { version = "2.0.1", features = ["display"] }
+derive_more = { version = "2.0.1", default-features = false, features = ["display"] }
 num-traits = { version = "0.2.19", default-features = false }
 uuid = { version = "1.18.1", default-features = false, features = ["v3"] }
 md5 = { version = "0.8.0", default-features = false }

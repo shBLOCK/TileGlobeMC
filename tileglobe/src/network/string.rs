@@ -1,4 +1,4 @@
-use crate::network::{EIOError, ReadVarInt, ReadVarIntError, WriteVarInt};
+use crate::network::{EIOError, EIOReadExactError, ReadVarInt, ReadVarIntError, WriteVarInt};
 use alloc::boxed::Box;
 use alloc::string::{FromUtf8Error, String};
 use core::error::Error;
@@ -15,7 +15,7 @@ pub trait ReadUTF8: embedded_io_async::Read {
         let mut buf = unsafe { Box::<[u8]>::new_uninit_slice(length as usize).assume_init() };
         self.read_exact(buf.as_mut())
             .await
-            .map_err(|err| ReadUTF8Error::IOError(err.into()))?;
+            .map_err(|err| ReadUTF8Error::IOError(EIOReadExactError::from(err).into()))?;
         Ok(String::from_utf8(buf.into_vec()).map_err(|err| ReadUTF8Error::UnicodeError(err))?)
     }
 }

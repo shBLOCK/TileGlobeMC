@@ -56,5 +56,21 @@ SECTIONS {
 
 } INSERT AFTER .uninit;
 
+SECTIONS {
+    .psram_static (NOLOAD) :
+    {
+        __psram_static_start = .;
+        KEEP(*(.psram_static));
+        __psram_static_end = .;
+    } > PSRAM
+
+    .psram_heap (NOLOAD) :
+    {
+        __psram_heap_start = .;
+        . = ORIGIN(PSRAM) + LENGTH(PSRAM);
+        __psram_heap_end = .;
+    } > PSRAM
+}
+
 PROVIDE(start_to_end = __end_block_addr - __start_block_addr);
 PROVIDE(end_to_start = __start_block_addr - __end_block_addr);

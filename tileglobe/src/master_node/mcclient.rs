@@ -12,11 +12,11 @@ use core::error::Error;
 use core::fmt::{Debug, Display, Formatter};
 use core::net::SocketAddr;
 use defmt_or_log::*;
-use embedded_io_async::Write;
 use num_traits::abs;
 use uuid::Uuid;
 
-#[derive(Debug)]
+#[derive(derive_more::Display)]
+#[display("{self:?}")]
 pub struct MCClient<'a, T: embedded_io_async::Read + embedded_io_async::Write> {
     socket: &'a mut T,
     addr: Option<SocketAddr>,
@@ -24,9 +24,16 @@ pub struct MCClient<'a, T: embedded_io_async::Read + embedded_io_async::Write> {
     // player_name: String,
 }
 
-impl<T: embedded_io_async::Read + embedded_io_async::Write> Display for MCClient<'_, T> {
+impl<T: embedded_io_async::Read + embedded_io_async::Write> Debug for MCClient<'_, T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "MCClient({:?}, state: {:?})", self.addr, self.state)
+    }
+}
+
+#[cfg(feature = "defmt")]
+impl<T: embedded_io_async::Read + embedded_io_async::Write> defmt::Format for MCClient<'_, T> {
+    fn format(&self, fmt: defmt::Formatter) {
+        defmt::write!(fmt, "MCClient({:?}, state: {:?})", Debug2Format(&self.addr), self.state)
     }
 }
 
@@ -273,7 +280,6 @@ where
                     self.skip_unknown_packet(packet_type, packet_length).await?;
                 }
             },
-            _ => {}
         }
         Ok(())
     }
@@ -281,7 +287,7 @@ where
     pub async fn _main_task(&mut self) {
         loop {
             if let Err(err) = self.process_packet().await {
-                warn!("{} error: {:?}", self, err);
+                warn!("{} error: {:?}", self, Debug2Format(&err));
                 break;
                 // TODO: disconnection packet
             }
@@ -315,6 +321,7 @@ where
 }
 
 #[derive(Debug)]
+#[maybe_derive_format]
 enum State {
     Handshaking,
     Status,
@@ -325,12 +332,13 @@ enum State {
 
 #[derive(Debug, derive_more::Display)]
 #[display("{self:?}")]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum MCClientError {
     /// Logical protocol error (e.g. wrong packet sequence)
     ProtocolError(String),
     /// Packet data format error (e.g. varint too big)
-    DataError(Box<dyn Error>),
-    NetworkError(Box<dyn Error>),
+    DataError(#[cfg_attr(feature = "defmt", defmt(Debug2Format))] Box<dyn Error>),
+    NetworkError(#[cfg_attr(feature = "defmt", defmt(Debug2Format))] Box<dyn Error>),
 }
 
 impl<IOE: embedded_io_async::Error + 'static> From<EIOError<IOE>> for MCClientError {
