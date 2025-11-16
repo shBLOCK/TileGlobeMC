@@ -71,6 +71,12 @@ neoForge {
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
+        serverData {
+            serverData()
+
+            programArguments.addAll '--mod', project.mod_id, '--mod', 'minecraft', '--all', '--output', file('run/serverData/').getAbsolutePath(), '--existing', file('run/serverData/').getAbsolutePath()
+        }
+
         // applies to all the run configs above
         configureEach {
             // Recommended logging data for a userdev environment
