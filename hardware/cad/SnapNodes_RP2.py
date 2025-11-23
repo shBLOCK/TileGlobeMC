@@ -123,8 +123,10 @@ def batt_holder():
         )
 
     batt_holder.part.label = "batt_holder"
-    batt_holder.part.color = "yellow"
+    batt_holder.part.color = "chocolate"
     return batt_holder.part
+
+CONNECTORS_CENTER_OFFSET = 8.0
 
 @operator.call
 def male_connector():
@@ -153,21 +155,24 @@ def female_connector():
     part.part.color = "orange"
     return part.part
 
-CONNECTOR_CENTER_OFFSET = 8.0
+male_connector_locations = [
+    Rot(Z = i * 90) * Pos(-MODULE_SIZE / 2, CONNECTORS_CENTER_OFFSET)
+    for i in range(4)
+]
+female_connector_locations = [
+    Rot(Z = i * 90) * Pos(-MODULE_SIZE / 2, -CONNECTORS_CENTER_OFFSET)
+    for i in range(4)
+]
 
 main_pcba = Compound(
     label="main_pcba",
     children=[
         main_pcb,
         batt_holder.rotate(Axis.Z, 45),
-        *[male_connector
-            .located(Pos(-MODULE_SIZE / 2, CONNECTOR_CENTER_OFFSET, MAIN_PCB_THICKNESS))
-            .rotate(Axis.Z, 90 * i)
-          for i in range(4)],
-        *[female_connector
-            .located(Pos(-MODULE_SIZE / 2, -CONNECTOR_CENTER_OFFSET, MAIN_PCB_THICKNESS))
-            .rotate(Axis.Z, 90 * i)
-          for i in range(4)],
+        Compound(label="Connectors", children=[
+            *[male_connector.located(l) for l in male_connector_locations],
+            *[female_connector.located(l) for l in female_connector_locations],
+        ]).move(Pos(Z=MAIN_PCB_THICKNESS))
     ]
 ).locate(Location((0, 0, bottom_part.bounding_box().max.Z)))
 
@@ -216,6 +221,32 @@ def middle_part():
                     align=(Align.MIN, Align.CENTER, Align.MAX),
                     mode=Mode.SUBTRACT
                 )
+        
+        # USB port
+        with Locations(Pos(X=MODULE_SIZE / 2, Z=MIDDLE_PART_THICKNESS)):
+            Box(
+                8.0, 8.94 + 0.4, 3.16 + 0.2,
+                align=(Align.MAX, Align.CENTER, Align.MAX),
+                mode=Mode.SUBTRACT
+            )
+
+        with Locations(male_connector_locations):
+            Box(
+                4.0 + 0.2, 14.0 + 0.4, 3.8 + 0.1 + 0.2,
+                align=(Align.MIN, Align.CENTER, Align.MIN),
+                mode=Mode.SUBTRACT
+            )
+        
+            with BuildPart(*female_connector_locations, mode=Mode.SUBTRACT):
+                Box(
+                    1.6 + 0.2, 12.5 + 0.4, 6.0 + 0.2,
+                    align=(Align.MIN, Align.CENTER, Align.MIN)
+                )
+                with Locations(*[Pos(Y=7.5 / 2 * m) for m in [-1, 1]]):
+                    Box(
+                        1.6 + 1.0 + 0.6, 1.1 + 0.4, 6.0 - 4.3 + 1.1 / 2 + 0.2,
+                        align=(Align.MIN, Align.CENTER, Align.MIN)
+                    )
 
     middle_part.part.label = "middle_part"
     middle_part.part.color = "black"
@@ -243,7 +274,7 @@ lcd = Part(Box(
     .move(Pos(Y=LCD_EDGE_TOP + LCD_ACTIVE / 2, Z=LCD_TO_PCB))
 
 peri_pcba = Compound(label="peri_pcba", children=[peri_pcb, lcd]) \
-    .locate(middle_part.global_location * Plane(middle_part.faces().sort_by(Axis.Z)[-1]).location)
+    .locate(middle_part.global_location * Pos(Z=middle_part.bounding_box().max.Z))
 
 @operator.call
 def top_part():
@@ -297,3 +328,11 @@ ocp_vscode.show(
     main_pcba,
     bottom_assembly,
 )
+
+export_path = "./export/SnapNodes_RP2"
+export_stl(bottom_part, f"{export_path}/bottom_part.stl")
+export_stl(middle_part, f"{export_path}/middle_part.stl")
+export_stl(top_part, f"{export_path}/top_part.stl")
+export_step(bottom_part, f"{export_path}/bottom_part.step")
+export_step(middle_part, f"{export_path}/middle_part.step")
+export_step(top_part, f"{export_path}/top_part.step")
