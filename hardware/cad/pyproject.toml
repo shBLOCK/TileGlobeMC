@@ -1,0 +1,11 @@
+[project]
+name = "cad"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = "~=3.13.0"
+dependencies = [
+    "build123d==0.10.0",
+    "ocp_vscode~=3.0.0",
+    "pip" # required by OCP CAD Viewer VSCode extension
+]
