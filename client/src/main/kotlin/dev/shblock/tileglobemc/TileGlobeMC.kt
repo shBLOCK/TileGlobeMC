@@ -1,14 +1,17 @@
 package dev.shblock.tileglobemc
 
+import dev.shblock.tileglobemc.datagen.BlocksDatagen
 import net.neoforged.api.distmarker.Dist
+import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.fml.common.Mod
+import net.neoforged.neoforge.data.event.GatherDataEvent
 import org.apache.logging.log4j.Level
 import org.apache.logging.log4j.LogManager
 import org.apache.logging.log4j.Logger
 
-@Mod(TileGlobeMC.ID, dist = [Dist.CLIENT])
-@EventBusSubscriber(Dist.CLIENT)
+@Mod(TileGlobeMC.ID)
+@EventBusSubscriber(modid = TileGlobeMC.ID)
 object TileGlobeMC {
     const val ID = "tileglobemc"
 
@@ -16,5 +19,10 @@ object TileGlobeMC {
 
     init {
         LOGGER.log(Level.INFO, "Hello world!")
+    }
+
+    @SubscribeEvent
+    fun onGatherDataServer(event: GatherDataEvent.Server) {
+        event.createProvider(::BlocksDatagen)
     }
 }
