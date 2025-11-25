@@ -1,0 +1,16 @@
+[package]
+name = "tileglobe_proc_macro"
+version = "0.1.0"
+edition.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.103"
+syn = "2.0.110"
+quote = "1.0.42"
+serde = { workspace = true, features = ["default"] }
+serde_json = "1.0.145"
+
+tileglobe_utils = { path = "../tileglobe_utils", features = ["std"] }

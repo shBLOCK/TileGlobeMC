@@ -3,8 +3,9 @@ resolver = "3"
 members = [
     "tileglobe",
     "runtime/pc",
-    "runtime/rp2350"
-]
+    "runtime/rp2350",
+    "tileglobe_proc_macro"
+    , "tileglobe_utils"]
 
 [workspace.package]
 edition = "2024"
@@ -23,6 +24,9 @@ critical-section = "1.2.0"
 
 heapless = "0.8.0"
 static_cell = "2.1.1"
+derive_more = { version = "2.0.1", default-features = false }
+serde = { version = "1.0.228", default-features = false, features = ["alloc", "derive"] }
+serde_with = { version = "3.16.0", default-features = false, features = ["macros"] }
 
 defmt = { version = "1.0.1", features = ["alloc"] }
 log = "0.4.28"
