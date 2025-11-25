@@ -5,17 +5,17 @@ from build123d import *
 import ocp_vscode
 
 MODULE_SIZE = 40
-SCREW_DIA = 2.0 + 0.4
+SCREW_DIA = 2.0 + 0.2
 SCREW_TO_EDGES = 2.2
 EDGE_FILLET_R = SCREW_TO_EDGES
 MAIN_PCB_THICKNESS = 1.2
 PERI_PCB_THICKNESS = 1.2
 
-MAGNET_TO_SURFACE = 0.8
+MAGNET_TO_SURFACE = 0.4
 MAGNET_WIDTH = 5.0
 MAGNET_HEIGHT = 5.0
 MAGNET_THICKNESS = 5.0
-MAGNET_HORIZONTAL_DISTANCE = 28.0
+MAGNET_HORIZONTAL_DISTANCE = 29.0
 
 magnet = Part(Box(
     MAGNET_THICKNESS, MAGNET_WIDTH, MAGNET_HEIGHT,
@@ -37,19 +37,20 @@ def bottom_part():
     with BuildPart() as bottom_part:
         BATT_HOLDER_D = 29.5
         BATT_HOLDER_HEIGHT = 8.6
+        BOTTOM_PART_THICKNESS = 9.0
 
         with BuildSketch():
             RectangleRounded(
                 MODULE_SIZE, MODULE_SIZE,
                 EDGE_FILLET_R
             )
-        extrude(amount=BATT_HOLDER_HEIGHT + 0.4)
+        extrude(amount=BOTTOM_PART_THICKNESS)
 
         with Locations(bottom_part.faces().sort_by(Axis.Z)[0]):
             with GridLocations(*([MODULE_SIZE - SCREW_TO_EDGES * 2] * 2), 2, 2):
                 CounterSinkHole(
                     SCREW_DIA / 2,
-                    counter_sink_radius=4.0 / 2,
+                    counter_sink_radius=4.2 / 2,
                     counter_sink_angle=82
                 )
 
@@ -57,7 +58,7 @@ def bottom_part():
             Hole(BATT_HOLDER_D / 2)
             Hole(35.0 / 2, 5.0)
             [Box(
-                MODULE_SIZE, MODULE_SIZE - SCREW_TO_EDGES * 4 - 2.0, 2.0,
+                MODULE_SIZE - 0.8 * 2, MODULE_SIZE - SCREW_TO_EDGES * 4 - 2.0, 2.0,
                 rotation=(0, 0, rot),
                 align=(Align.CENTER, Align.CENTER, Align.MAX),
                 mode=Mode.SUBTRACT
@@ -66,10 +67,18 @@ def bottom_part():
         with Locations(Pos(Z=1.0)):
             with Locations(magnet_locations):
                 Box(
-                    MAGNET_THICKNESS + 0.2, MAGNET_WIDTH + 0.2, bottom_part.max_dimension,
+                    MAGNET_THICKNESS + 0.1, MAGNET_WIDTH + 0.1, bottom_part.max_dimension,
                     align=(Align.MIN, Align.CENTER, Align.MIN),
                     mode=Mode.SUBTRACT
                 )
+        
+        # SWD connector
+        with Locations(Pos(Y=-MODULE_SIZE / 2, Z=BOTTOM_PART_THICKNESS)):
+            Box(
+                4.3 + 0.2, 5.0, 3.1 + 0.1,
+                align=(Align.CENTER, Align.MIN, Align.MAX),
+                mode=Mode.SUBTRACT
+            )
 
     bottom_part.part.label = "bottom_part"
     bottom_part.part.color = "black"
@@ -217,7 +226,7 @@ def middle_part():
         with Locations(Pos(Z=MIDDLE_PART_THICKNESS)):
             with Locations(magnet_locations):
                 Box(
-                    MAGNET_THICKNESS * 2 + 0.2, MAGNET_WIDTH + 0.2, MAGNET_HEIGHT + 0.1,
+                    MAGNET_THICKNESS * 2 + 0.1, MAGNET_WIDTH + 0.1, MAGNET_HEIGHT + 0.1,
                     align=(Align.MIN, Align.CENTER, Align.MAX),
                     mode=Mode.SUBTRACT
                 )
@@ -225,28 +234,34 @@ def middle_part():
         # USB port
         with Locations(Pos(X=MODULE_SIZE / 2, Z=MIDDLE_PART_THICKNESS)):
             Box(
-                8.0, 8.94 + 0.4, 3.16 + 0.2,
+                8.0, 8.94 + 0.2, 3.16 + 0.1,
                 align=(Align.MAX, Align.CENTER, Align.MAX),
                 mode=Mode.SUBTRACT
             )
 
         with Locations(male_connector_locations):
             Box(
-                4.0 + 0.2, 14.0 + 0.4, 3.8 + 0.1 + 0.2,
+                4.0 + 0.1, 14.0 + 0.2, 3.9 + 0.1,
                 align=(Align.MIN, Align.CENTER, Align.MIN),
                 mode=Mode.SUBTRACT
             )
-        
-            with BuildPart(*female_connector_locations, mode=Mode.SUBTRACT):
+            with Locations(Pos(X=0.4)):
                 Box(
-                    1.6 + 0.2, 12.5 + 0.4, 6.0 + 0.2,
+                    4.0 - 0.4, 14 + 0.8 * 2 + 0.2, 1.0,
+                    align=(Align.MIN, Align.CENTER, Align.MIN),
+                    mode=Mode.SUBTRACT
+                )
+        
+        with BuildPart(*female_connector_locations, mode=Mode.SUBTRACT):
+            Box(
+                1.6 + 0.1, 12.5 + 0.2, 6.0 + 0.1,
+                align=(Align.MIN, Align.CENTER, Align.MIN)
+            )
+            with Locations(*[Pos(Y=7.5 / 2 * m) for m in [-1, 1]]):
+                Box(
+                    1.6 + 1.0 + 0.6, 1.1 + 0.4, 6.0 - 4.3 + 1.1 / 2 + 0.2,
                     align=(Align.MIN, Align.CENTER, Align.MIN)
                 )
-                with Locations(*[Pos(Y=7.5 / 2 * m) for m in [-1, 1]]):
-                    Box(
-                        1.6 + 1.0 + 0.6, 1.1 + 0.4, 6.0 - 4.3 + 1.1 / 2 + 0.2,
-                        align=(Align.MIN, Align.CENTER, Align.MIN)
-                    )
 
     middle_part.part.label = "middle_part"
     middle_part.part.color = "black"
@@ -264,7 +279,7 @@ LCD_SIZE_Y = 33.72
 LCD_ACTIVE = 27.72
 LCD_EDGE_TOP = 1.45
 LCD_THICKNESS = 1.9
-LCD_TO_PCB = 4.3 + 0.3
+LCD_TO_PCB = 4.3 + 0.2
 LCD_FPC_WIDTH = 22.0
 lcd = Part(Box(
     LCD_SIZE_X, LCD_SIZE_Y, LCD_THICKNESS,
@@ -279,7 +294,7 @@ peri_pcba = Compound(label="peri_pcba", children=[peri_pcb, lcd]) \
 @operator.call
 def top_part():
     with BuildPart(peri_pcb.global_location * Plane(peri_pcb.faces().sort_by(Axis.Z)[-1]).location) as top_part:
-        LCD_COVER_THICKNESS = 0.8
+        LCD_COVER_THICKNESS = 0.6
 
         with BuildSketch(*top_part.workplanes):
             RectangleRounded(
@@ -292,26 +307,45 @@ def top_part():
         with GridLocations(*([MODULE_SIZE - SCREW_TO_EDGES * 2] * 2), 2, 2):
             Hole(SCREW_DIA / 2)
         
-        with Locations(Pos(Y=LCD_EDGE_TOP + LCD_ACTIVE / 2 + 0.5)):
+        # main LCD slot
+        with Locations(Pos(Y=LCD_EDGE_TOP + LCD_ACTIVE / 2 + 0.3)):
             Box(
-                LCD_SIZE_X + 1.0, LCD_SIZE_Y + 1.0, LCD_TO_PCB + LCD_THICKNESS,
+                LCD_SIZE_X + 0.6, LCD_SIZE_Y + 0.6, LCD_TO_PCB + LCD_THICKNESS,
                 align=(Align.CENTER, Align.MAX, Align.MIN),
                 mode=Mode.SUBTRACT
             )
         
+        # LCD FPC slot
         with Locations(Pos(Z=_total_thickness - LCD_COVER_THICKNESS)):
             Box(
                 LCD_FPC_WIDTH + 1.0,
-                LCD_SIZE_Y - LCD_EDGE_TOP - LCD_ACTIVE / 2 + top_part.max_dimension,
+                LCD_SIZE_Y - LCD_EDGE_TOP - LCD_ACTIVE / 2 + 0.8,
                 LCD_THICKNESS + 0.5,
                 align=(Align.CENTER, Align.MAX, Align.MAX),
                 mode=Mode.SUBTRACT
             )
         
+        # LCD viewing window
         with Locations(Pos(Z=_total_thickness)):
             Box(
                 LCD_ACTIVE + 2.0, LCD_ACTIVE + 2.0, LCD_COVER_THICKNESS,
                 align=(Align.CENTER, Align.CENTER, Align.MAX),
+                mode=Mode.SUBTRACT
+            )
+        
+        # buttons clearance
+        with Locations([Rot(Z=i) for i in [0, 90]]):
+            Box(
+                13.5 * 2 + 4.5 + 1.0, 4.5 + 3.0, 4.0 + 0.5,
+                align=(Align.CENTER, Align.CENTER, Align.MIN),
+                mode=Mode.SUBTRACT
+            )
+        
+        # USB port backside clearance
+        with Locations(Pos(X=MODULE_SIZE / 2 - 1.2)):
+            Box(
+                10.0, 10.0, 2.0,
+                align=(Align.MAX, Align.CENTER, Align.MIN),
                 mode=Mode.SUBTRACT
             )
 
