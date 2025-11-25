@@ -74,15 +74,13 @@ class BlocksDatagen(
                         }
                     }
 
-                    val idDiv =
+                    val idGroupSize =
                         possibleStates.takeWhile { it.getValue(property) == property.possibleValues.first() }.size
-                    val idMod = idDiv * property.possibleValues.size
 
-                    blockstatePropertyData.addProperty("id_mod", idMod)
-                    blockstatePropertyData.addProperty("id_div", idDiv)
+                    blockstatePropertyData.addProperty("id_group_size", idGroupSize)
 
                     // check validity
-                    possibleStates.forEach { check(it.getValue(property) == property.possibleValues[(it.id - idBase) % idMod / idDiv]) }
+                    possibleStates.forEach { check(it.getValue(property) == property.possibleValues[(it.id - idBase) / idGroupSize % property.possibleValues.size]) }
                 }
 
                 DataProvider.saveStable(

@@ -74,7 +74,7 @@ neoForge {
         serverData {
             serverData()
 
-            programArguments.addAll '--mod', project.mod_id, '--mod', 'minecraft', '--all', '--output', file('run/serverData/').getAbsolutePath(), '--existing', file('run/serverData/').getAbsolutePath()
+            programArguments.addAll '--mod', project.mod_id, '--mod', 'minecraft', '--all', '--output', file('serverData/').getAbsolutePath(), '--existing', file('serverData/').getAbsolutePath()
         }
 
         // applies to all the run configs above
