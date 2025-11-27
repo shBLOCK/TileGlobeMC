@@ -6,8 +6,10 @@ extern crate alloc;
 
 use embassy_executor::Spawner;
 
-pub mod master_node;
+pub mod world;
 mod network;
-mod utils;
+pub mod utils;
+
+pub mod master_node;
 
 pub async fn node_start(spawner: Spawner) {}

@@ -10,14 +10,19 @@ embassy-sync = { workspace = true }
 embassy-net = { workspace = true }
 embedded-io-async = { workspace = true }
 
-derive_more = { version = "2.0.1", default-features = false, features = ["display"] }
+derive_more = { workspace = true, features = ["display", "from", "into"] }
 num-traits = { version = "0.2.19", default-features = false }
+num_enum = { version = "0.7.5", default-features = false }
 uuid = { version = "1.18.1", default-features = false, features = ["v3"] }
 md5 = { version = "0.8.0", default-features = false }
+dynify = { version = "0.1.2" }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
+
+tileglobe_utils = { path = "../tileglobe_utils" }
+tileglobe_proc_macro = { path = "../tileglobe_proc_macro" }
 
 [features]
 defmt = ["dep:defmt", "defmt-or-log/defmt"]

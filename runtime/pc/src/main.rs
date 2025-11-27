@@ -44,6 +44,9 @@ fn main() {
         .format_timestamp_micros()
         .init();
 
+    // let b = tileglobe::world::block::blocks::Blocks::get_block(tileglobe::world::block::BlockId(10));
+    // info!("{:?}", b);
+
     static EXECUTOR: StaticCell<Executor> = StaticCell::new();
 
     let executor = EXECUTOR.init(Executor::new());

@@ -7,3 +7,8 @@ mod utils;
 pub fn mc_block_id_base(input: TokenStream) -> TokenStream {
     blocks::macros::mc_block_id_base(input)
 }
+
+#[proc_macro]
+pub fn mc_block_resloc_consts(input: TokenStream) -> TokenStream {
+    blocks::macros::mc_block_resloc_consts(input)
+}

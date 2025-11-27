@@ -12,5 +12,7 @@ syn = "2.0.110"
 quote = "1.0.42"
 serde = { workspace = true, features = ["default"] }
 serde_json = "1.0.145"
+walkdir = "2.5.0"
+itertools = "0.14.0"
 
 tileglobe_utils = { path = "../tileglobe_utils", features = ["std"] }

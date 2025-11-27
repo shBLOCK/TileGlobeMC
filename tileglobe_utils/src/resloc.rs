@@ -6,6 +6,7 @@ use core::fmt::{Display, Formatter};
 use core::marker::PhantomData;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
+use crate::MINECRAFT;
 
 #[derive(Debug, Clone)]
 pub struct ResLoc<'a> {
@@ -14,27 +15,27 @@ pub struct ResLoc<'a> {
 }
 
 impl<'a> ResLoc<'a> {
-    pub fn new(namespace: &'a str, path: &'a str) -> Self {
+    pub const fn new(namespace: &'a str, path: &'a str) -> Self {
         Self {
             namespace: Cow::Borrowed(namespace),
             path: Cow::Borrowed(path),
         }
     }
 
-    pub fn new_owned(namespace: String, path: String) -> Self {
+    pub const fn new_owned(namespace: String, path: String) -> Self {
         Self {
             namespace: Cow::Owned(namespace),
             path: Cow::Owned(path),
         }
     }
 
-    pub fn try_new(namespace: &'a str, path: &'a str) -> Result<Self, ResLocError> {
+    pub fn new_checked(namespace: &'a str, path: &'a str) -> Result<Self, ResLocError> {
         let resloc = Self::new(namespace, path);
         resloc.validate()?;
         Ok(resloc)
     }
 
-    pub fn try_new_owned(namespace: String, path: String) -> Result<Self, ResLocError> {
+    pub fn new_owned_checked(namespace: String, path: String) -> Result<Self, ResLocError> {
         let resloc = Self::new_owned(namespace, path);
         resloc.validate()?;
         Ok(resloc)
@@ -92,11 +93,11 @@ impl<'a> TryFrom<&'a str> for ResLoc<'a> {
                 path = b;
             }
             None => {
-                namespace = "minecraft";
+                namespace = MINECRAFT;
                 path = s;
             }
         }
-        Self::try_new(namespace, path)
+        Self::new_checked(namespace, path)
     }
 }
 
@@ -123,8 +124,8 @@ mod _std {
     use super::*;
     use std::path::PathBuf;
 
-    impl From<ResLoc<'_>> for PathBuf {
-        fn from(value: ResLoc) -> Self {
+    impl From<&ResLoc<'_>> for PathBuf {
+        fn from(value: &ResLoc) -> Self {
             [&*value.namespace, &*value.path].iter().collect()
         }
     }
