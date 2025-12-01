@@ -1,11 +1,13 @@
 [workspace]
 resolver = "3"
 members = [
+    "tileglobe_utils",
+    "tileglobe_proc_macro",
     "tileglobe",
-    "runtime/pc",
-    "runtime/rp2350",
-    "tileglobe_proc_macro"
-    , "tileglobe_utils"]
+    "tileglobe_server",
+    "tileglobe_runtime/pc",
+    "tileglobe_runtime/rp2350",
+]
 
 [workspace.package]
 edition = "2024"
@@ -22,11 +24,17 @@ embassy-net = { version = "0.7.1", path = "embassy/embassy-net", features = ["al
 embedded-io-async = "0.6.1"
 critical-section = "1.2.0"
 
+libm = { version = "0.2.15" }
+glam = { version = "0.30.9", default-features = false, features = ["libm"] }
+num-traits = { version = "0.2.19", default-features = false }
 heapless = "0.8.0"
 static_cell = "2.1.1"
 derive_more = { version = "2.0.1", default-features = false }
 serde = { version = "1.0.228", default-features = false, features = ["alloc", "derive"] }
-serde_with = { version = "3.16.0", default-features = false, features = ["macros"] }
+dynify = { version = "0.1.2", features = ["smallvec"] }
+smallvec = { version = "1.15.1" }
+uuid = { version = "1.18.1", default-features = false, features = ["v3"] }
+md5 = { version = "0.8.0", default-features = false }
 
 defmt = { version = "1.0.1", features = ["alloc"] }
 log = "0.4.28"

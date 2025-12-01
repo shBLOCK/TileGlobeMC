@@ -1,5 +1,5 @@
 [package]
-name = "tileglobe-runtime-rp2350"
+name = "tileglobe_runtime_rp2350"
 version = "0.1.0"
 edition.workspace = true
 #forced-target = "thumbv8m.main-none-eabihf"
@@ -19,7 +19,7 @@ embassy-executor = { workspace = true, features = [
     "defmt"
 ] }
 embassy-time = { workspace = true }
-embassy-rp = { version = "0.8.0", path = "../../embassy/embassy-rp", features = [
+embassy-rp = { version = "0.9.0", path = "../../embassy/embassy-rp", features = [
     "unstable-pac",
     "time-driver",
     "critical-section-impl",
@@ -42,8 +42,8 @@ cortex-m = { version = "0.7.6", features = ["inline-asm"] }
 cortex-m-rt = "0.7.0"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 
-cyw43 = { version = "0.5.0", path = "../../embassy/cyw43", features = ["defmt", "firmware-logs"] }
-cyw43-pio = { version = "0.8.0", path = "../../embassy/cyw43-pio", features = ["defmt"] }
+cyw43 = { version = "0.6.0", path = "../../embassy/cyw43", features = ["defmt", "firmware-logs"] }
+cyw43-pio = { version = "0.9.0", path = "../../embassy/cyw43-pio", features = ["defmt"] }
 log = "0.4.28"
 
 [package.metadata.embassy]

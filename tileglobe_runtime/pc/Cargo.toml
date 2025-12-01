@@ -1,10 +1,11 @@
 [package]
-name = "tileglobe-runtime-pc"
+name = "tileglobe_runtime_pc"
 version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
 tileglobe = { path = "../../tileglobe", features = ["log"] }
+tileglobe_server = { path = "../../tileglobe_server", features = ["log"] }
 
 embassy-executor = { workspace = true, features = ["arch-std", "log"] }
 embassy-time = { workspace = true, features = ["std", "log"] }

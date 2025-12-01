@@ -1,14 +1,14 @@
 #![allow(unused)]
 
+use crate::MINECRAFT;
 use alloc::borrow::{Cow, ToOwned};
 use alloc::string::String;
 use core::fmt::{Display, Formatter};
 use core::marker::PhantomData;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use serde::de::{Error, Visitor};
-use crate::MINECRAFT;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Eq, PartialEq, Hash)]
 pub struct ResLoc<'a> {
     pub namespace: Cow<'a, str>,
     pub path: Cow<'a, str>,
@@ -134,7 +134,7 @@ mod _std {
 impl Serialize for ResLoc<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.collect_str(&format_args!("{}:{}", &*self.namespace, &*self.path))
     }
@@ -143,7 +143,7 @@ impl Serialize for ResLoc<'_> {
 impl<'de: 'a, 'a> Deserialize<'de> for ResLoc<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         struct ResLocVisitor<'a>(PhantomData<&'a ()>);
 
@@ -151,19 +151,22 @@ impl<'de: 'a, 'a> Deserialize<'de> for ResLoc<'a> {
             type Value = ResLoc<'a>;
 
             fn expecting(&self, formatter: &mut Formatter) -> core::fmt::Result {
-                write!(formatter, "a Minecraft ResourceLocation, e.g. \"minecraft:stone\" or \"stone\".")
+                write!(
+                    formatter,
+                    "a Minecraft ResourceLocation, e.g. \"minecraft:stone\" or \"stone\"."
+                )
             }
 
             fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
             where
-                E: Error
+                E: Error,
             {
                 Ok(ResLoc::try_from(v).map_err(E::custom)?.into_owned())
             }
 
             fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
             where
-                E: Error
+                E: Error,
             {
                 ResLoc::try_from(v).map_err(E::custom)
             }
@@ -174,9 +177,7 @@ impl<'de: 'a, 'a> Deserialize<'de> for ResLoc<'a> {
 }
 
 impl ResLoc<'static> {
-    pub fn de_owned<'de, D: Deserializer<'de>>(
-        deserializer: D,
-    ) -> Result<Self, D::Error> {
+    pub fn de_owned<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         Ok(ResLoc::deserialize(deserializer)?.into_owned())
     }
 }

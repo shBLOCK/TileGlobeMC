@@ -1,12 +1,13 @@
 mod block;
+pub use block::*;
 pub mod blocks;
 mod registry;
 
 use crate::utils::NumEnumU8;
 pub use block::*;
-pub use registry::*;
 use core::fmt::Debug;
 use defmt_or_log::maybe_derive_format;
+pub use registry::*;
 
 pub type BlockStateType = u16;
 #[derive(
@@ -16,7 +17,7 @@ pub type BlockStateType = u16;
 pub struct BlockState(pub BlockStateType);
 
 impl BlockState {
-    pub fn block(&self) -> &'static dyn Block {
+    pub fn get_block(&self) -> &'static dyn Block {
         Blocks.get_block(self)
     }
 }
@@ -31,12 +32,12 @@ pub struct StateId(pub StateIdType);
 pub trait BlockStateImpl: Sized + Copy + From<BlockState> {
     fn block_state(&self) -> BlockState;
 
-    fn block(&self) -> &'static dyn Block {
-        self.block_state().block()
+    fn get_block(&self) -> &'static dyn Block {
+        self.block_state().get_block()
     }
 }
 
-impl <T: BlockStateImpl> Into<BlockState> for T {
+impl<T: BlockStateImpl> Into<BlockState> for T {
     fn into(self) -> BlockState {
         self.block_state()
     }

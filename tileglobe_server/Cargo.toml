@@ -1,20 +1,22 @@
 [package]
-name = "tileglobe"
+name = "tileglobe_server"
 version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
 tileglobe_utils = { path = "../tileglobe_utils" }
-tileglobe_proc_macro = { path = "../tileglobe_proc_macro" }
+tileglobe = { path = "../tileglobe" }
 
-embassy-executor = { workspace = true }
+embassy-time = { workspace = true }
+embassy-sync = { workspace = true }
+embassy-net = { workspace = true }
+embedded-io-async = { workspace = true }
 
-libm = { workspace = true }
-glam = { workspace = true }
-derive_more = { workspace = true, features = ["display", "from", "into"] }
 num-traits = { workspace = true }
-dynify = { workspace = true }
+uuid = { workspace = true }
+md5 = { workspace = true }
 smallvec = { workspace = true }
+derive_more = { workspace = true, features = ["debug", "display", "from", "into", "deref", "deref_mut"] }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }

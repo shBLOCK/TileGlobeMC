@@ -1,20 +1,24 @@
-mod varint;
-mod string;
+mod mc_packet;
 mod primitives;
+mod string;
 mod uuid;
-mod mcpacket;
+mod varint;
+mod enums;
 
-pub use varint::*;
-pub use string::*;
-pub use primitives::*;
-pub use uuid::*;
-pub use mcpacket::*;
 pub use error_wrappers::*;
+pub use mc_packet::*;
+pub use primitives::*;
+pub use string::*;
+pub use uuid::*;
+pub use varint::*;
+pub use enums::*;
 
 use core::mem::MaybeUninit;
 
 pub trait ReadExt: embedded_io_async::Read {
-    async fn read_bytes<const BYTES: usize>(&mut self) -> Result<[u8; BYTES], EIOReadExactError<Self::Error>> {
+    async fn read_bytes<const BYTES: usize>(
+        &mut self,
+    ) -> Result<[u8; BYTES], EIOReadExactError<Self::Error>> {
         let mut buf = unsafe { MaybeUninit::<[u8; BYTES]>::uninit().assume_init() };
         self.read_exact(&mut buf).await?;
         Ok(buf)
@@ -29,7 +33,7 @@ pub trait ReadExt: embedded_io_async::Read {
     }
 }
 
-impl <T: embedded_io_async::Read> ReadExt for T {}
+impl<T: embedded_io_async::Read> ReadExt for T {}
 
 mod error_wrappers {
     use core::error::Error;

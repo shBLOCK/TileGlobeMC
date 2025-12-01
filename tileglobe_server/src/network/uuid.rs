@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::network::{EIOError, EIOReadExactError, ReadExt};
+use uuid::Uuid;
 
 pub trait ReadUUID: embedded_io_async::Read {
     async fn read_uuid(mut self: &mut Self) -> Result<Uuid, EIOReadExactError<Self::Error>> {

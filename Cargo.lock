@@ -155,15 +155,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b75356056920673b02621b35afd0f7dda9306d03c79a30f5c56c44cf256e3de"
 
 [[package]]
-name = "atomic-polyfill"
-version = "1.0.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
-dependencies = [
- "critical-section",
-]
-
-[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -468,7 +459,7 @@ dependencies = [
 
 [[package]]
 name = "cyw43"
-version = "0.5.0"
+version = "0.6.0"
 dependencies = [
  "bt-hci",
  "cortex-m",
@@ -488,7 +479,7 @@ dependencies = [
 
 [[package]]
 name = "cyw43-pio"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
  "cyw43",
  "defmt 1.0.1",
@@ -670,6 +661,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81acb15628a3e22358bf73de5e7e62360b8a777dbcb5fc9ac7dfa9ae73723747"
 dependencies = [
  "dynify-macros",
+ "smallvec",
 ]
 
 [[package]]
@@ -819,9 +811,8 @@ dependencies = [
 
 [[package]]
 name = "embassy-rp"
-version = "0.8.0"
+version = "0.9.0"
 dependencies = [
- "atomic-polyfill",
  "cfg-if",
  "chrono",
  "cortex-m",
@@ -1329,6 +1320,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "glam"
+version = "0.30.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bd47b05dddf0005d850e5644cae7f2b14ac3df487979dbfff3b56f20b1a6ae46"
+dependencies = [
+ "libm",
+]
+
+[[package]]
 name = "glob"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1515,6 +1515,12 @@ name = "libc"
 version = "0.2.177"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2874a2af47a2325c2001a6e6fad9b16a53b802102b528163885171cf92b15976"
+
+[[package]]
+name = "libm"
+version = "0.2.15"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f9fbbcab51052fe104eb5e5d351cf728d30a5be1fe14d9be8a3b097481fb97de"
 
 [[package]]
 name = "linked_list_allocator"
@@ -2472,21 +2478,31 @@ dependencies = [
  "derive_more",
  "dynify",
  "embassy-executor",
- "embassy-net",
- "embassy-sync 0.7.2",
- "embassy-time",
- "embedded-io-async",
+ "glam",
+ "libm",
  "log",
- "md5",
  "num-traits",
- "num_enum 0.7.5",
+ "smallvec",
  "tileglobe_proc_macro",
  "tileglobe_utils",
- "uuid",
 ]
 
 [[package]]
-name = "tileglobe-runtime-pc"
+name = "tileglobe_proc_macro"
+version = "0.1.0"
+dependencies = [
+ "itertools",
+ "proc-macro2",
+ "quote",
+ "serde",
+ "serde_json",
+ "syn 2.0.110",
+ "tileglobe_utils",
+ "walkdir",
+]
+
+[[package]]
+name = "tileglobe_runtime_pc"
 version = "0.1.0"
 dependencies = [
  "async-net",
@@ -2500,10 +2516,11 @@ dependencies = [
  "rand_core 0.9.3",
  "static_cell",
  "tileglobe",
+ "tileglobe_server",
 ]
 
 [[package]]
-name = "tileglobe-runtime-rp2350"
+name = "tileglobe_runtime_rp2350"
 version = "0.1.0"
 dependencies = [
  "cortex-m",
@@ -2526,17 +2543,23 @@ dependencies = [
 ]
 
 [[package]]
-name = "tileglobe_proc_macro"
+name = "tileglobe_server"
 version = "0.1.0"
 dependencies = [
- "itertools",
- "proc-macro2",
- "quote",
- "serde",
- "serde_json",
- "syn 2.0.110",
+ "defmt 1.0.1",
+ "defmt-or-log",
+ "derive_more",
+ "embassy-net",
+ "embassy-sync 0.7.2",
+ "embassy-time",
+ "embedded-io-async",
+ "log",
+ "md5",
+ "num-traits",
+ "smallvec",
+ "tileglobe",
  "tileglobe_utils",
- "walkdir",
+ "uuid",
 ]
 
 [[package]]

@@ -1,4 +1,3 @@
-use crate::master_node::utils::MCPlayerUUID;
 use crate::network::{
     EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
     ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket, WriteNumPrimitive,
@@ -14,14 +13,21 @@ use core::net::SocketAddr;
 use defmt_or_log::*;
 use num_traits::abs;
 use uuid::Uuid;
+use crate::mc_server::MCServer;
+use crate::player::Player;
 
 #[derive(derive_more::Display)]
 #[display("{self:?}")]
 pub struct MCClient<'a, T: embedded_io_async::Read + embedded_io_async::Write> {
+    server: &'a MCServer<'_, _>,
     socket: &'a mut T,
     addr: Option<SocketAddr>,
     state: State,
     // player_name: String,
+}
+
+impl Player for MCClient<> {
+    
 }
 
 impl<T: embedded_io_async::Read + embedded_io_async::Write> Debug for MCClient<'_, T> {
@@ -33,7 +39,12 @@ impl<T: embedded_io_async::Read + embedded_io_async::Write> Debug for MCClient<'
 #[cfg(feature = "defmt")]
 impl<T: embedded_io_async::Read + embedded_io_async::Write> defmt::Format for MCClient<'_, T> {
     fn format(&self, fmt: defmt::Formatter) {
-        defmt::write!(fmt, "MCClient({:?}, state: {:?})", Debug2Format(&self.addr), self.state)
+        defmt::write!(
+            fmt,
+            "MCClient({:?}, state: {:?})",
+            Debug2Format(&self.addr),
+            self.state
+        )
     }
 }
 
@@ -232,7 +243,7 @@ where
 
                             // chunk
                             pkt.write_varint(0u32).await?; // heightmaps
-                            pkt.write_varint::<u32>((2+1+1+1+1) * 24).await?; // bytes
+                            pkt.write_varint::<u32>((2 + 1 + 1 + 1 + 1) * 24).await?; // bytes
                             for y in -4..20 {
                                 // blocks
                                 if y == 4 && abs(x) <= 4 && abs(z) <= 4 {

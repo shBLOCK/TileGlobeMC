@@ -41,7 +41,10 @@ impl MCPacketBuffer {
 }
 
 pub trait WriteMCPacket: embedded_io_async::Write {
-    async fn write_mc_packet(mut self: &mut Self, pkt: MCPacketBuffer) -> Result<(), EIOError<Self::Error>> {
+    async fn write_mc_packet(
+        mut self: &mut Self,
+        pkt: MCPacketBuffer,
+    ) -> Result<(), EIOError<Self::Error>> {
         self.write_varint::<u32>(pkt.buffer.len() as u32).await?;
         self.write_all(&pkt.buffer).await?;
         Ok(())

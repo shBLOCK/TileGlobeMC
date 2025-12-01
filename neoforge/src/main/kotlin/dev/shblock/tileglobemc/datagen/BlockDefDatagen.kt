@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture
 
 private val BlockState.id get() = Block.getId(this)
 
-class BlocksDatagen(
+class BlockDefDatagen(
     val packOutput: PackOutput,
     val registries: CompletableFuture<HolderLookup.Provider>
 ) : DataProvider {
@@ -87,7 +87,7 @@ class BlocksDatagen(
                     cachedOutput,
                     blockData,
                     packOutput.outputFolder
-                        .resolve("blocks")
+                        .resolve("block_def")
                         .resolve(resLoc.namespace)
                         .resolve("${resLoc.path}.json")
                 )
@@ -95,5 +95,5 @@ class BlocksDatagen(
         )
     }
 
-    override fun getName() = "TileGlobeMC: Blocks"
+    override fun getName() = "TileGlobeMC: BlockDef"
 }

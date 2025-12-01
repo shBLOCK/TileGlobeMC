@@ -28,11 +28,17 @@ pub trait ReadNumPrimitive: embedded_io_async::Read {
 impl<T: embedded_io_async::Read> ReadNumPrimitive for T {}
 
 pub trait WriteNumPrimitive: embedded_io_async::Write {
-    async fn write_le<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(&mut self, value: T) -> Result<(), Self::Error> {
+    async fn write_le<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(
+        &mut self,
+        value: T,
+    ) -> Result<(), Self::Error> {
         self.write_all(&value.to_le_bytes()).await
     }
 
-    async fn write_be<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(&mut self, value: T) -> Result<(), Self::Error> {
+    async fn write_be<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(
+        &mut self,
+        value: T,
+    ) -> Result<(), Self::Error> {
         self.write_all(&value.to_be_bytes()).await
     }
 }

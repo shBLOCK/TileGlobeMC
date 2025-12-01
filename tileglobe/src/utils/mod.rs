@@ -1,4 +1,5 @@
-pub trait NumEnumU8<const N: u8>: num_enum::FromPrimitive + From<u8> + Into<u8> {}
+mod indexed_enum;
+pub use indexed_enum::*;
 
 pub trait Dynified<D> {
     fn dynified(&self) -> &dyn D;

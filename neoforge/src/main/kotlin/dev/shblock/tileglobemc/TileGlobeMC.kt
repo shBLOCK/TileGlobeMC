@@ -1,7 +1,6 @@
 package dev.shblock.tileglobemc
 
-import dev.shblock.tileglobemc.datagen.BlocksDatagen
-import net.neoforged.api.distmarker.Dist
+import dev.shblock.tileglobemc.datagen.BlockDefDatagen
 import net.neoforged.bus.api.SubscribeEvent
 import net.neoforged.fml.common.EventBusSubscriber
 import net.neoforged.fml.common.Mod
@@ -23,6 +22,6 @@ object TileGlobeMC {
 
     @SubscribeEvent
     fun onGatherDataServer(event: GatherDataEvent.Server) {
-        event.createProvider(::BlocksDatagen)
+        event.createProvider(::BlockDefDatagen)
     }
 }

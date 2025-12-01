@@ -8,7 +8,7 @@ proc-macro = true
 
 [dependencies]
 proc-macro2 = "1.0.103"
-syn = "2.0.110"
+syn = { version = "2.0.110", features = ["full"] }
 quote = "1.0.42"
 serde = { workspace = true, features = ["default"] }
 serde_json = "1.0.145"

@@ -24,7 +24,9 @@ impl VarIntType<10> for u32 {}
 impl VarIntType<10> for u64 {}
 
 pub trait ReadVarInt<const MAX_BYTES: usize>: embedded_io_async::Read {
-    async fn read_varint<I: VarIntType<MAX_BYTES>>(mut self: &mut Self) -> Result<I, ReadVarIntError>
+    async fn read_varint<I: VarIntType<MAX_BYTES>>(
+        mut self: &mut Self,
+    ) -> Result<I, ReadVarIntError>
     where
         Self::Error: 'static,
     {
