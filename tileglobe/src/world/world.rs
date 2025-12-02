@@ -32,7 +32,7 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
         }
     }
 
-    pub async fn get_chunk(&self, pos: ChunkPos) -> Result<MappedMutexGuard<M, Chunk>, ()> {
+    pub async fn get_chunk(&self, pos: ChunkPos) -> Result<MappedMutexGuard<'_, M, Chunk>, ()> {
         let mutex = self
             .chunks
             .get((pos.x - MIN_X) as usize)

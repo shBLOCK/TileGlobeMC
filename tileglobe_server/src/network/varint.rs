@@ -23,6 +23,7 @@ impl VarIntType<5> for i64 {}
 impl VarIntType<10> for u32 {}
 impl VarIntType<10> for u64 {}
 
+#[allow(async_fn_in_trait)]
 pub trait ReadVarInt<const MAX_BYTES: usize>: embedded_io_async::Read {
     async fn read_varint<I: VarIntType<MAX_BYTES>>(
         mut self: &mut Self,
@@ -51,6 +52,7 @@ pub trait ReadVarInt<const MAX_BYTES: usize>: embedded_io_async::Read {
 
 impl<T: embedded_io_async::Read, const MAX_BYTES: usize> ReadVarInt<MAX_BYTES> for T {}
 
+#[allow(async_fn_in_trait)]
 pub trait WriteVarInt<IOE: embedded_io_async::Error, const MAX_BYTES: usize>:
     embedded_io_async::Write<Error = IOE>
 {

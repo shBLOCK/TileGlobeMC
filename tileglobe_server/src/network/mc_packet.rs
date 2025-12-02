@@ -40,6 +40,7 @@ impl MCPacketBuffer {
     }
 }
 
+#[allow(async_fn_in_trait)]
 pub trait WriteMCPacket: embedded_io_async::Write {
     async fn write_mc_packet(
         mut self: &mut Self,

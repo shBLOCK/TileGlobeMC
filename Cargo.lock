@@ -2507,6 +2507,7 @@ name = "tileglobe_runtime_pc"
 version = "0.1.0"
 dependencies = [
  "async-net",
+ "critical-section",
  "embassy-executor",
  "embassy-sync 0.7.2",
  "embassy-time",
@@ -2552,6 +2553,7 @@ dependencies = [
  "defmt-or-log",
  "derive_more",
  "dynify",
+ "embassy-futures",
  "embassy-net",
  "embassy-sync 0.7.2",
  "embassy-time",

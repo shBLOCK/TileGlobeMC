@@ -4,6 +4,7 @@ mod string;
 mod uuid;
 mod varint;
 mod enums;
+mod bitbuf;
 
 pub use error_wrappers::*;
 pub use mc_packet::*;
@@ -12,9 +13,11 @@ pub use string::*;
 pub use uuid::*;
 pub use varint::*;
 pub use enums::*;
+pub use bitbuf::*;
 
 use core::mem::MaybeUninit;
 
+#[allow(async_fn_in_trait)]
 pub trait ReadExt: embedded_io_async::Read {
     async fn read_bytes<const BYTES: usize>(
         &mut self,
@@ -38,7 +41,7 @@ impl<T: embedded_io_async::Read> ReadExt for T {}
 mod error_wrappers {
     use core::error::Error;
     use core::fmt;
-    use core::fmt::{Debug, Display, Formatter};
+    use core::fmt::{Debug, Formatter};
 
     // Wrapper to support core::error::Error
     #[derive(derive_more::Display)]

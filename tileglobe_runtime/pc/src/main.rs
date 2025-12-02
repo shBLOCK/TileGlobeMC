@@ -9,9 +9,9 @@ use tileglobe_server::MCClient;
 
 #[embassy_executor::task(pool_size = 3)]
 async fn mc_client_task(mc_server: &'static MCServer<'static, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
-    let mut adapter = embedded_io_adapters::futures_03::FromFutures::new(socket);
+    let adapter = embedded_io_adapters::futures_03::FromFutures::new(socket);
 
-    let mut client = MCClient::new(mc_server, &mut adapter, Some(addr));
+    let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(mc_server, adapter.clone(), adapter.clone(), Some(addr));
     client._main_task().await;
 
     let socket = adapter.into_inner();

@@ -9,6 +9,7 @@ tileglobe = { path = "../tileglobe" }
 
 embassy-time = { workspace = true }
 embassy-sync = { workspace = true }
+embassy-futures = { workspace = true }
 embassy-net = { workspace = true }
 embedded-io-async = { workspace = true }
 

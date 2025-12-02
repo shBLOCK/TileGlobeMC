@@ -3,6 +3,7 @@ use alloc::boxed::Box;
 use alloc::string::{FromUtf8Error, String};
 use core::error::Error;
 
+#[allow(async_fn_in_trait)]
 pub trait ReadUTF8: embedded_io_async::Read {
     async fn read_utf8(mut self: &mut Self) -> Result<String, ReadUTF8Error>
     where
@@ -32,6 +33,7 @@ pub enum ReadUTF8Error {
 
 impl Error for ReadUTF8Error {}
 
+#[allow(async_fn_in_trait)]
 pub trait WriteUTF8: embedded_io_async::Write {
     async fn write_utf8(mut self: &mut Self, str: &str) -> Result<(), EIOError<Self::Error>> {
         let data = str.as_bytes();

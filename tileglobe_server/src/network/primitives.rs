@@ -1,6 +1,7 @@
 use crate::network::{EIOReadExactError, ReadExt};
 use num_traits::{FromBytes, ToBytes};
 
+#[allow(async_fn_in_trait)]
 pub trait ReadNumPrimitive: embedded_io_async::Read {
     async fn read_le<T: FromBytes<Bytes = [u8; size_of::<T>()]>>(
         mut self: &mut Self,
@@ -27,6 +28,7 @@ pub trait ReadNumPrimitive: embedded_io_async::Read {
 
 impl<T: embedded_io_async::Read> ReadNumPrimitive for T {}
 
+#[allow(async_fn_in_trait)]
 pub trait WriteNumPrimitive: embedded_io_async::Write {
     async fn write_le<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(
         &mut self,

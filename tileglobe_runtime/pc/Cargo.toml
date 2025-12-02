@@ -12,6 +12,7 @@ embassy-time = { workspace = true, features = ["std", "log"] }
 embassy-sync = { workspace = true, features = ["std", "log"] }
 embedded-io-async = { workspace = true }
 embedded-io-adapters = { version = "0.6.1", features = ["std", "futures-03"] }
+critical-section = { workspace = true, features = ["std"] }
 
 heapless = { workspace = true }
 static_cell = { workspace = true }

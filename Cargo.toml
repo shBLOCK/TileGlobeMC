@@ -20,6 +20,7 @@ embassy-rp = { path = "embassy/embassy-rp" }
 embassy-executor = { version = "0.9.1", path = "embassy/embassy-executor", features = ["executor-thread"] }
 embassy-time = { version = "0.5.0", path = "embassy/embassy-time" }
 embassy-sync = { version = "0.7.2", path = "embassy/embassy-sync" }
+embassy-futures = { version = "0.1.2", path = "embassy/embassy-futures" }
 embassy-net = { version = "0.7.1", path = "embassy/embassy-net", features = ["alloc", "tcp", "proto-ipv4", "medium-ethernet"] }
 embedded-io-async = "0.6.1"
 critical-section = "1.2.0"
@@ -35,6 +36,7 @@ dynify = { version = "0.1.2", features = ["smallvec"] }
 smallvec = { version = "1.15.1" }
 uuid = { version = "1.18.1", default-features = false, features = ["v3"] }
 md5 = { version = "0.8.0", default-features = false }
+bit-vec = { version = "0.8.0", default-features = false }
 
 defmt = { version = "1.0.1", features = ["alloc"] }
 log = "0.4.28"
