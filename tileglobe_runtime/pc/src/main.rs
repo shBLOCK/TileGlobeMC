@@ -1,12 +1,17 @@
 use embassy_executor::{Executor, Spawner};
 use log::{info, warn};
 use static_cell::StaticCell;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_time::Timer;
+use tileglobe::world::world::LocalWorld;
+use tileglobe_server::mc_server::MCServer;
+use tileglobe_server::MCClient;
 
 #[embassy_executor::task(pool_size = 3)]
-async fn client_task(socket: async_net::TcpStream, addr: async_net::SocketAddr) {
+async fn mc_client_task(mc_server: &'static MCServer<'static, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
     let mut adapter = embedded_io_adapters::futures_03::FromFutures::new(socket);
 
-    let mut client = tileglobe::master_node::MCClient::new(&mut adapter, Some(addr));
+    let mut client = MCClient::new(mc_server, &mut adapter, Some(addr));
     client._main_task().await;
 
     let socket = adapter.into_inner();
@@ -15,8 +20,10 @@ async fn client_task(socket: async_net::TcpStream, addr: async_net::SocketAddr) 
     }
 }
 
-#[embassy_executor::task]
-async fn net_task(spawner: Spawner) {
+type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
+
+#[embassy_executor::task(pool_size = 1)]
+async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, _World>) {
     let tcp_listener = async_net::TcpListener::bind("127.0.0.1:25565")
         .await
         .unwrap();
@@ -25,16 +32,25 @@ async fn net_task(spawner: Spawner) {
         match tcp_listener.accept().await {
             Ok((socket, addr)) => {
                 info!("TCP accepted: {addr}");
-                spawner.spawn(client_task(socket, addr).unwrap());
+                spawner.spawn(mc_client_task(mc_server, socket, addr).unwrap());
             }
             Err(err) => warn!("TCP accept failed: {err}"),
         }
     }
 }
 
-#[embassy_executor::task]
-async fn main_setup(spawner: Spawner) {
-    spawner.spawn(net_task(spawner).unwrap());
+static WORLD: StaticCell<_World> = StaticCell::new();
+static MC_SERVER: StaticCell<MCServer<'_, _World>> = StaticCell::new();
+
+#[embassy_executor::task(pool_size = 1)]
+async fn main_task(spawner: Spawner) {
+    let world = WORLD.init(_World::new());
+    let mc_server = MC_SERVER.init(MCServer::new(world));
+    spawner.spawn(net_task(spawner, mc_server).unwrap());
+
+    loop {
+        Timer::after_millis(50).await;
+    }
 }
 
 fn main() {
@@ -44,13 +60,10 @@ fn main() {
         .format_timestamp_micros()
         .init();
 
-    // let b = tileglobe::world::block::blocks::Blocks::get_block(tileglobe::world::block::BlockId(10));
-    // info!("{:?}", b);
-
     static EXECUTOR: StaticCell<Executor> = StaticCell::new();
 
     let executor = EXECUTOR.init(Executor::new());
     executor.run(|spawner| {
-        spawner.spawn(main_setup(spawner).unwrap());
+        spawner.spawn(main_task(spawner).unwrap());
     });
 }

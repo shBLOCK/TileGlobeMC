@@ -6,8 +6,8 @@ extern crate alloc;
 
 pub mod network;
 pub mod utils;
-mod mc_client;
-mod mc_server;
-mod player;
+pub mod mc_client;
+pub mod mc_server;
+pub mod player;
 
 pub use mc_client::MCClient;

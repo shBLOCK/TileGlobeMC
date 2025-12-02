@@ -7,10 +7,15 @@ use syn::parse::ParseBuffer;
 use tileglobe_utils::resloc::ResLoc;
 use walkdir::WalkDir;
 
-pub const SERVER_DATA_ROOT: &str = "../neoforge/serverData/tileglobemc/";
+const SERVER_DATA_ROOT: &str = "../neoforge/serverData/tileglobemc/";
+
+#[allow(non_snake_case)]
+fn CARGO_MANIFEST_DIR() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+}
 
 pub fn read_json(path: impl AsRef<Path>) -> Result<serde_json::Value, Box<dyn Error>> {
-    let path = Path::new(SERVER_DATA_ROOT).join(path.as_ref());
+    let path = CARGO_MANIFEST_DIR().join(SERVER_DATA_ROOT).join(path.as_ref());
     Ok(serde_json::from_reader(File::open(path)?)?)
 }
 
@@ -28,7 +33,8 @@ pub fn resloc_path(
 pub fn list_resloc_files_in_dir(
     root: impl AsRef<Path>,
 ) -> impl Iterator<Item = (ResLoc<'static>, PathBuf)> {
-    let root_path = Path::new(SERVER_DATA_ROOT).join(root);
+    let root_path = CARGO_MANIFEST_DIR().join(SERVER_DATA_ROOT).join(root);
+    assert!(root_path.exists(), "{root_path:?} does not exist");
     WalkDir::new(&root_path)
         .into_iter()
         .filter_map(|e| e.ok())

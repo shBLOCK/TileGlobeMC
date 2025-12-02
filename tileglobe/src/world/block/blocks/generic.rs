@@ -1,17 +1,19 @@
 use crate::world::block::{
-    Block, BlockState, BlockStateImpl, BlockStateType, StateId, StateIdType,
+    Block, BlockState, BlockStateType, StateId, StateIdType,
 };
 use tileglobe_utils::resloc::ResLoc;
 
+#[derive(derive_more::Debug)]
+#[debug("GenericBlock(\"{}\")", self.resloc)]
 pub struct GenericBlock {
-    resloc: &'static ResLoc<'static>,
-    id_base: BlockStateType,
-    num_states: StateIdType,
-    default_state: StateId,
+    pub resloc: &'static ResLoc<'static>,
+    pub id_base: BlockStateType,
+    pub num_states: StateIdType,
+    pub default_state: StateId,
 }
 
 impl Block for GenericBlock {
-    fn resloc(&self) -> &'static ResLoc {
+    fn resloc(&self) -> &'static ResLoc<'static> {
         self.resloc
     }
 

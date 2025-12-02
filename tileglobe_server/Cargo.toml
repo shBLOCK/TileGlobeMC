@@ -17,6 +17,7 @@ uuid = { workspace = true }
 md5 = { workspace = true }
 smallvec = { workspace = true }
 derive_more = { workspace = true, features = ["debug", "display", "from", "into", "deref", "deref_mut"] }
+dynify = { workspace = true }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }

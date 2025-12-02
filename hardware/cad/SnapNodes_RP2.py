@@ -75,7 +75,7 @@ def bottom_part():
         # SWD connector
         with Locations(Pos(Y=-MODULE_SIZE / 2, Z=BOTTOM_PART_THICKNESS)):
             Box(
-                4.3 + 0.2, 5.0, 3.1 + 0.1,
+                5.0 + 2.0 + 0.2, 5.0, 3.1 + 0.1,
                 align=(Align.CENTER, Align.MIN, Align.MAX),
                 mode=Mode.SUBTRACT
             )
@@ -188,6 +188,15 @@ main_pcba = Compound(
 MIDDLE_PART_THICKNESS = 11.0
 MIDDLE_PART_WALL = 5.0
 
+LCD_SIZE_X = 31.52
+LCD_SIZE_Y = 33.72
+LCD_ACTIVE = 27.72
+LCD_EDGE_TOP = 1.45
+LCD_THICKNESS = 1.9
+LCD_TO_PCB = 4.3 + 0.2
+LCD_FPC_WIDTH = 22.0
+LCD_FPC_SMALL_WIDTH = 6.5
+
 @operator.call
 def middle_part():
     with BuildPart() as middle_part:        
@@ -238,10 +247,18 @@ def middle_part():
                 align=(Align.MAX, Align.CENTER, Align.MAX),
                 mode=Mode.SUBTRACT
             )
+        
+        # LCD FPC
+        with Locations(Pos(Y=-MODULE_SIZE / 2 + 0.8, Z=MIDDLE_PART_THICKNESS)):
+            Box(
+                LCD_FPC_SMALL_WIDTH + 1.0, MODULE_SIZE / 2, 2.0,
+                align=(Align.CENTER, Align.MIN, Align.MAX),
+                mode=Mode.SUBTRACT
+            )
 
         with Locations(male_connector_locations):
             Box(
-                4.0 + 0.1, 14.0 + 0.2, 3.9 + 0.1,
+                4.0 + 0.2, 14.0 + 0.4, 3.9 + 0.2,
                 align=(Align.MIN, Align.CENTER, Align.MIN),
                 mode=Mode.SUBTRACT
             )
@@ -254,7 +271,7 @@ def middle_part():
         
         with BuildPart(*female_connector_locations, mode=Mode.SUBTRACT):
             Box(
-                1.6 + 0.1, 12.5 + 0.2, 6.0 + 0.1,
+                1.6 + 0.2, 12.5 + 0.4, 6.0 + 0.2,
                 align=(Align.MIN, Align.CENTER, Align.MIN)
             )
             with Locations(*[Pos(Y=7.5 / 2 * m) for m in [-1, 1]]):
@@ -274,13 +291,6 @@ middle_assembly = Compound(label="middle_assembly", children=[
 
 peri_pcb = pcb_base(PERI_PCB_THICKNESS)
 
-LCD_SIZE_X = 31.52
-LCD_SIZE_Y = 33.72
-LCD_ACTIVE = 27.72
-LCD_EDGE_TOP = 1.45
-LCD_THICKNESS = 1.9
-LCD_TO_PCB = 4.3 + 0.2
-LCD_FPC_WIDTH = 22.0
 lcd = Part(Box(
     LCD_SIZE_X, LCD_SIZE_Y, LCD_THICKNESS,
     align=(Align.CENTER, Align.MAX, Align.MIN)
@@ -363,10 +373,12 @@ ocp_vscode.show(
     bottom_assembly,
 )
 
-export_path = "./export/SnapNodes_RP2"
-export_stl(bottom_part, f"{export_path}/bottom_part.stl")
-export_stl(middle_part, f"{export_path}/middle_part.stl")
-export_stl(top_part, f"{export_path}/top_part.stl")
-export_step(bottom_part, f"{export_path}/bottom_part.step")
-export_step(middle_part, f"{export_path}/middle_part.step")
-export_step(top_part, f"{export_path}/top_part.step")
+from pathlib import Path
+export_path = Path("./export/SnapNodes_RP2")
+export_path.mkdir(parents=True, exist_ok=True)
+export_stl(bottom_part, export_path / "bottom_part.stl")
+export_stl(middle_part, export_path / "middle_part.stl")
+export_stl(top_part, export_path / "top_part.stl")
+export_step(bottom_part, export_path / "bottom_part.step")
+export_step(middle_part, export_path / "middle_part.step")
+export_step(top_part, export_path / "top_part.step")

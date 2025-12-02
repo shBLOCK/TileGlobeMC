@@ -13,24 +13,26 @@ use core::net::SocketAddr;
 use defmt_or_log::*;
 use num_traits::abs;
 use uuid::Uuid;
+use tileglobe::world::world::World;
 use crate::mc_server::MCServer;
 use crate::player::Player;
+use crate::utils::MCPlayerUUID;
 
 #[derive(derive_more::Display)]
 #[display("{self:?}")]
-pub struct MCClient<'a, T: embedded_io_async::Read + embedded_io_async::Write> {
-    server: &'a MCServer<'_, _>,
-    socket: &'a mut T,
+pub struct MCClient<'a, CONN: embedded_io_async::Read + embedded_io_async::Write, WORLD: World> {
+    server: &'a MCServer<'a, WORLD>,
+    conn: &'a mut CONN,
     addr: Option<SocketAddr>,
     state: State,
     // player_name: String,
 }
 
-impl Player for MCClient<> {
+impl<CONN: embedded_io_async::Read + embedded_io_async::Write, WORLD: World> Player for MCClient<'_, CONN, WORLD> {
     
 }
 
-impl<T: embedded_io_async::Read + embedded_io_async::Write> Debug for MCClient<'_, T> {
+impl<CONN: embedded_io_async::Read + embedded_io_async::Write, WORLD: World> Debug for MCClient<'_, CONN, WORLD> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "MCClient({:?}, state: {:?})", self.addr, self.state)
     }
@@ -48,13 +50,14 @@ impl<T: embedded_io_async::Read + embedded_io_async::Write> defmt::Format for MC
     }
 }
 
-impl<'a, T: embedded_io_async::Read + embedded_io_async::Write> MCClient<'a, T>
+impl<'a, CONN: embedded_io_async::Read + embedded_io_async::Write, WORLD: World> MCClient<'a, CONN, WORLD>
 where
-    T::Error: 'static,
+    CONN::Error: 'static,
 {
-    pub fn new(socket: &'a mut T, addr: Option<SocketAddr>) -> Self {
+    pub fn new(server: &'a MCServer<'a, WORLD>, conn: &'a mut CONN, addr: Option<SocketAddr>) -> Self {
         Self {
-            socket,
+            server,
+            conn,
             addr,
             state: State::Handshaking,
         }
@@ -64,7 +67,7 @@ where
         &mut self,
         packet_type: i32,
         packet_length: usize,
-    ) -> Result<(), EIOReadExactError<T::Error>> {
+    ) -> Result<(), EIOReadExactError<CONN::Error>> {
         warn!(
             "{} received unknown packet (type: {}, length: {}), skipping.",
             self, packet_type, packet_length
@@ -76,15 +79,15 @@ where
             varintlen += 1;
         }
         varintlen = max(varintlen, 1);
-        self.socket.skip_bytes(packet_length - varintlen).await
+        self.conn.skip_bytes(packet_length - varintlen).await
     }
 
     async fn process_packet(&mut self) -> Result<(), MCClientError>
     where
-        <T as embedded_io_async::ErrorType>::Error: 'static,
+        <CONN as embedded_io_async::ErrorType>::Error: 'static,
     {
-        let packet_length: usize = self.socket.read_varint::<i32>().await? as usize;
-        let packet_type = self.socket.read_varint::<i32>().await?;
+        let packet_length: usize = self.conn.read_varint::<i32>().await? as usize;
+        let packet_type = self.conn.read_varint::<i32>().await?;
         debug!(
             "{} recv pkt: type: {}, length: {}",
             self, packet_type, packet_length
@@ -92,10 +95,10 @@ where
         match self.state {
             State::Handshaking => match packet_type {
                 0 => {
-                    let protocol_version = self.socket.read_varint::<i32>().await?;
-                    let server_address = self.socket.read_utf8().await?;
-                    let server_port = self.socket.read_be::<u16>().await?;
-                    let intent = self.socket.read_varint::<i32>().await?;
+                    let protocol_version = self.conn.read_varint::<i32>().await?;
+                    let server_address = self.conn.read_utf8().await?;
+                    let server_port = self.conn.read_be::<u16>().await?;
+                    let intent = self.conn.read_varint::<i32>().await?;
                     debug!(
                         "{:?}, {:?}, {:?}, {:?}",
                         protocol_version, server_address, server_port, intent
@@ -124,14 +127,14 @@ where
                     // minecraft:status_request
                     let mut pkt = MCPacketBuffer::new(0).await;
                     pkt.write_utf8(r#"{"version":{"name":"1.21.8","protocol":772}, "description":{"text":"Hello, world!"}}"#).await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
                 }
                 1 => {
                     // minecraft:ping_request
-                    let timestamp = self.socket.read_be::<i64>().await?;
+                    let timestamp = self.conn.read_be::<i64>().await?;
                     let mut pkt = MCPacketBuffer::new(1).await;
                     pkt.write_be(timestamp).await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
                 }
                 _ => {
                     self.skip_unknown_packet(packet_type, packet_length).await?;
@@ -140,15 +143,15 @@ where
             State::Login => match packet_type {
                 0 => {
                     // login start (minecraft:hello)
-                    let player_name = self.socket.read_utf8().await?;
-                    let given_player_uuid = self.socket.read_uuid().await?;
+                    let player_name = self.conn.read_utf8().await?;
+                    let given_player_uuid = self.conn.read_uuid().await?;
                     let player_uuid = Uuid::new_mc_offline_player(&player_name);
 
                     let mut pkt = MCPacketBuffer::new(2).await; // minecraft:login_finished
                     pkt.write_uuid(player_uuid).await?;
                     pkt.write_utf8(&player_name).await?;
                     pkt.write_varint::<u32>(0).await?; // empty properties array
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
                 }
                 3 => {
                     // minecraft:login_acknowledged
@@ -164,15 +167,15 @@ where
                     pkt.write_utf8("minecraft").await?;
                     pkt.write_utf8("core").await?;
                     pkt.write_utf8("1.21.8").await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
 
                     // let mut pkt = MCPacketBuffer::new(7).await; // minecraft:registry_data
                     //
                     // self.socket.write_mc_packet(pkt).await?;
 
-                    self.socket.write_all(&REGISTRY_PACKETS_DATA).await?;
+                    self.conn.write_all(&REGISTRY_PACKETS_DATA).await?;
 
-                    self.socket
+                    self.conn
                         .write_mc_packet(MCPacketBuffer::new(3).await)
                         .await?; // minecraft:finish_configuration
 
@@ -210,12 +213,12 @@ where
                     pkt.write_varint(0u32).await?; // portal cooldown
                     pkt.write_varint(68u32).await?; // sea level
                     pkt.write_be(false as u8).await?; // enforce secure chat
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
 
                     let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
                     pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
                     pkt.write_be::<f32>(0.0).await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
 
                     let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
                     pkt.write_varint::<u32>(0).await?;
@@ -228,12 +231,12 @@ where
                     pkt.write_be::<f32>(0.0).await?;
                     pkt.write_be::<f32>(0.0).await?;
                     pkt.write_be::<u32>(0).await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
 
                     let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
                     pkt.write_varint(0u32).await?;
                     pkt.write_varint(0u32).await?;
-                    self.socket.write_mc_packet(pkt).await?;
+                    self.conn.write_mc_packet(pkt).await?;
 
                     for x in -5..=5 {
                         for z in -5..=5 {
@@ -278,7 +281,7 @@ where
                             pkt.write_varint(0u32).await?;
                             pkt.write_varint(0u32).await?;
 
-                            self.socket.write_mc_packet(pkt).await?;
+                            self.conn.write_mc_packet(pkt).await?;
                         }
                     }
                 }

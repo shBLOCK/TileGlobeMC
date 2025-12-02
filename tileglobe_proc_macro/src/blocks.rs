@@ -194,11 +194,11 @@ pub mod macros {
                     let id_base = Literal::u32_unsuffixed(block.id_base);
                     let num_states = Literal::u32_unsuffixed(block.total_states);
                     let default_state = Literal::u32_unsuffixed(block.default_state);
-                    quote! {#generic_block {
+                    quote! {&#generic_block {
                         resloc: #resloc_consts::#const_ident,
                         id_base: #id_base,
                         num_states: #num_states,
-                        default_state: #default_state.into(),
+                        default_state: StateId(#default_state),
                     }}
                 };
                 let id_base = Literal::u32_unsuffixed(block.id_base);

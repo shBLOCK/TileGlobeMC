@@ -25,7 +25,7 @@ impl IndexedEnum<u8> for Direction {
 
 impl From<u8> for Direction {
     fn from(value: u8) -> Self {
-        Self::variants()[value]
+        Self::variants()[value as usize]
     }
 }
 
@@ -37,11 +37,11 @@ impl From<Direction> for u8 {
 
 impl Direction {
     pub fn name(self) -> &'static str {
-        ["down", "up", "north", "south", "west", "east"][self]
+        ["down", "up", "north", "south", "west", "east"][self as usize]
     }
 
     pub fn normal_i16(self) -> I16Vec3 {
-        [I16Vec3::NEG_Y, I16Vec3::Y, I16Vec3::NEG_Z, I16Vec3::Z, I16Vec3::NEG_Z, I16Vec3::X][self]
+        [I16Vec3::NEG_Y, I16Vec3::Y, I16Vec3::NEG_Z, I16Vec3::Z, I16Vec3::NEG_Z, I16Vec3::X][self as usize]
     }
 }
 

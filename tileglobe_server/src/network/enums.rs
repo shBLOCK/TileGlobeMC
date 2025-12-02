@@ -1,9 +1,9 @@
 use crate::network::{EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
-use crate::utils::IndexedEnum;
-use num_traits::PrimInt;
+use num_traits::{FromBytes, PrimInt, ToBytes, Unsigned};
+use tileglobe::utils::IndexedEnum;
 
 pub trait ReadIndexedEnum: embedded_io_async::Read {
-    async fn read_indexed_enum<T: IndexedEnum<I>, I: PrimInt>(
+    async fn read_indexed_enum<T: IndexedEnum<I>, I: PrimInt + Unsigned + FromBytes<Bytes = [u8; size_of::<I>()]>>(
         mut self: &mut Self,
     ) -> Result<T, EIOReadExactError<Self::Error>> {
         Ok(self.read_be::<I>().await?.into())
@@ -13,11 +13,11 @@ pub trait ReadIndexedEnum: embedded_io_async::Read {
 impl <T: embedded_io_async::Read> ReadIndexedEnum for T {}
 
 pub trait WriteIndexedEnum: embedded_io_async::Write {
-    async fn write_indexed_enum<T: IndexedEnum<I>, I: PrimInt>(
-        &mut self,
+    async fn write_indexed_enum<T: IndexedEnum<I>, I: PrimInt + Unsigned + ToBytes<Bytes = [u8; size_of::<I>()]>>(
+        mut self: &mut Self,
         value: T,
     ) -> Result<(), Self::Error> {
-        self.write_be::<I>(value.into())
+        self.write_be::<I>(value.into()).await
     }
 }
 

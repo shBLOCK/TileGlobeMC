@@ -2478,6 +2478,7 @@ dependencies = [
  "derive_more",
  "dynify",
  "embassy-executor",
+ "embassy-sync 0.7.2",
  "glam",
  "libm",
  "log",
@@ -2507,6 +2508,7 @@ version = "0.1.0"
 dependencies = [
  "async-net",
  "embassy-executor",
+ "embassy-sync 0.7.2",
  "embassy-time",
  "embedded-io-adapters",
  "embedded-io-async",
@@ -2549,6 +2551,7 @@ dependencies = [
  "defmt 1.0.1",
  "defmt-or-log",
  "derive_more",
+ "dynify",
  "embassy-net",
  "embassy-sync 0.7.2",
  "embassy-time",

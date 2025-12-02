@@ -3,11 +3,10 @@ pub use block::*;
 pub mod blocks;
 mod registry;
 
-use crate::utils::NumEnumU8;
-pub use block::*;
 use core::fmt::Debug;
 use defmt_or_log::maybe_derive_format;
 pub use registry::*;
+use crate::utils::IndexedEnum;
 
 pub type BlockStateType = u16;
 #[derive(
@@ -17,7 +16,7 @@ pub type BlockStateType = u16;
 pub struct BlockState(pub BlockStateType);
 
 impl BlockState {
-    pub fn get_block(&self) -> &'static dyn Block {
+    pub fn get_block(&self) -> &'static dyn DynifiedBlock {
         Blocks.get_block(self)
     }
 }
@@ -32,14 +31,14 @@ pub struct StateId(pub StateIdType);
 pub trait BlockStateImpl: Sized + Copy + From<BlockState> {
     fn block_state(&self) -> BlockState;
 
-    fn get_block(&self) -> &'static dyn Block {
+    fn get_block(&self) -> &'static dyn DynifiedBlock {
         self.block_state().get_block()
     }
 }
 
-impl<T: BlockStateImpl> Into<BlockState> for T {
-    fn into(self) -> BlockState {
-        self.block_state()
+impl<T: BlockStateImpl> From<T> for BlockState {
+    fn from(value: T) -> Self {
+        value.block_state()
     }
 }
 
@@ -84,7 +83,7 @@ pub trait BoolProperty<const ID_GROUP_SIZE: StateIdType>: Property<bool, 2> {
     }
 }
 
-pub trait EnumProperty<T: NumEnumU8<N>, const N: u8>: Property<T, { N as StateIdType }> {
+pub trait EnumProperty<T: IndexedEnum<u8>>: Property<T, { T::VARIANTS.len() as StateIdType }> {
     fn get(&self) -> T {
         T::from(self.get_raw() as u8)
     }

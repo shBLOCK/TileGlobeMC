@@ -1,10 +1,8 @@
 #![no_std]
 
-extern crate alloc;
+#![feature(generic_const_exprs)]
 
-use embassy_executor::Spawner;
+extern crate alloc;
 
 pub mod utils;
 pub mod world;
-
-pub async fn node_start(spawner: Spawner) {}
