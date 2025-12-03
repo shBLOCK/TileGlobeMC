@@ -1,9 +1,4 @@
 use crate::mc_server::MCServer;
-use crate::network::{
-    EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
-    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket,
-    WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
-};
 use crate::player::Player;
 use crate::utils::MCPlayerUUID;
 use alloc::boxed::Box;
@@ -18,9 +13,11 @@ use embassy_futures::select::Either;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Ticker};
-use num_traits::abs;
+use num_traits::{abs, ToPrimitive};
 use tileglobe::world::world::World;
 use uuid::Uuid;
+use tileglobe::world::ChunkPos;
+use tileglobe_utils::network::{EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt};
 
 #[derive(derive_more::Display)]
 #[display("{self:?}")]
@@ -368,68 +365,13 @@ where
                 pkt.write_varint(0u32).await?;
                 self.write_mc_packet(pkt).await?;
 
-                for cx in -2..=2 {
-                    for cz in -2..=2 {
+                for cx in -2i16..=2 {
+                    for cz in -2i16..=2 {
                         let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
-                        pkt.write_be::<i32>(cx).await?;
-                        pkt.write_be::<i32>(cz).await?;
+                        pkt.write_be::<i32>(cx.to_i32().unwrap()).await?;
+                        pkt.write_be::<i32>(cz.to_i32().unwrap()).await?;
 
-                        // chunk
-                        pkt.write_varint(0u32).await?; // heightmaps
-
-                        let entry_size = 15u8;
-                        let entries_per_long = 64u8 / entry_size;
-                        let longs_per_section = 4096u16.div_ceil(entries_per_long as u16);
-                        pkt.write_varint::<u32>(
-                            (2 + 1 + (longs_per_section as u32) * 8 + 1 + 1) * 24,
-                        )
-                        .await?; // bytes
-                        for cy in -4..20 {
-                            // blocks
-                            pkt.write_be(4096u16).await?;
-                            // pkt.write_be(0u8).await?;
-                            // pkt.write_varint(10u32).await?; // dirt
-                            pkt.write_be(entry_size).await?;
-
-                            let mut long = 0u64;
-                            for i in 0..4096u16 {
-                                let mut entry = 0u16;
-                                if cy == 4 && abs(cx) <= 1 && abs(cz) <= 1 {
-                                    entry = 10u16 + i % 50;
-                                }
-
-                                let n = (i % entries_per_long as u16) as u8;
-                                long |= (entry as u64) << (n * entry_size);
-                                if n == (entries_per_long - 1) || i == 4095 {
-                                    pkt.write_be(long).await?;
-                                    long = 0;
-                                }
-                            }
-
-                            // biomes
-                            pkt.write_be(0u8).await?;
-                            pkt.write_varint(0u32).await?;
-                        }
-                        pkt.write_varint(0u32).await?; // block entities
-
-                        // light
-                        for _ in 0..2 {
-                            pkt.write_varint(1u32).await?;
-                            pkt.write_be(0xFFFF_FF00_0000_0000u64).await?;
-                        }
-                        for _ in 0..2 {
-                            pkt.write_varint(1u32).await?;
-                            pkt.write_be(0x0u64).await?;
-                        }
-                        for _ in 0..2 {
-                            pkt.write_varint(24u32).await?;
-                            for _ in 0..24 {
-                                pkt.write_varint(2048u32).await?;
-                                for _ in 0..2048 {
-                                    pkt.write_be(0xFFu8).await?;
-                                }
-                            }
-                        }
+                        self.server.world.write_net_chunk(ChunkPos::new(cx, cz), &mut pkt).await?;
 
                         self.write_mc_packet(pkt).await?;
                     }

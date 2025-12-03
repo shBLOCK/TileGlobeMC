@@ -4,7 +4,6 @@
 
 extern crate alloc;
 
-pub mod network;
 pub mod utils;
 pub mod mc_client;
 pub mod mc_server;

@@ -1,6 +1,8 @@
 use crate::world::ChunkLocalPos;
 use crate::world::block::BlockState;
 use alloc::vec::Vec;
+use core::ops::RangeInclusive;
+use tileglobe_utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
 
 pub struct Chunk {
     sections: Vec<ChunkSection>,
@@ -9,6 +11,16 @@ pub struct Chunk {
 }
 
 impl Chunk {
+    pub fn new(sections: RangeInclusive<i8>) -> Self {
+        let bottom = *sections.start();
+        Self {
+            sections: sections
+                .map(|_| ChunkSection::new())
+                .collect(),
+            bottom_section: bottom,
+        }
+    }
+
     pub fn get_section(&self, y: i8) -> Result<&ChunkSection, ()> {
         self.sections
             .get((y - self.bottom_section) as usize)
@@ -76,5 +88,44 @@ impl ChunkSection {
 
     pub fn non_air_blocks(&self) -> u16 {
         self.non_air_blocks
+    }
+
+    pub fn serialized_size(&self) -> usize {
+        2 + if self.non_air_blocks() == 0 {
+            1 + 1
+        } else {
+            1 + (16usize * 16 * 16).div_ceil(64 / 15)
+        }
+    }
+
+    pub async fn serialize_into<W: embedded_io_async::Write>(
+        &self,
+        writer: &mut W,
+    ) -> Result<(), EIOError<W::Error>> {
+        let non_air_blocks = self.non_air_blocks();
+        if non_air_blocks == 0 {
+            writer.write_be(0u16).await?;
+            writer.write_be(0u8).await?;
+            writer.write_varint(0u32).await?;
+        } else {
+            writer.write_be::<u16>(non_air_blocks).await?;
+            let entry_size = 15u8;
+            writer.write_be(entry_size).await?;
+            let entries_per_long = 64u8 / entry_size;
+            let mut data = self.get_data_array().as_slice();
+            let mut i = 0;
+            let mut long = 0u64;
+            while !data.is_empty() {
+                let n = (i % entries_per_long as u16) as u8;
+                long |= (data[0].0 as u64) << (n * entry_size);
+                data = &data[1..];
+                if n == (entries_per_long - 1) || data.is_empty() {
+                    writer.write_be(long).await?;
+                    long = 0;
+                }
+                i += 1;
+            }
+        }
+        Ok(())
     }
 }

@@ -1,6 +1,6 @@
 use crate::network::{EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
 use num_traits::{FromBytes, PrimInt, ToBytes, Unsigned};
-use tileglobe::utils::IndexedEnum;
+use crate::indexed_enum::IndexedEnum;
 
 #[allow(async_fn_in_trait)]
 pub trait ReadIndexedEnum: embedded_io_async::Read {

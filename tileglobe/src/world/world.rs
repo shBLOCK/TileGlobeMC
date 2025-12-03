@@ -1,8 +1,9 @@
 use crate::world::block::BlockState;
-use crate::world::chunk::Chunk;
+use crate::world::chunk::{Chunk, ChunkSection};
 use crate::world::{BlockPos, ChunkPos};
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
+use tileglobe_utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
 
 #[allow(async_fn_in_trait)]
 pub trait World {
@@ -11,6 +12,12 @@ pub trait World {
     async fn set_block_state(&self, pos: BlockPos, state: BlockState) -> Result<BlockState, ()>;
 
     async fn tick(&self);
+
+    async fn write_net_chunk<W: embedded_io_async::Write>(
+        &self,
+        pos: ChunkPos,
+        writer: &mut W,
+    ) -> Result<(), EIOError<W::Error>>;
 }
 
 pub struct LocalWorld<
@@ -32,18 +39,26 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
         }
     }
 
-    pub async fn get_chunk(&self, pos: ChunkPos) -> Result<MappedMutexGuard<'_, M, Chunk>, ()> {
-        let mutex = self
+    fn get_chunk_mutex(&self, pos: ChunkPos) -> Result<&Mutex<M, Option<Chunk>>, ()> {
+        Ok(self
             .chunks
             .get((pos.x - MIN_X) as usize)
             .ok_or(())?
             .get((pos.y - MIN_Y) as usize)
-            .ok_or(())?;
-        let locked = mutex.lock().await;
+            .ok_or(())?)
+    }
+
+    pub async fn get_chunk(&self, pos: ChunkPos) -> Result<MappedMutexGuard<'_, M, Chunk>, ()> {
+        let locked = self.get_chunk_mutex(pos)?.lock().await;
         if locked.is_none() {
             return Err(());
         }
         Ok(MutexGuard::map(locked, |it| it.as_mut().unwrap()))
+    }
+
+    pub async fn set_chunk(&self, pos: ChunkPos, chunk: Chunk) -> Result<(), ()> {
+        *self.get_chunk_mutex(pos)?.lock().await = Some(chunk);
+        Ok(())
     }
 }
 
@@ -63,4 +78,66 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
     }
 
     async fn tick(&self) {}
+
+    async fn write_net_chunk<W: embedded_io_async::Write>(
+        &self,
+        pos: ChunkPos,
+        writer: &mut W,
+    ) -> Result<(), EIOError<W::Error>> {
+        let chunk = self.get_chunk(pos).await;
+
+        writer.write_varint(0u32).await?; // heightmaps
+
+        let total_size = match chunk.as_ref() {
+            Ok(c) => (-4..20)
+                .map(|y| c.get_section(y).unwrap().serialized_size() + 1 + 1)
+                .sum(),
+            Err(_) => (2 + 1 + 1 + 1 + 1) * 24,
+        };
+        writer.write_varint::<u32>(total_size as u32).await?; // bytes
+
+        for cy in -4..20 {
+            // blocks
+            let section = match chunk.as_ref() {
+                Ok(c) => c.get_section(cy),
+                Err(_) => Err(()),
+            };
+            match section {
+                Ok(s) => s.serialize_into(writer).await?,
+                Err(_) => {
+                    // write empty section
+                    writer.write_be(0u16).await?;
+                    writer.write_be(0u8).await?;
+                    writer.write_varint(0u32).await?;
+                }
+            };
+
+            // biomes
+            writer.write_be(0u8).await?;
+            writer.write_varint(0u32).await?;
+        }
+
+        writer.write_varint(0u32).await?; // block entities
+
+        // light
+        for _ in 0..2 {
+            writer.write_varint(1u32).await?;
+            writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+        }
+        for _ in 0..2 {
+            writer.write_varint(1u32).await?;
+            writer.write_be(0x0u64).await?;
+        }
+        for _ in 0..2 {
+            writer.write_varint(24u32).await?;
+            for _ in 0..24 {
+                writer.write_varint(2048u32).await?;
+                for _ in 0..2048 {
+                    writer.write_be(0xFFu8).await?;
+                }
+            }
+        }
+
+        Ok(())
+    }
 }

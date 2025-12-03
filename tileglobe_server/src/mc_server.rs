@@ -3,7 +3,7 @@ use embassy_sync::blocking_mutex::raw::RawMutex;
 use tileglobe::world::world::World;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {
-    world: &'a mut WORLD,
+    pub world: &'a mut WORLD,
     _phantom: PhantomData<M>,
     // players: Mutex<M, BTreeMap<Uuid, Arc<dyn DynifiedPlayer>>>,
 }

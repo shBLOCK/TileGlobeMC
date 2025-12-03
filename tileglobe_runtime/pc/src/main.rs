@@ -3,6 +3,9 @@ use log::{info, warn};
 use static_cell::StaticCell;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_time::Timer;
+use tileglobe::world::block::BlockState;
+use tileglobe::world::chunk::Chunk;
+use tileglobe::world::{ChunkLocalPos, ChunkPos};
 use tileglobe::world::world::LocalWorld;
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
@@ -46,6 +49,28 @@ static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = St
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner) {
     let world = WORLD.init(_World::new());
+
+    for cz in -1i16..1 {
+        for cx in -1i16..1 {
+            let mut chunk = Chunk::new(-4..=19);
+            for sz in 0..16u8 {
+                for sx in 0..16u8 {
+                    for y in (-4 * 16)..(19 * 16i16) {
+                        let (x, z) = (cx * 16 + sx, cz * 16 + sz);
+                        let mut blockstate = BlockState(0);
+                        if (-10..=-1).contains(&y) {
+                            blockstate = BlockState(10);
+                        }
+                        if blockstate.0 != 0 {
+                            chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate).await;
+                        }
+                    }
+                }
+            }
+            world.set_chunk(ChunkPos::new(cx, cz), chunk).await.unwrap();
+        }
+    }
+
     let mc_server = MC_SERVER.init(MCServer::new(world));
 
     spawner.spawn(net_task(spawner, mc_server).unwrap());

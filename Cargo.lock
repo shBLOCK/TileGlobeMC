@@ -2463,6 +2463,7 @@ dependencies = [
  "dynify",
  "embassy-executor",
  "embassy-sync 0.7.2",
+ "embedded-io-async",
  "glam",
  "libm",
  "log",
@@ -2556,8 +2557,14 @@ dependencies = [
 name = "tileglobe_utils"
 version = "0.1.0"
 dependencies = [
+ "defmt 1.0.1",
+ "defmt-or-log",
  "derive_more",
+ "embedded-io-async",
+ "log",
+ "num-traits",
  "serde",
+ "uuid",
 ]
 
 [[package]]

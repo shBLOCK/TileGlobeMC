@@ -5,6 +5,7 @@ mod uuid;
 mod varint;
 mod enums;
 mod bitbuf;
+mod bytebuf;
 
 pub use error_wrappers::*;
 pub use mc_packet::*;

@@ -1,6 +1,4 @@
-use core::ops::BitAnd;
 use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
-use num_traits::Euclid;
 
 pub mod block;
 pub mod chunk;
@@ -43,14 +41,14 @@ impl BlockPos {
 #[debug("ChunkPos({}, {})", self.x, self.y)]
 #[display("{}", self.0)]
 pub struct ChunkPos(I16Vec2);
+impl ChunkPos {
+    pub const fn new(x: i16, y: i16) -> ChunkPos {
+        ChunkPos(I16Vec2::new(x, y))
+    }
+}
 
 #[derive(
-    Copy,
-    Clone,
-    derive_more::From,
-    derive_more::Into,
-    derive_more::Debug,
-    derive_more::Display,
+    Copy, Clone, derive_more::From, derive_more::Into, derive_more::Debug, derive_more::Display,
 )]
 #[debug("ChunkLocalPos({}, {}, {})", self.x(), self.y(), self.z())]
 #[display("[{}, {}, {}]", self.x(), self.y(), self.z())]

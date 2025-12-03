@@ -7,7 +7,7 @@ mod misc;
 use core::fmt::Debug;
 use defmt_or_log::maybe_derive_format;
 pub use registry::*;
-use crate::utils::IndexedEnum;
+use tileglobe_utils::indexed_enum::IndexedEnum;
 
 pub type BlockStateType = u16;
 #[derive(

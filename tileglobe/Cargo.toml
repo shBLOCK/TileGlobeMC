@@ -9,6 +9,7 @@ tileglobe_proc_macro = { path = "../tileglobe_proc_macro" }
 
 embassy-executor = { workspace = true }
 embassy-sync = { workspace = true }
+embedded-io-async = { workspace = true }
 
 libm = { workspace = true }
 glam = { workspace = true }
