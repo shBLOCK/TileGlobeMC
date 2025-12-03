@@ -1,5 +1,9 @@
 use crate::mc_server::MCServer;
-use crate::network::{BitBuf, EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteBitBuf, WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt};
+use crate::network::{
+    BitBuf, EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
+    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteBitBuf, WriteMCPacket,
+    WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
+};
 use crate::player::Player;
 use crate::utils::MCPlayerUUID;
 use alloc::boxed::Box;
@@ -49,13 +53,15 @@ impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WOR
 }
 
 #[cfg(feature = "defmt")]
-impl<T: embedded_io_async::Read + embedded_io_async::Write> defmt::Format for MCClient<'_, T> {
+impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WORLD: World>
+    defmt::Format for MCClient<'_, M, RX, TX, WORLD>
+{
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(
             fmt,
             "MCClient({:?}, state: {:?})",
             Debug2Format(&self.addr),
-            self.state
+            Debug2Format(&self.state)
         )
     }
 }
@@ -280,7 +286,10 @@ where
                             let entry_size = 15u8;
                             let entries_per_long = 64u8 / entry_size;
                             let longs_per_section = 4096u16.div_ceil(entries_per_long as u16);
-                            pkt.write_varint::<u32>((2 + 1 + (longs_per_section as u32) * 8 + 1 + 1) * 24).await?; // bytes
+                            pkt.write_varint::<u32>(
+                                (2 + 1 + (longs_per_section as u32) * 8 + 1 + 1) * 24,
+                            )
+                            .await?; // bytes
                             for cy in -4..20 {
                                 // blocks
                                 pkt.write_be(4096u16).await?;

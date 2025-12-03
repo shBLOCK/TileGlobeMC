@@ -35,12 +35,19 @@ use embassy_net::tcp::TcpSocket;
 use embassy_rp::clocks::RoscRng;
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
-use tileglobe::master_node::MCClient;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use tileglobe::world::world::LocalWorld;
+use tileglobe_server::mc_server::MCServer;
+use tileglobe_server::MCClient;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
-#[embassy_executor::task]
+type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
+static WORLD: StaticCell<_World> = StaticCell::new();
+static MC_SERVER: StaticCell<MCServer<'_, _World>> = StaticCell::new();
+
+#[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     {
         embassy_rp::psram::Psram::new(
@@ -60,85 +67,12 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         unsafe { HEAP.init(start, end - start) }
     }
 
-    // {
-    //     use embassy_net;
-    //     use embassy_net_esp_hosted as hosted;
-    //
-    //     #[embassy_executor::task]
-    //     async fn wifi_task(
-    //         runner: hosted::Runner<
-    //             'static,
-    //             hosted::SpiInterface<
-    //                 ExclusiveDevice<Spim<'static>, Output<'static>, Delay>,
-    //                 Input<'static>,
-    //             >,
-    //             Output<'static>,
-    //         >,
-    //     ) -> ! {
-    //         runner.run().await
-    //     }
-    //
-    //     #[embassy_executor::task]
-    //     async fn net_task(
-    //         mut runner: embassy_net::Runner<'static, hosted::NetDriver<'static>>,
-    //     ) -> ! {
-    //         runner.run().await
-    //     }
-    //
-    //     let miso = ps.PIN_28;
-    //     let sck = ps.PIN_30;
-    //     let mosi = ps.PIN_31;
-    //     let cs = Output::new(ps.PIN_46, Level::High);
-    //     let handshake = Input::new(ps.PIN_23, Pull::Up);
-    //     let ready = Input::new(ps.PIN_3, Pull::None);
-    //     let reset = Output::new(ps.PIN_22, Level::Low);
-    //
-    //     let config = embassy_rp::spi::Config {
-    //         frequency: 32_000_000,
-    //         phase: embassy_rp::spi::Phase::CaptureOnSecondTransition,
-    //         polarity: embassy_rp::spi::Polarity::IdleLow,
-    //     };
-    //     // config.mode = spim::MODE_2; // !!!
-    //     let spi = embassy_rp::spi::Spi::new(p.SPI3, Irqs, sck, miso, mosi, config);
-    //     let spi = embassy_rp::spi::Spi::new(ps.SPI1, , mosi, miso, );
-    //     let spi = ExclusiveDevice::new(spi, cs, Delay);
-    //
-    //     let iface = hosted::SpiInterface::new(spi, handshake, ready);
-    //
-    //     static ESP_STATE: StaticCell<embassy_net_esp_hosted::State> = StaticCell::new();
-    //     let (device, mut control, runner) = embassy_net_esp_hosted::new(
-    //         ESP_STATE.init(embassy_net_esp_hosted::State::new()),
-    //         iface,
-    //         reset,
-    //     )
-    //     .await;
-    //
-    //     spawner.spawn(unwrap!(wifi_task(runner)));
-    //
-    //     unwrap!(control.init().await);
-    //     // unwrap!(control.connect(WIFI_NETWORK, WIFI_PASSWORD).await);
-    //
-    //     // let config = embassy_net::Config::dhcpv4(Default::default());
-    //
-    //     // // Generate random seed
-    //     // let mut rng = Rng::new(p.RNG, Irqs);
-    //     // let mut seed = [0; 8];
-    //     // rng.blocking_fill_bytes(&mut seed);
-    //     // let seed = u64::from_le_bytes(seed);
-    //     //
-    //     // // Init network stack
-    //     // static RESOURCES: StaticCell<StackResources<3>> = StaticCell::new();
-    //     // let (stack, runner) = embassy_net::new(device, config, RESOURCES.init(StackResources::new()), seed);
-    //
-    //     // spawner.spawn(unwrap!(net_task(runner)));
-    // }
-
     {
         bind_interrupts!(struct Irqs {
             PIO2_IRQ_0 => InterruptHandler<PIO2>;
         });
 
-        #[embassy_executor::task]
+        #[embassy_executor::task(pool_size = 1)]
         async fn cyw43_task(
             runner: cyw43::Runner<
                 'static,
@@ -149,7 +83,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             runner.run().await
         }
 
-        #[embassy_executor::task]
+        #[embassy_executor::task(pool_size = 1)]
         async fn net_task(
             mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>,
         ) -> ! {
@@ -180,7 +114,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
         control.init(clm).await;
         control
-            .set_power_management(cyw43::PowerManagementMode::PowerSave)
+            .set_power_management(cyw43::PowerManagementMode::None)
             .await;
 
         // Use a link-local address for communication without DHCP server
@@ -205,9 +139,13 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         spawner.spawn(unwrap!(net_task(runner)));
 
         control.start_ap_wpa2("TileGlobeMC", "password", 5).await;
+        // control.start_ap_open("TileGlobeMC", 5).await;
+
+        let world = WORLD.init(_World::new());
+        let mc_server = MC_SERVER.init(MCServer::new(world));
 
         #[embassy_executor::task(pool_size = 3)]
-        async fn socket_task(stack: Stack<'static>) -> ! {
+        async fn socket_task(mc_server: &'static MCServer<'static, _World>, stack: Stack<'static>) -> ! {
             let mut rx_buffer = [0; 4096];
             let mut tx_buffer = [0; 4096];
 
@@ -223,8 +161,12 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
                 info!("Connected to {:?}", endpoint);
 
-                let mut client = MCClient::new(
-                    &mut socket,
+                let (mut rx, mut tx) = socket.split();
+
+                let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(
+                    mc_server,
+                    &mut rx,
+                    &mut tx,
                     endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
                 );
                 client._main_task().await;
@@ -237,13 +179,15 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         }
 
         for _ in 0..3 {
-            spawner.spawn(socket_task(stack).unwrap());
+            spawner.spawn(socket_task(mc_server, stack).unwrap());
         }
     }
 
+    let mut i = 0;
     loop {
-        info!("Hello world!");
+        info!("Hello world! {}", i);
         Timer::after_secs(1).await;
+        i += 1;
     }
 }
 

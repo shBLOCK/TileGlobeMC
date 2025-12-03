@@ -5,20 +5,22 @@ edition.workspace = true
 #forced-target = "thumbv8m.main-none-eabihf"
 
 [[bin]]
-name = "main"
+name = "tileglobe_runtime_rp2350"
 path = "src/main.rs"
 test = false
 bench = false
 
 [dependencies]
 tileglobe = { path = "../../tileglobe", features = ["defmt"] }
+tileglobe_server = { path = "../../tileglobe_server", features = ["defmt"] }
 
 embassy-executor = { workspace = true, features = [
     "arch-cortex-m",
     "executor-interrupt",
     "defmt"
 ] }
-embassy-time = { workspace = true }
+embassy-time = { workspace = true, features = ["defmt"] }
+embassy-sync = { workspace = true, features = ["defmt"] }
 embassy-rp = { version = "0.9.0", path = "../../embassy/embassy-rp", features = [
     "unstable-pac",
     "time-driver",
@@ -27,7 +29,7 @@ embassy-rp = { version = "0.9.0", path = "../../embassy/embassy-rp", features = 
     "defmt"
 ] }
 embassy-net = { workspace = true, features = ["defmt"] }
-embassy-net-esp-hosted = { version = "0.2.1", path = "../../embassy/embassy-net-esp-hosted", features = ["defmt"] }
+#embassy-net-esp-hosted = { version = "0.2.1", path = "../../embassy/embassy-net-esp-hosted", features = ["defmt"] }
 
 static_cell = { workspace = true }
 heapless = { workspace = true }

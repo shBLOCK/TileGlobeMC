@@ -46,6 +46,7 @@ static MC_SERVER: StaticCell<MCServer<'_, _World>> = StaticCell::new();
 async fn main_task(spawner: Spawner) {
     let world = WORLD.init(_World::new());
     let mc_server = MC_SERVER.init(MCServer::new(world));
+
     spawner.spawn(net_task(spawner, mc_server).unwrap());
 
     loop {

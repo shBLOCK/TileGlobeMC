@@ -794,22 +794,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "embassy-net-esp-hosted"
-version = "0.2.1"
-dependencies = [
- "defmt 1.0.1",
- "embassy-futures",
- "embassy-net-driver-channel",
- "embassy-sync 0.7.2",
- "embassy-time",
- "embedded-hal 1.0.0",
- "embedded-hal-async",
- "heapless",
- "log",
- "micropb",
-]
-
-[[package]]
 name = "embassy-rp"
 version = "0.9.0"
 dependencies = [
@@ -1604,16 +1588,6 @@ name = "memchr"
 version = "2.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f52b00d39961fc5b2736ea853c9cc86238e165017a493d1d5c8eac6bdc4cc273"
-
-[[package]]
-name = "micropb"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2396c04036d4672d7e39e42ded922d2024ec74268dc8c06fba6de05633165ee9"
-dependencies = [
- "heapless",
- "num-traits",
-]
 
 [[package]]
 name = "nb"
@@ -2534,8 +2508,8 @@ dependencies = [
  "defmt-rtt",
  "embassy-executor",
  "embassy-net",
- "embassy-net-esp-hosted",
  "embassy-rp",
+ "embassy-sync 0.7.2",
  "embassy-time",
  "embedded-alloc",
  "heapless",
@@ -2543,6 +2517,7 @@ dependencies = [
  "panic-probe",
  "static_cell",
  "tileglobe",
+ "tileglobe_server",
 ]
 
 [[package]]
