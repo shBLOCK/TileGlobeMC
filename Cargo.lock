@@ -155,6 +155,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b75356056920673b02621b35afd0f7dda9306d03c79a30f5c56c44cf256e3de"
 
 [[package]]
+name = "atomic-polyfill"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8cf2bce30dfe09ef0bfaef228b9d414faaf7e563035494d7fe092dba54b300f4"
+dependencies = [
+ "critical-section",
+]
+
+[[package]]
 name = "atomic-waker"
 version = "1.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -459,7 +468,7 @@ dependencies = [
 
 [[package]]
 name = "cyw43"
-version = "0.6.0"
+version = "0.5.0"
 dependencies = [
  "bt-hci",
  "cortex-m",
@@ -479,7 +488,7 @@ dependencies = [
 
 [[package]]
 name = "cyw43-pio"
-version = "0.9.0"
+version = "0.8.0"
 dependencies = [
  "cyw43",
  "defmt 1.0.1",
@@ -795,8 +804,9 @@ dependencies = [
 
 [[package]]
 name = "embassy-rp"
-version = "0.9.0"
+version = "0.8.0"
 dependencies = [
+ "atomic-polyfill",
  "cfg-if",
  "chrono",
  "cortex-m",
