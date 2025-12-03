@@ -13,7 +13,7 @@ impl Blocks {
         }
     };
 
-    pub(super) fn get_block(&self, bs: &BlockState) -> &'static dyn DynifiedBlock {
+    pub(super) fn get_block(&self, bs: BlockState) -> &'static dyn DynifiedBlock {
         match Self::_ID_BASE_TO_BLOCK_SORTED.binary_search_by_key(&bs.0, |&(id, _)| id) {
             Ok(idx) => Self::_ID_BASE_TO_BLOCK_SORTED[idx].1,
             Err(0) => unreachable!(),

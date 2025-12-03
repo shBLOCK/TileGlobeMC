@@ -2,6 +2,7 @@ mod block;
 pub use block::*;
 pub mod blocks;
 mod registry;
+mod misc;
 
 use core::fmt::Debug;
 use defmt_or_log::maybe_derive_format;
@@ -16,8 +17,18 @@ pub type BlockStateType = u16;
 pub struct BlockState(pub BlockStateType);
 
 impl BlockState {
-    pub fn get_block(&self) -> &'static dyn DynifiedBlock {
+    pub fn get_block(self) -> &'static dyn DynifiedBlock {
         Blocks.get_block(self)
+    }
+    
+    pub fn is_air(self) -> bool {
+        self.0 == 0 // TODO: include cave_air & void_air
+    }
+}
+
+impl Default for BlockState {
+    fn default() -> Self {
+        BlockState(0)
     }
 }
 

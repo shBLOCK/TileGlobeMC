@@ -5,7 +5,7 @@ edition.workspace = true
 
 [dependencies]
 serde = { workspace = true }
-derive_more = { workspace = true, features = ["display"] }
+derive_more = { workspace = true, features = ["debug", "display", "from", "into"] }
 
 [features]
 std = []

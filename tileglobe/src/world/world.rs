@@ -8,7 +8,7 @@ use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 pub trait World {
     async fn get_block_state(&self, pos: BlockPos) -> Result<BlockState, ()>;
 
-    async fn set_block_state(&self, pos: BlockPos, state: BlockState) -> Result<(), ()>;
+    async fn set_block_state(&self, pos: BlockPos, state: BlockState) -> Result<BlockState, ()>;
 
     async fn tick(&self);
 }
@@ -56,10 +56,10 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
             .get_block_state(pos.chunk_local_pos())
     }
 
-    async fn set_block_state(&self, pos: BlockPos, state: BlockState) -> Result<(), ()> {
+    async fn set_block_state(&self, pos: BlockPos, value: BlockState) -> Result<BlockState, ()> {
         self.get_chunk(pos.chunk_pos())
             .await?
-            .set_block_state(pos.chunk_local_pos(), state)
+            .set_block_state(pos.chunk_local_pos(), value)
     }
 
     async fn tick(&self) {}

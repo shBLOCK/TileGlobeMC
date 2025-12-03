@@ -1,6 +1,8 @@
 use crate::world::block::BlockState;
 use core::fmt::Debug;
+use tileglobe_utils::color::RGBA8;
 use tileglobe_utils::resloc::ResLoc;
+use crate::world::block::misc::MapColor;
 
 #[allow(async_fn_in_trait)]
 pub trait Block: Debug + 'static {
@@ -8,6 +10,10 @@ pub trait Block: Debug + 'static {
 
     fn default_state(&self) -> BlockState;
 
+    fn map_color(&self, blockstate: BlockState) -> MapColor {
+        MapColor::new(RGBA8::new(0xFF, 0xFF, 0xFF, 0))
+    }
+    
     async fn on_use_without_item(&self) {}
 }
 
