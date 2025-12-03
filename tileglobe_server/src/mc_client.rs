@@ -1,7 +1,7 @@
 use crate::mc_server::MCServer;
 use crate::network::{
-    BitBuf, EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
-    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteBitBuf, WriteMCPacket,
+    EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
+    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket,
     WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
 };
 use crate::player::Player;
@@ -13,8 +13,8 @@ use core::cmp::max;
 use core::error::Error;
 use core::fmt::{Debug, Formatter};
 use core::net::SocketAddr;
-use core::ops::Div;
 use defmt_or_log::*;
+use embassy_futures::select::Either;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Ticker};
@@ -30,55 +30,84 @@ pub struct MCClient<
     RX: embedded_io_async::Read,
     TX: embedded_io_async::Write,
     WORLD: World,
+    SM: RawMutex,
 > {
-    server: &'a MCServer<'a, WORLD>,
+    server: &'a MCServer<'a, SM, WORLD>,
     rx: Mutex<M, RX>,
     tx: Mutex<M, TX>,
     addr: Option<SocketAddr>,
-    state: Mutex<M, State>,
-    // player_name: String,
+    player_data: Option<PlayerData>,
 }
 
-impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WORLD: World> Player
-    for MCClient<'_, M, RX, TX, WORLD>
+struct PlayerData {
+    uuid: Uuid,
+    name: String,
+}
+
+impl<
+    M: RawMutex,
+    RX: embedded_io_async::Read,
+    TX: embedded_io_async::Write,
+    WORLD: World,
+    SM: RawMutex,
+> Player for MCClient<'_, M, RX, TX, WORLD, SM>
 {
+    fn uuid(&self) -> Uuid {
+        self.player_data.as_ref().unwrap().uuid
+    }
 }
 
-impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WORLD: World> Debug
-    for MCClient<'_, M, RX, TX, WORLD>
+impl<
+    M: RawMutex,
+    RX: embedded_io_async::Read,
+    TX: embedded_io_async::Write,
+    WORLD: World,
+    SM: RawMutex,
+> Debug for MCClient<'_, M, RX, TX, WORLD, SM>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        write!(f, "MCClient({:?}, state: {:?})", self.addr, self.state)
+        write!(f, "MCClient({:?})", self.addr)
     }
 }
 
 #[cfg(feature = "defmt")]
-impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WORLD: World>
-    defmt::Format for MCClient<'_, M, RX, TX, WORLD>
+impl<
+    M: RawMutex,
+    RX: embedded_io_async::Read,
+    TX: embedded_io_async::Write,
+    WORLD: World,
+    SM: RawMutex,
+> defmt::Format for MCClient<'_, M, RX, TX, WORLD, SM>
 {
     fn format(&self, fmt: defmt::Formatter) {
-        defmt::write!(
-            fmt,
-            "MCClient({:?}, state: {:?})",
-            Debug2Format(&self.addr),
-            Debug2Format(&self.state)
-        )
+        defmt::write!(fmt, "MCClient({:?})", Debug2Format(&self.addr),)
     }
 }
 
-impl<'a, M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, WORLD: World>
-    MCClient<'a, M, RX, TX, WORLD>
+impl<
+    'a,
+    M: RawMutex,
+    RX: embedded_io_async::Read,
+    TX: embedded_io_async::Write,
+    WORLD: World,
+    SM: RawMutex,
+> MCClient<'a, M, RX, TX, WORLD, SM>
 where
     RX::Error: 'static,
     TX::Error: 'static,
 {
-    pub fn new(server: &'a MCServer<'a, WORLD>, rx: RX, tx: TX, addr: Option<SocketAddr>) -> Self {
+    pub fn new(
+        server: &'a MCServer<'a, SM, WORLD>,
+        rx: RX,
+        tx: TX,
+        addr: Option<SocketAddr>,
+    ) -> Self {
         Self {
             server,
             rx: Mutex::new(rx),
             tx: Mutex::new(tx),
             addr,
-            state: Mutex::new(State::Handshaking),
+            player_data: None
         }
     }
 
@@ -106,61 +135,59 @@ where
         self.tx.lock().await.write_mc_packet(pkt).await
     }
 
-    async fn get_state(&self) -> State {
-        *self.state.lock().await
-    }
-
-    async fn set_state(&self, state: State) {
-        *self.state.lock().await = state;
-    }
-
-    async fn _process_packet(&self) -> Result<(), MCClientError> {
-        let mut rx = self.rx.lock().await;
-        let packet_length: usize = rx.read_varint::<i32>().await? as usize;
+    async fn read_mc_packet_header(&self, rx: &mut RX) -> Result<(usize, i32), MCClientError> {
+        let packet_length = rx.read_varint::<i32>().await? as usize;
         let packet_type = rx.read_varint::<i32>().await?;
         debug!(
             "{} recv pkt: type: {}, length: {}",
             self, packet_type, packet_length
         );
-        match self.get_state().await {
-            State::Handshaking => match packet_type {
-                0 => {
-                    let protocol_version = rx.read_varint::<i32>().await?;
-                    let server_address = rx.read_utf8().await?;
-                    let server_port = rx.read_be::<u16>().await?;
-                    let intent = rx.read_varint::<i32>().await?;
-                    debug!(
-                        "{:?}, {:?}, {:?}, {:?}",
-                        protocol_version, server_address, server_port, intent
-                    );
-                    let new_state = match intent {
-                        1 => State::Status,
-                        2 => State::Login,
-                        3 => State::Login, // TODO: transfer login?
-                        _ => {
-                            return Err(MCClientError::ProtocolError(format!(
-                                "Handshaking: invalid intent id: {intent}."
-                            )));
-                        }
-                    };
-                    debug!("{} Switching connection state to {:?}", self, new_state);
-                    self.set_state(new_state).await;
+        Ok((packet_length, packet_type))
+    }
+
+    async fn handle_handshake(&mut self) -> Result<ClientIntent, MCClientError> {
+        let rx = &mut *self.rx.lock().await;
+        let (_, packet_type) = self.read_mc_packet_header(rx).await?;
+        match packet_type {
+            0 => {
+                let protocol_version = rx.read_varint::<i32>().await?;
+                let server_address = rx.read_utf8().await?;
+                let server_port = rx.read_be::<u16>().await?;
+                let intent = rx.read_varint::<i32>().await?;
+                debug!(
+                    "{} handshake: {:?}, {:?}, {:?}, {:?}",
+                    self, protocol_version, server_address, server_port, intent
+                );
+                match intent {
+                    1 => Ok(ClientIntent::Status),
+                    2 => Ok(ClientIntent::Login),
+                    3 => Ok(ClientIntent::Login), // TODO: transfer login?
+                    _ => Err(MCClientError::ProtocolError(format!(
+                        "Handshaking: invalid intent id: {intent}."
+                    ))),
                 }
-                _ => {
-                    return Err(MCClientError::ProtocolError(format!(
-                        "Received invalid packet of type {packet_type} before handshake."
-                    )));
-                }
-            },
-            State::Status => match packet_type {
+            }
+            _ => Err(MCClientError::ProtocolError(format!(
+                "Received invalid packet of type {packet_type} before handshake."
+            ))),
+        }
+    }
+
+    async fn handle_status_intent(&mut self) -> Result<(), MCClientError> {
+        let rx = &mut *self.rx.lock().await;
+        loop {
+            let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
+            match packet_type {
                 0 => {
                     // minecraft:status_request
+                    debug!("{} status request", self);
                     let mut pkt = MCPacketBuffer::new(0).await;
                     pkt.write_utf8(r#"{"version":{"name":"1.21.8","protocol":772}, "description":{"text":"Hello, world!"}}"#).await?;
                     self.write_mc_packet(pkt).await?;
                 }
                 1 => {
                     // minecraft:ping_request
+                    debug!("{} ping request", self);
                     let timestamp = rx.read_be::<i64>().await?;
                     let mut pkt = MCPacketBuffer::new(1).await;
                     pkt.write_be(timestamp).await?;
@@ -170,216 +197,250 @@ where
                     self.skip_unknown_packet(&mut *rx, packet_type, packet_length)
                         .await?;
                 }
-            },
-            State::Login => match packet_type {
+            }
+        }
+    }
+
+    async fn handle_login(&mut self) -> Result<(), MCClientError> {
+        let rx = &mut *self.rx.lock().await;
+        loop {
+            let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
+            match packet_type {
                 0 => {
                     // login start (minecraft:hello)
-                    let player_name = rx.read_utf8().await?;
-                    let given_player_uuid = rx.read_uuid().await?;
-                    let player_uuid = Uuid::new_mc_offline_player(&player_name);
+                    debug!("{} login start", self);
+                    {
+                        let player_name = rx.read_utf8().await?;
+                        let _given_player_uuid = rx.read_uuid().await?;
+                        let player_uuid = Uuid::new_mc_offline_player(&player_name);
+
+                        self.player_data = Some(PlayerData {
+                            uuid: player_uuid,
+                            name: player_name,
+                        });
+                    }
 
                     let mut pkt = MCPacketBuffer::new(2).await; // minecraft:login_finished
-                    pkt.write_uuid(player_uuid).await?;
-                    pkt.write_utf8(&player_name).await?;
+                    pkt.write_uuid(self.player_data.as_ref().unwrap().uuid).await?;
+                    pkt.write_utf8(&self.player_data.as_ref().unwrap().name).await?;
                     pkt.write_varint::<u32>(0).await?; // empty properties array
                     self.write_mc_packet(pkt).await?;
                 }
                 3 => {
                     // minecraft:login_acknowledged
-                    debug!(
-                        "{} Switching connection state to {:?}",
-                        self,
-                        State::Configuration
-                    );
-                    self.set_state(State::Configuration).await;
-
-                    let mut pkt = MCPacketBuffer::new(14).await; // minecraft:select_known_packs
-                    pkt.write_varint(1u32).await?;
-                    pkt.write_utf8("minecraft").await?;
-                    pkt.write_utf8("core").await?;
-                    pkt.write_utf8("1.21.8").await?;
-                    self.write_mc_packet(pkt).await?;
-
-                    // let mut pkt = MCPacketBuffer::new(7).await; // minecraft:registry_data
-                    //
-                    // self.socket.write_mc_packet(pkt).await?;
-
-                    {
-                        self.tx
-                            .lock()
-                            .await
-                            .write_all(&REGISTRY_PACKETS_DATA)
-                            .await?;
-                    }
-
-                    self.write_mc_packet(MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
-
-                    info!("sguoid")
+                    debug!("{} login acknowledged", self);
+                    return Ok(());
                 }
                 _ => {
                     self.skip_unknown_packet(&mut *rx, packet_type, packet_length)
                         .await?;
                 }
-            },
-            State::Configuration => match packet_type {
+            }
+        }
+    }
+
+    async fn handle_configure(&mut self) -> Result<(), MCClientError> {
+        let mut pkt = MCPacketBuffer::new(14).await; // minecraft:select_known_packs
+        pkt.write_varint(1u32).await?;
+        pkt.write_utf8("minecraft").await?;
+        pkt.write_utf8("core").await?;
+        pkt.write_utf8("1.21.8").await?;
+        self.write_mc_packet(pkt).await?;
+
+        // let mut pkt = MCPacketBuffer::new(7).await; // minecraft:registry_data
+        //
+        // self.socket.write_mc_packet(pkt).await?;
+
+        {
+            self.tx
+                .lock()
+                .await
+                .write_all(&REGISTRY_PACKETS_DATA)
+                .await?;
+        }
+
+        self.write_mc_packet(MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
+
+        let rx = &mut *self.rx.lock().await;
+        loop {
+            let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
+            match packet_type {
                 3 => {
                     // minecraft:finish_configuration
-                    debug!("{} Switching connection state to {:?}", self, State::Play);
-                    self.set_state(State::Play).await;
-
-                    let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
-                    pkt.write_be::<u32>(0).await?; // entity id
-                    pkt.write_be(false as u8).await?; // is hardcore
-                    pkt.write_varint(1u32).await?; // dimension names
-                    pkt.write_utf8("minecraft:overworld").await?;
-                    pkt.write_varint(3u32).await?; // max players
-                    pkt.write_varint(32u32).await?; // view distance
-                    pkt.write_varint(32u32).await?; // sim distance
-                    pkt.write_be(false as u8).await?; // reduced debug info
-                    pkt.write_be(true as u8).await?; // enable respawn screen
-                    pkt.write_be(false as u8).await?; // do limited crafting (unused)
-                    pkt.write_varint(0u32).await?; // dimension id
-                    pkt.write_utf8("minecraft:overworld").await?; // dimension name
-                    pkt.write_be(0u64).await?; // world seed hash
-                    pkt.write_be(1u8).await?; // game mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator)
-                    pkt.write_be(-1i8).await?; // prev game mode
-                    pkt.write_be(false as u8).await?; // is debug mode world
-                    pkt.write_be(false as u8).await?; // is flat world
-                    pkt.write_be(false as u8).await?; // has death location
-                    pkt.write_varint(0u32).await?; // portal cooldown
-                    pkt.write_varint(68u32).await?; // sea level
-                    pkt.write_be(false as u8).await?; // enforce secure chat
-                    self.write_mc_packet(pkt).await?;
-
-                    let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
-                    pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
-                    pkt.write_be::<f32>(0.0).await?;
-                    self.write_mc_packet(pkt).await?;
-
-                    let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
-                    pkt.write_varint::<u32>(0).await?;
-                    pkt.write_be::<f64>(0.0).await?;
-                    pkt.write_be::<f64>(100.0).await?;
-                    pkt.write_be::<f64>(0.0).await?;
-                    pkt.write_be::<f64>(0.0).await?;
-                    pkt.write_be::<f64>(0.0).await?;
-                    pkt.write_be::<f64>(0.0).await?;
-                    pkt.write_be::<f32>(0.0).await?;
-                    pkt.write_be::<f32>(0.0).await?;
-                    pkt.write_be::<u32>(0).await?;
-                    self.write_mc_packet(pkt).await?;
-
-                    let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
-                    pkt.write_varint(0u32).await?;
-                    pkt.write_varint(0u32).await?;
-                    self.write_mc_packet(pkt).await?;
-
-                    for cx in -5..=5 {
-                        for cz in -5..=5 {
-                            let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
-                            pkt.write_be::<i32>(cx).await?;
-                            pkt.write_be::<i32>(cz).await?;
-
-                            // chunk
-                            pkt.write_varint(0u32).await?; // heightmaps
-
-                            let entry_size = 15u8;
-                            let entries_per_long = 64u8 / entry_size;
-                            let longs_per_section = 4096u16.div_ceil(entries_per_long as u16);
-                            pkt.write_varint::<u32>(
-                                (2 + 1 + (longs_per_section as u32) * 8 + 1 + 1) * 24,
-                            )
-                            .await?; // bytes
-                            for cy in -4..20 {
-                                // blocks
-                                pkt.write_be(4096u16).await?;
-                                // pkt.write_be(0u8).await?;
-                                // pkt.write_varint(10u32).await?; // dirt
-                                pkt.write_be(entry_size).await?;
-
-                                let mut long = 0u64;
-                                for i in 0..4096u16 {
-                                    let mut entry = 0u16;
-                                    if cy == 4 && abs(cx) <= 4 && abs(cz) <= 4 {
-                                        entry = 10u16 + i % 50;
-                                    }
-
-                                    let n = (i % entries_per_long as u16) as u8;
-                                    long |= (entry as u64) << (n * entry_size);
-                                    if n == (entries_per_long - 1) || i == 4095 {
-                                        pkt.write_be(long).await?;
-                                        long = 0;
-                                    }
-                                }
-
-                                // biomes
-                                pkt.write_be(0u8).await?;
-                                pkt.write_varint(0u32).await?;
-                            }
-                            pkt.write_varint(0u32).await?; // block entities
-
-                            // light
-                            for _ in 0..2 {
-                                pkt.write_varint(1u32).await?;
-                                pkt.write_be(0xFFFF_FF00_0000_0000u64).await?;
-                            }
-                            for _ in 0..2 {
-                                pkt.write_varint(1u32).await?;
-                                pkt.write_be(0x0u64).await?;
-                            }
-                            for _ in 0..2 {
-                                pkt.write_varint(24u32).await?;
-                                for _ in 0..24 {
-                                    pkt.write_varint(2048u32).await?;
-                                    for _ in 0..2048 {
-                                        pkt.write_be(0xFFu8).await?;
-                                    }
-                                }
-                            }
-
-                            self.write_mc_packet(pkt).await?;
-                        }
-                    }
+                    debug!("{} finish configuration", self);
+                    return Ok(());
                 }
                 _ => {
                     self.skip_unknown_packet(&mut *rx, packet_type, packet_length)
                         .await?;
                 }
-            },
-            State::Play => match packet_type {
-                _ => {
-                    self.skip_unknown_packet(&mut *rx, packet_type, packet_length)
-                        .await?;
-                }
-            },
-        }
-        Ok(())
-    }
-
-    async fn _subroutine_process_packets(&self) -> Result<(), MCClientError> {
-        loop {
-            self._process_packet().await?;
+            }
         }
     }
 
-    async fn _subroutine_send_keep_alive(&self) -> Result<(), MCClientError> {
+    async fn play_keep_alive(&self) -> Result<(), MCClientError> {
         let mut ticker = Ticker::every(Duration::from_secs(5));
         loop {
-            if self.get_state().await == State::Play {
-                let mut pkt = MCPacketBuffer::new(38).await;
-                pkt.write_be(0u64).await?;
-                self.write_mc_packet(pkt).await?;
-            }
+            let mut pkt = MCPacketBuffer::new(38).await;
+            pkt.write_be(0u64).await?;
+            self.write_mc_packet(pkt).await?;
             ticker.next().await;
         }
     }
 
-    pub async fn _main_task(&mut self) {
-        embassy_futures::select::select(
-            self._subroutine_process_packets(),
-            self._subroutine_send_keep_alive(),
-        )
-        .await;
+    async fn play_handle_packets(&self) -> Result<(), MCClientError> {
+        let rx = &mut *self.rx.lock().await;
+        loop {
+            let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
+            match packet_type {
+                _ => {
+                    self.skip_unknown_packet(rx, packet_type, packet_length)
+                        .await?;
+                }
+            }
+        }
+    }
+
+    async fn play(&self) -> Result<(), MCClientError> {
+        let result =
+            embassy_futures::select::select(self.play_handle_packets(), self.play_keep_alive())
+                .await;
+
+        match result {
+            Either::First(it) => it,
+            Either::Second(it) => it,
+        }
+    }
+
+    pub async fn run(mut self) -> Result<(), MCClientError> {
+        match self.handle_handshake().await? {
+            ClientIntent::Status => self.handle_status_intent().await?,
+            ClientIntent::Login => {
+                self.handle_login().await?;
+                self.handle_configure().await?;
+
+                // self.server.add_player(Box::new(self)).await;
+
+                let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
+                pkt.write_be::<u32>(0).await?; // entity id
+                pkt.write_be(false as u8).await?; // is hardcore
+                pkt.write_varint(1u32).await?; // dimension names
+                pkt.write_utf8("minecraft:overworld").await?;
+                pkt.write_varint(3u32).await?; // max players
+                pkt.write_varint(32u32).await?; // view distance
+                pkt.write_varint(32u32).await?; // sim distance
+                pkt.write_be(false as u8).await?; // reduced debug info
+                pkt.write_be(true as u8).await?; // enable respawn screen
+                pkt.write_be(false as u8).await?; // do limited crafting (unused)
+                pkt.write_varint(0u32).await?; // dimension id
+                pkt.write_utf8("minecraft:overworld").await?; // dimension name
+                pkt.write_be(0u64).await?; // world seed hash
+                pkt.write_be(1u8).await?; // game mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator)
+                pkt.write_be(-1i8).await?; // prev game mode
+                pkt.write_be(false as u8).await?; // is debug mode world
+                pkt.write_be(false as u8).await?; // is flat world
+                pkt.write_be(false as u8).await?; // has death location
+                pkt.write_varint(0u32).await?; // portal cooldown
+                pkt.write_varint(68u32).await?; // sea level
+                pkt.write_be(false as u8).await?; // enforce secure chat
+                self.write_mc_packet(pkt).await?;
+
+                let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
+                pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
+                pkt.write_be::<f32>(0.0).await?;
+                self.write_mc_packet(pkt).await?;
+
+                let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
+                pkt.write_varint::<u32>(0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(200.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f32>(0.0).await?;
+                pkt.write_be::<f32>(0.0).await?;
+                pkt.write_be::<u32>(0).await?;
+                self.write_mc_packet(pkt).await?;
+
+                let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
+                pkt.write_varint(0u32).await?;
+                pkt.write_varint(0u32).await?;
+                self.write_mc_packet(pkt).await?;
+
+                for cx in -2..=2 {
+                    for cz in -2..=2 {
+                        let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
+                        pkt.write_be::<i32>(cx).await?;
+                        pkt.write_be::<i32>(cz).await?;
+
+                        // chunk
+                        pkt.write_varint(0u32).await?; // heightmaps
+
+                        let entry_size = 15u8;
+                        let entries_per_long = 64u8 / entry_size;
+                        let longs_per_section = 4096u16.div_ceil(entries_per_long as u16);
+                        pkt.write_varint::<u32>(
+                            (2 + 1 + (longs_per_section as u32) * 8 + 1 + 1) * 24,
+                        )
+                        .await?; // bytes
+                        for cy in -4..20 {
+                            // blocks
+                            pkt.write_be(4096u16).await?;
+                            // pkt.write_be(0u8).await?;
+                            // pkt.write_varint(10u32).await?; // dirt
+                            pkt.write_be(entry_size).await?;
+
+                            let mut long = 0u64;
+                            for i in 0..4096u16 {
+                                let mut entry = 0u16;
+                                if cy == 4 && abs(cx) <= 1 && abs(cz) <= 1 {
+                                    entry = 10u16 + i % 50;
+                                }
+
+                                let n = (i % entries_per_long as u16) as u8;
+                                long |= (entry as u64) << (n * entry_size);
+                                if n == (entries_per_long - 1) || i == 4095 {
+                                    pkt.write_be(long).await?;
+                                    long = 0;
+                                }
+                            }
+
+                            // biomes
+                            pkt.write_be(0u8).await?;
+                            pkt.write_varint(0u32).await?;
+                        }
+                        pkt.write_varint(0u32).await?; // block entities
+
+                        // light
+                        for _ in 0..2 {
+                            pkt.write_varint(1u32).await?;
+                            pkt.write_be(0xFFFF_FF00_0000_0000u64).await?;
+                        }
+                        for _ in 0..2 {
+                            pkt.write_varint(1u32).await?;
+                            pkt.write_be(0x0u64).await?;
+                        }
+                        for _ in 0..2 {
+                            pkt.write_varint(24u32).await?;
+                            for _ in 0..24 {
+                                pkt.write_varint(2048u32).await?;
+                                for _ in 0..2048 {
+                                    pkt.write_be(0xFFu8).await?;
+                                }
+                            }
+                        }
+
+                        self.write_mc_packet(pkt).await?;
+                    }
+                }
+
+                self.play().await?;
+
+                // self.server.remove_player(self.uuid()).await;
+            }
+        };
+        Ok(())
 
         // let mut buf = [0u8; 1024];
         // loop {
@@ -410,12 +471,9 @@ where
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[maybe_derive_format]
-enum State {
-    Handshaking,
+enum ClientIntent {
     Status,
     Login,
-    Configuration,
-    Play,
 }
 
 #[derive(Debug, derive_more::Display)]

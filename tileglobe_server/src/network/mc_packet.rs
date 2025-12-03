@@ -1,6 +1,7 @@
 use crate::network::{EIOError, WriteVarInt};
 use alloc::vec::Vec;
 use core::convert::Infallible;
+use defmt_or_log::debug;
 
 pub struct MCPacketBuffer {
     buffer: Vec<u8>,
@@ -40,6 +41,19 @@ impl MCPacketBuffer {
     }
 }
 
+async fn write_all_with_log<TX: embedded_io_async::Write>(tx: &mut TX, buf: &[u8]) -> Result<(), TX::Error> {
+    let mut buf = buf;
+    while !buf.is_empty() {
+        match tx.write(buf).await {
+            Ok(0) => panic!("write() returned Ok(0)"),
+            Ok(n) => buf = &buf[n..],
+            Err(e) => return Err(e),
+        }
+        debug!("Remaining: {:?}", buf.len());
+    }
+    Ok(())
+}
+
 #[allow(async_fn_in_trait)]
 pub trait WriteMCPacket: embedded_io_async::Write {
     async fn write_mc_packet(
@@ -47,7 +61,7 @@ pub trait WriteMCPacket: embedded_io_async::Write {
         pkt: MCPacketBuffer,
     ) -> Result<(), EIOError<Self::Error>> {
         self.write_varint::<u32>(pkt.buffer.len() as u32).await?;
-        self.write_all(&pkt.buffer).await?;
+        write_all_with_log(&mut self, &*pkt.buffer).await?;
         Ok(())
     }
 }

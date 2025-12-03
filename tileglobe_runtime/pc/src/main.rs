@@ -8,11 +8,12 @@ use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
 
 #[embassy_executor::task(pool_size = 3)]
-async fn mc_client_task(mc_server: &'static MCServer<'static, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
+async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
     let adapter = embedded_io_adapters::futures_03::FromFutures::new(socket);
 
-    let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(mc_server, adapter.clone(), adapter.clone(), Some(addr));
-    client._main_task().await;
+    let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(mc_server, adapter.clone(), adapter.clone(), Some(addr));
+    let result = client.run().await;
+    info!("{} disconnected: {:?}", addr, result);
 
     let socket = adapter.into_inner();
     if let Err(err) = socket.shutdown(std::net::Shutdown::Both) {
@@ -23,7 +24,7 @@ async fn mc_client_task(mc_server: &'static MCServer<'static, _World>, socket: a
 type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
 
 #[embassy_executor::task(pool_size = 1)]
-async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, _World>) {
+async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>) {
     let tcp_listener = async_net::TcpListener::bind("127.0.0.1:25565")
         .await
         .unwrap();
@@ -40,7 +41,7 @@ async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, _World
 }
 
 static WORLD: StaticCell<_World> = StaticCell::new();
-static MC_SERVER: StaticCell<MCServer<'_, _World>> = StaticCell::new();
+static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = StaticCell::new();
 
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner) {

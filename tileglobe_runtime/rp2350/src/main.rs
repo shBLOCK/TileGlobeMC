@@ -45,7 +45,7 @@ static HEAP: Heap = Heap::empty();
 
 type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
 static WORLD: StaticCell<_World> = StaticCell::new();
-static MC_SERVER: StaticCell<MCServer<'_, _World>> = StaticCell::new();
+static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = StaticCell::new();
 
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
@@ -145,9 +145,9 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         let mc_server = MC_SERVER.init(MCServer::new(world));
 
         #[embassy_executor::task(pool_size = 3)]
-        async fn socket_task(mc_server: &'static MCServer<'static, _World>, stack: Stack<'static>) -> ! {
+        async fn socket_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, stack: Stack<'static>) -> ! {
             let mut rx_buffer = [0; 4096];
-            let mut tx_buffer = [0; 4096];
+            let mut tx_buffer = [0; 32768];
 
             loop {
                 let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
@@ -163,13 +163,15 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
                 let (mut rx, mut tx) = socket.split();
 
-                let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(
+                let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(
                     mc_server,
                     &mut rx,
                     &mut tx,
                     endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
                 );
-                client._main_task().await;
+                let result = client.run().await;
+                info!("Client disconnected: {:?}", result);
+
                 socket.close();
                 if let Err(err) = socket.flush().await {
                     warn!("Failed to close socket: {:?}", err);
