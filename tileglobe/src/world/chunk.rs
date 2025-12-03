@@ -94,7 +94,7 @@ impl ChunkSection {
         2 + if self.non_air_blocks() == 0 {
             1 + 1
         } else {
-            1 + (16usize * 16 * 16).div_ceil(64 / 15)
+            1 + (16usize * 16 * 16).div_ceil(64 / 15) * 8
         }
     }
 

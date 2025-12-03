@@ -36,6 +36,9 @@ use embassy_rp::clocks::RoscRng;
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use tileglobe::world::block::BlockState;
+use tileglobe::world::chunk::Chunk;
+use tileglobe::world::{ChunkLocalPos, ChunkPos};
 use tileglobe::world::world::LocalWorld;
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
@@ -43,7 +46,7 @@ use tileglobe_server::MCClient;
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
-type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
+type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>;
 static WORLD: StaticCell<_World> = StaticCell::new();
 static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = StaticCell::new();
 
@@ -142,6 +145,28 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         // control.start_ap_open("TileGlobeMC", 5).await;
 
         let world = WORLD.init(_World::new());
+
+        for cz in -1i16..=1 {
+            for cx in -1i16..=1 {
+                let mut chunk = Chunk::new(-4..=19);
+                for sz in 0..16u8 {
+                    for sx in 0..16u8 {
+                        for y in (-4 * 16)..(19 * 16i16) {
+                            let (x, z) = (cx * 16 + sx as i16, cz * 16 + sz as i16);
+                            let mut blockstate = BlockState(0);
+                            if (-10..=-1).contains(&y) {
+                                blockstate = BlockState(10);
+                            }
+                            if blockstate.0 != 0 {
+                                let _ = chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate);
+                            }
+                        }
+                    }
+                }
+                world.set_chunk(ChunkPos::new(cx, cz), chunk).await.unwrap();
+            }
+        }
+
         let mc_server = MC_SERVER.init(MCServer::new(world));
 
         #[embassy_executor::task(pool_size = 3)]

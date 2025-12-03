@@ -13,11 +13,15 @@ use embassy_futures::select::Either;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
 use embassy_time::{Duration, Ticker};
-use num_traits::{abs, ToPrimitive};
-use tileglobe::world::world::World;
-use uuid::Uuid;
+use num_traits::{ToPrimitive, abs};
 use tileglobe::world::ChunkPos;
-use tileglobe_utils::network::{EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt};
+use tileglobe::world::world::World;
+use tileglobe_utils::network::{
+    EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
+    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket, WriteNumPrimitive,
+    WriteUTF8, WriteUUID, WriteVarInt,
+};
+use uuid::Uuid;
 
 #[derive(derive_more::Display)]
 #[display("{self:?}")]
@@ -104,7 +108,7 @@ where
             rx: Mutex::new(rx),
             tx: Mutex::new(tx),
             addr,
-            player_data: None
+            player_data: None,
         }
     }
 
@@ -218,8 +222,10 @@ where
                     }
 
                     let mut pkt = MCPacketBuffer::new(2).await; // minecraft:login_finished
-                    pkt.write_uuid(self.player_data.as_ref().unwrap().uuid).await?;
-                    pkt.write_utf8(&self.player_data.as_ref().unwrap().name).await?;
+                    pkt.write_uuid(self.player_data.as_ref().unwrap().uuid)
+                        .await?;
+                    pkt.write_utf8(&self.player_data.as_ref().unwrap().name)
+                        .await?;
                     pkt.write_varint::<u32>(0).await?; // empty properties array
                     self.write_mc_packet(pkt).await?;
                 }
@@ -253,7 +259,8 @@ where
                 .lock()
                 .await
                 .write_all(&REGISTRY_PACKETS_DATA)
-                .await?;
+                .await
+                .map_err(EIOError::from)?;
         }
 
         self.write_mc_packet(MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
@@ -350,7 +357,7 @@ where
                 let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
                 pkt.write_varint::<u32>(0).await?;
                 pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(200.0).await?;
+                pkt.write_be::<f64>(100.0).await?;
                 pkt.write_be::<f64>(0.0).await?;
                 pkt.write_be::<f64>(0.0).await?;
                 pkt.write_be::<f64>(0.0).await?;
@@ -371,7 +378,10 @@ where
                         pkt.write_be::<i32>(cx.to_i32().unwrap()).await?;
                         pkt.write_be::<i32>(cz.to_i32().unwrap()).await?;
 
-                        self.server.world.write_net_chunk(ChunkPos::new(cx, cz), &mut pkt).await?;
+                        self.server
+                            .world
+                            .write_net_chunk(ChunkPos::new(cx, cz), &mut pkt)
+                            .await?;
 
                         self.write_mc_packet(pkt).await?;
                     }
@@ -442,12 +452,6 @@ impl Error for MCClientError {
             Self::DataError(err) => Some(err.as_ref()),
             Self::NetworkError(err) => Some(err.as_ref()),
         }
-    }
-}
-
-impl<E: embedded_io_async::Error + 'static> From<E> for MCClientError {
-    fn from(value: E) -> Self {
-        Self::NetworkError(EIOError(value).into())
     }
 }
 

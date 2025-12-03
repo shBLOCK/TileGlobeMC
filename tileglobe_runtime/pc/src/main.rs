@@ -24,7 +24,7 @@ async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRaw
     }
 }
 
-type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 1, 1>;
+type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>;
 
 #[embassy_executor::task(pool_size = 1)]
 async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>) {
@@ -56,13 +56,13 @@ async fn main_task(spawner: Spawner) {
             for sz in 0..16u8 {
                 for sx in 0..16u8 {
                     for y in (-4 * 16)..(19 * 16i16) {
-                        let (x, z) = (cx * 16 + sx, cz * 16 + sz);
+                        let (x, z) = (cx * 16 + sx as i16, cz * 16 + sz as i16);
                         let mut blockstate = BlockState(0);
                         if (-10..=-1).contains(&y) {
                             blockstate = BlockState(10);
                         }
                         if blockstate.0 != 0 {
-                            chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate).await;
+                            let _ = chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate);
                         }
                     }
                 }

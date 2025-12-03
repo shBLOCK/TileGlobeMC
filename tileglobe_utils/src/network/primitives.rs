@@ -1,4 +1,4 @@
-use crate::network::{EIOReadExactError, ReadExt};
+use crate::network::{EIOError, EIOReadExactError, ReadExt};
 use num_traits::{FromBytes, ToBytes};
 
 #[allow(async_fn_in_trait)]
@@ -33,15 +33,15 @@ pub trait WriteNumPrimitive: embedded_io_async::Write {
     async fn write_le<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(
         &mut self,
         value: T,
-    ) -> Result<(), Self::Error> {
-        self.write_all(&value.to_le_bytes()).await
+    ) -> Result<(), EIOError<Self::Error>> {
+        Ok(self.write_all(&value.to_le_bytes()).await?)
     }
 
     async fn write_be<T: ToBytes<Bytes = [u8; size_of::<T>()]>>(
         &mut self,
         value: T,
-    ) -> Result<(), Self::Error> {
-        self.write_all(&value.to_be_bytes()).await
+    ) -> Result<(), EIOError<Self::Error>> {
+        Ok(self.write_all(&value.to_be_bytes()).await?)
     }
 }
 

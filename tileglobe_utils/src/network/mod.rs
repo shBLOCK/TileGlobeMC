@@ -62,6 +62,16 @@ mod error_wrappers {
     }
 
     impl<E: embedded_io_async::Error> Error for EIOError<E> {}
+    
+    // pub trait WrapEIOError<T, E: embedded_io_async::Error> {
+    //     fn wrap_ioe(self) -> Result<T, EIOError<E>>;
+    // }
+    // 
+    // impl<T, E: embedded_io_async::Error> WrapEIOError<T, E> for Result<T, E> {
+    //     fn wrap_ioe(self) -> Result<T, EIOError<E>> {
+    //         self.map_err(|e| EIOError::from(e))
+    //     }
+    // }
 
     // Wrapper to support core::error::Error
     #[derive(derive_more::Display)]

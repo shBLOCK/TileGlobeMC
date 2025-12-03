@@ -1,4 +1,4 @@
-use crate::network::{EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
+use crate::network::{EIOError, EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
 use num_traits::{FromBytes, PrimInt, ToBytes, Unsigned};
 use crate::indexed_enum::IndexedEnum;
 
@@ -18,8 +18,8 @@ pub trait WriteIndexedEnum: embedded_io_async::Write {
     async fn write_indexed_enum<T: IndexedEnum<I>, I: PrimInt + Unsigned + ToBytes<Bytes = [u8; size_of::<I>()]>>(
         mut self: &mut Self,
         value: T,
-    ) -> Result<(), Self::Error> {
-        self.write_be::<I>(value.into()).await
+    ) -> Result<(), EIOError<Self::Error>> {
+        Ok(self.write_be::<I>(value.into()).await?)
     }
 }
 
