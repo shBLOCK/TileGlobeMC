@@ -372,6 +372,12 @@ where
                 pkt.write_varint(0u32).await?;
                 self.write_mc_packet(pkt).await?;
 
+                // for cx in -2i16..=2 {
+                //     for cz in -2i16..=2 {
+                //
+                //     }
+                // }
+
                 for cx in -2i16..=2 {
                     for cz in -2i16..=2 {
                         let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light

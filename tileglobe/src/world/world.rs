@@ -120,23 +120,38 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
         writer.write_varint(0u32).await?; // block entities
 
         // light
-        for _ in 0..2 {
-            writer.write_varint(1u32).await?;
-            writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
-        }
-        for _ in 0..2 {
-            writer.write_varint(1u32).await?;
-            writer.write_be(0x0u64).await?;
-        }
-        for _ in 0..2 {
-            writer.write_varint(24u32).await?;
-            for _ in 0..24 {
-                writer.write_varint(2048u32).await?;
-                for _ in 0..2048 {
-                    writer.write_be(0xFFu8).await?;
-                }
-            }
-        }
+        // writer.write_varint(1u32).await?;
+        // writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+        // writer.write_varint(1u32).await?;
+        // writer.write_be(0x0u64).await?;
+        //
+        // writer.write_varint(1u32).await?;
+        // writer.write_be(0x0u64).await?;
+        // writer.write_varint(1u32).await?;
+        // writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+        //
+        // writer.write_varint(24u32).await?;
+        // for _ in 0..24 {
+        //     writer.write_varint(2048u32).await?;
+        //     for _ in 0..2048 {
+        //         writer.write_be(0xFFu8).await?;
+        //     }
+        // }
+        //
+        // writer.write_varint(0u32).await?;
+
+        writer.write_varint(1u32).await?;
+        writer.write_be(0x0u64).await?;
+        writer.write_varint(1u32).await?;
+        writer.write_be(0x0u64).await?;
+
+        writer.write_varint(1u32).await?;
+        writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+        writer.write_varint(1u32).await?;
+        writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+
+        writer.write_varint(0u32).await?;
+        writer.write_varint(0u32).await?;
 
         Ok(())
     }

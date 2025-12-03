@@ -67,15 +67,15 @@ impl ChunkSection {
         self.blocks[index as usize]
     }
 
-    pub fn set_block_state(&mut self, index: u16, bs: BlockState) -> BlockState {
+    pub fn set_block_state(&mut self, index: u16, blockstate: BlockState) -> BlockState {
         let old = self.blocks[index as usize];
-        self.blocks[index as usize] = bs;
+        self.blocks[index as usize] = blockstate;
         if old.is_air() {
-            if !bs.is_air() {
+            if !blockstate.is_air() {
                 self.non_air_blocks += 1;
             }
         } else {
-            if bs.is_air() {
+            if blockstate.is_air() {
                 self.non_air_blocks -= 1;
             }
         }
