@@ -21,6 +21,7 @@ embassy-executor = { workspace = true, features = [
 ] }
 embassy-time = { workspace = true, features = ["defmt"] }
 embassy-sync = { workspace = true, features = ["defmt"] }
+embassy-futures = { workspace = true }
 embassy-rp = { version = "0.8.0", path = "../../embassy/embassy-rp", features = [
     "unstable-pac",
     "time-driver",

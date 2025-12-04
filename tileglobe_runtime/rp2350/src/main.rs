@@ -13,8 +13,7 @@ use embassy_rp::peripherals::{DMA_CH0, DMA_CH15, PIO2};
 use embassy_rp::pio::InterruptHandler;
 use embassy_rp::pio::Pio;
 use embassy_rp::{Peripherals, bind_interrupts};
-use embassy_time::{Duration, Ticker};
-use embassy_time::Timer;
+use embassy_time::{Duration, Ticker, Timer};
 use static_cell::StaticCell;
 
 use {defmt_rtt as _, panic_probe as _};
@@ -32,11 +31,12 @@ pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
 
 use embassy_net::Stack;
 use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
+use embassy_rp::adc::Adc;
 use embassy_rp::clocks::RoscRng;
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
-use embassy_rp::adc::Adc;
+use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World};
@@ -58,7 +58,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
             embassy_rp::psram::Config::aps6404l(),
         )
-            .expect("Failed to initialize PSRAM");
+        .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
@@ -139,7 +139,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
     spawner.spawn(unwrap!(net_task(runner)));
 
-    control.start_ap_wpa2("TileGlobeMC", "password", 5).await;
+    control.start_ap_wpa2("TileGlobeMC", "password", 8).await;
     // control.start_ap_open("TileGlobeMC", 5).await;
 
     let world = WORLD.init(_World::new());
@@ -221,22 +221,47 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
     let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
     let mut adc40 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
+    let mut adc41 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
+    let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
 
     let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     let mut i = 0;
     loop {
-        info!("Tick {}", i);
+        info!("Tick8 {}", i);
         let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
-        for i in 0..32 {
-            let state = if i as f32 / 30.0 <= adc_value_1 {
-                BlockState(9)
-            } else {
-                BlockState(0)
-            };
-            world.set_block_state(BlockPos::new(0, i, 0), state).await.unwrap();
+        let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
+        let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
+        // info!("Adc temp: {}", adc_temperature);
+        for y in 0..32 {
+            for x in 0..32 {
+                let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
+                    BlockState(if adc_temperature > 0.21 { 4340 } else { 117 })
+                } else {
+                    BlockState(0)
+                };
+                // if x > 10 && x < 16 {
+                let _ = world.set_block_state(BlockPos::new(x, y, 0), state).await;
+                // }
+            }
+            embassy_futures::yield_now().await;
+            // Timer::after_micros(1).await;
         }
+
+        // for y in 0..32 {
+        //     let state = if y as f32 / 32.0 < adc_value_1 {
+        //         BlockState(4340)
+        //     } else {
+        //         BlockState(0)
+        //     };
+        //     world
+        //         .set_block_state(BlockPos::new(0, y, 0), state)
+        //         .await
+        //         .unwrap();
+        // }
+
         world.tick().await;
         mc_server.tick().await;
+        i += 1;
         tick_ticker.next().await;
     }
 }

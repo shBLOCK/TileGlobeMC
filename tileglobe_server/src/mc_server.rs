@@ -59,8 +59,16 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
     // }
 
     pub async fn tick(&self) {
+        let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+
+        let block_update_packets = self.world.gen_blocks_update_packets_and_clear_changes().await;
         for player in self.players.lock().await.values() {
-            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            for pkt in &block_update_packets {
+                let _ = player.send_mc_packet(pkt).init(&mut c).await;
+            }
+        }
+
+        for player in self.players.lock().await.values() {
             player.tick().init(&mut c).await
         }
     }

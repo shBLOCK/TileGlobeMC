@@ -58,7 +58,7 @@ async fn write_all_with_log<TX: embedded_io_async::Write>(tx: &mut TX, buf: &[u8
 pub trait WriteMCPacket: embedded_io_async::Write {
     async fn write_mc_packet(
         mut self: &mut Self,
-        pkt: MCPacketBuffer,
+        pkt: &MCPacketBuffer,
     ) -> Result<(), EIOError<Self::Error>> {
         self.write_varint::<u32>(pkt.buffer.len() as u32).await?;
         write_all_with_log(&mut self, &*pkt.buffer).await?;

@@ -61,7 +61,14 @@ where
     }
 
     async fn tick(&self) {
-        self.send_chunk(ChunkPos::new(0, 0)).await;
+
+    }
+
+    // gross...
+    async fn send_mc_packet(&self, pkt: &MCPacketBuffer) {
+        if let Err(err) = self.write_mc_packet(pkt).await {
+            error!("error sending packet: {:?}", Debug2Format(&err));
+        }
     }
 }
 
@@ -124,7 +131,7 @@ where
         rx.skip_bytes(packet_length - varintlen).await
     }
 
-    async fn write_mc_packet(&self, pkt: MCPacketBuffer) -> Result<(), EIOError<TX::Error>> {
+    async fn write_mc_packet(&self, pkt: &MCPacketBuffer) -> Result<(), EIOError<TX::Error>> {
         self.tx.lock().await.write_mc_packet(pkt).await
     }
 
@@ -145,7 +152,7 @@ where
 
         self.server.world.write_net_chunk(pos, &mut pkt).await?;
 
-        self.write_mc_packet(pkt).await?;
+        self.write_mc_packet(&pkt).await?;
         Ok(())
     }
 }
@@ -215,7 +222,7 @@ where
                     debug!("{} status request", self);
                     let mut pkt = MCPacketBuffer::new(0).await;
                     pkt.write_utf8(r#"{"version":{"name":"1.21.8","protocol":772}, "description":{"text":"Hello, world!"}}"#).await?;
-                    self.write_mc_packet(pkt).await?;
+                    self.write_mc_packet(&pkt).await?;
                 }
                 1 => {
                     // minecraft:ping_request
@@ -223,7 +230,7 @@ where
                     let timestamp = rx.read_be::<i64>().await?;
                     let mut pkt = MCPacketBuffer::new(1).await;
                     pkt.write_be(timestamp).await?;
-                    self.write_mc_packet(pkt).await?;
+                    self.write_mc_packet(&pkt).await?;
                 }
                 _ => {
                     self.skip_unknown_packet(&mut *rx, packet_type, packet_length)
@@ -258,7 +265,7 @@ where
                     pkt.write_utf8(&self.player_data.as_ref().unwrap().name)
                         .await?;
                     pkt.write_varint::<u32>(0).await?; // empty properties array
-                    self.write_mc_packet(pkt).await?;
+                    self.write_mc_packet(&pkt).await?;
                 }
                 3 => {
                     // minecraft:login_acknowledged
@@ -279,7 +286,7 @@ where
         pkt.write_utf8("minecraft").await?;
         pkt.write_utf8("core").await?;
         pkt.write_utf8("1.21.8").await?;
-        self.write_mc_packet(pkt).await?;
+        self.write_mc_packet(&pkt).await?;
 
         // let mut pkt = MCPacketBuffer::new(7).await; // minecraft:registry_data
         //
@@ -294,7 +301,7 @@ where
                 .map_err(EIOError::from)?;
         }
 
-        self.write_mc_packet(MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
+        self.write_mc_packet(&MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
 
         let rx = &mut *self.rx.lock().await;
         loop {
@@ -318,7 +325,7 @@ where
         loop {
             let mut pkt = MCPacketBuffer::new(38).await;
             pkt.write_be(0u64).await?;
-            self.write_mc_packet(pkt).await?;
+            self.write_mc_packet(&pkt).await?;
             ticker.next().await;
         }
     }
@@ -383,12 +390,12 @@ where
                 pkt.write_varint(0u32).await?; // portal cooldown
                 pkt.write_varint(68u32).await?; // sea level
                 pkt.write_be(false as u8).await?; // enforce secure chat
-                self.write_mc_packet(pkt).await?;
+                self.write_mc_packet(&pkt).await?;
 
                 let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
                 pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
                 pkt.write_be::<f32>(0.0).await?;
-                self.write_mc_packet(pkt).await?;
+                self.write_mc_packet(&pkt).await?;
 
                 let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
                 pkt.write_varint::<u32>(0).await?;
@@ -401,12 +408,12 @@ where
                 pkt.write_be::<f32>(0.0).await?;
                 pkt.write_be::<f32>(0.0).await?;
                 pkt.write_be::<u32>(0).await?;
-                self.write_mc_packet(pkt).await?;
+                self.write_mc_packet(&pkt).await?;
 
                 let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
                 pkt.write_varint(0u32).await?;
                 pkt.write_varint(0u32).await?;
-                self.write_mc_packet(pkt).await?;
+                self.write_mc_packet(&pkt).await?;
 
                 // for cx in -2i16..=2 {
                 //     for cz in -2i16..=2 {

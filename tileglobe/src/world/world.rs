@@ -1,9 +1,10 @@
 use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
 use crate::world::{BlockPos, ChunkPos};
+use alloc::vec::Vec;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
-use tileglobe_utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
+use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
 
 #[allow(async_fn_in_trait)]
 pub trait World {
@@ -18,6 +19,12 @@ pub trait World {
         pos: ChunkPos,
         writer: &mut W,
     ) -> Result<(), EIOError<W::Error>>;
+
+    async fn gen_blocks_update_packets_and_clear_changes(
+        &self,
+    ) -> Vec<MCPacketBuffer> {
+        Vec::new()
+    }
 }
 
 pub struct LocalWorld<
@@ -154,5 +161,18 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
         writer.write_varint(0u32).await?;
 
         Ok(())
+    }
+
+    async fn gen_blocks_update_packets_and_clear_changes(&self) -> Vec<MCPacketBuffer> {
+        let mut vec = Vec::<MCPacketBuffer>::new();
+        for x in MIN_X..(MIN_X + SIZE_X as i16) {
+            for y in MIN_Y..(MIN_Y + SIZE_Y as i16) {
+                let pos = ChunkPos::new(x, y);
+                if let Ok(mut chunk) = self.get_chunk(pos).await {
+                    vec.extend(chunk.gen_blocks_update_packets_and_clear_changes(pos).await);
+                }
+            }
+        }
+        vec
     }
 }

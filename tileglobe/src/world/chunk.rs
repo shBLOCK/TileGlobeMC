@@ -1,8 +1,9 @@
-use crate::world::ChunkLocalPos;
 use crate::world::block::BlockState;
+use crate::world::{ChunkLocalPos, ChunkPos};
+use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use tileglobe_utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
+use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
 
 pub struct Chunk {
     sections: Vec<ChunkSection>,
@@ -14,9 +15,7 @@ impl Chunk {
     pub fn new(sections: RangeInclusive<i8>) -> Self {
         let bottom = *sections.start();
         Self {
-            sections: sections
-                .map(|_| ChunkSection::new())
-                .collect(),
+            sections: sections.map(|y| ChunkSection::new(y)).collect(),
             bottom_section: bottom,
         }
     }
@@ -48,18 +47,35 @@ impl Chunk {
             .get_section_mut(pos.section())?
             .set_block_state(pos.section_block_index(), bs))
     }
+
+    pub async fn gen_blocks_update_packets_and_clear_changes(
+        &mut self,
+        chunk_pos: ChunkPos,
+    ) -> Vec<MCPacketBuffer> {
+        let mut vec = Vec::<MCPacketBuffer>::with_capacity(self.sections.len());
+        for section in self.sections.iter_mut() {
+            if let Some(pkt) = section.gen_blocks_update_packet_and_clear_changes(chunk_pos).await {
+                vec.push(pkt);
+            }
+        }
+        vec
+    }
 }
 
 pub struct ChunkSection {
+    section_y: i8,
     blocks: [BlockState; 16 * 16 * 16],
     non_air_blocks: u16,
+    changes: BTreeSet<u16>,
 }
 
 impl ChunkSection {
-    pub fn new() -> Self {
+    pub fn new(section_y: i8) -> Self {
         Self {
+            section_y,
             blocks: [Default::default(); 16 * 16 * 16],
             non_air_blocks: 0,
+            changes: BTreeSet::new(),
         }
     }
 
@@ -70,6 +86,9 @@ impl ChunkSection {
     pub fn set_block_state(&mut self, index: u16, blockstate: BlockState) -> BlockState {
         let old = self.blocks[index as usize];
         self.blocks[index as usize] = blockstate;
+        if blockstate != old {
+            self.changes.insert(index);
+        }
         if old.is_air() {
             if !blockstate.is_air() {
                 self.non_air_blocks += 1;
@@ -127,5 +146,30 @@ impl ChunkSection {
             }
         }
         Ok(())
+    }
+
+    async fn gen_blocks_update_packet_and_clear_changes(
+        &mut self,
+        chunk_pos: ChunkPos,
+    ) -> Option<MCPacketBuffer> {
+        if self.changes.is_empty() {
+            return None;
+        }
+        let mut pkt = MCPacketBuffer::new(77).await; // section_blocks_update
+        pkt.write_be::<u64>(
+            self.section_y as u64 | ((chunk_pos.y as u64) << 20) | ((chunk_pos.x as u64) << 42),
+        )
+        .await
+        .unwrap();
+        pkt.write_varint(self.changes.len() as u32).await.unwrap();
+        for pos in self.changes.iter() {
+            let blockstate = self.get_block_state(*pos);
+            let encoded_pos = (*pos & 0xF) << 8 | ((*pos >> 8) & 0xF) | (*pos & 0xF0);
+            pkt.write_varint::<u64>(((blockstate.0 as u64) << 12) | (encoded_pos as u64))
+                .await
+                .unwrap();
+        }
+        self.changes.clear();
+        Some(pkt)
     }
 }
