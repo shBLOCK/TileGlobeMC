@@ -13,7 +13,7 @@ use embassy_rp::peripherals::{DMA_CH0, DMA_CH15, PIO2};
 use embassy_rp::pio::InterruptHandler;
 use embassy_rp::pio::Pio;
 use embassy_rp::{Peripherals, bind_interrupts};
-use embassy_time::Duration;
+use embassy_time::{Duration, Ticker};
 use embassy_time::Timer;
 use static_cell::StaticCell;
 
@@ -33,15 +33,16 @@ pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
 use embassy_net::Stack;
 use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
 use embassy_rp::clocks::RoscRng;
+use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
-use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
+use embassy_rp::adc::Adc;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
-use tileglobe::world::{ChunkLocalPos, ChunkPos};
-use tileglobe::world::world::LocalWorld;
-use tileglobe_server::mc_server::MCServer;
+use tileglobe::world::world::{LocalWorld, World};
+use tileglobe::world::{BlockPos, ChunkLocalPos, ChunkPos};
 use tileglobe_server::MCClient;
+use tileglobe_server::mc_server::MCServer;
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -57,7 +58,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
             embassy_rp::psram::Config::aps6404l(),
         )
-        .expect("Failed to initialize PSRAM");
+            .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
@@ -70,151 +71,173 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         unsafe { HEAP.init(start, end - start) }
     }
 
-    {
-        bind_interrupts!(struct Irqs {
-            PIO2_IRQ_0 => InterruptHandler<PIO2>;
-        });
+    bind_interrupts!(struct Irqs {
+        PIO2_IRQ_0 => InterruptHandler<PIO2>;
+    });
 
-        #[embassy_executor::task(pool_size = 1)]
-        async fn cyw43_task(
-            runner: cyw43::Runner<
-                'static,
-                Output<'static>,
-                cyw43_pio::PioSpi<'static, PIO2, 0, DMA_CH0>,
-            >,
-        ) -> ! {
-            runner.run().await
-        }
+    #[embassy_executor::task(pool_size = 1)]
+    async fn cyw43_task(
+        runner: cyw43::Runner<
+            'static,
+            Output<'static>,
+            cyw43_pio::PioSpi<'static, PIO2, 0, DMA_CH0>,
+        >,
+    ) -> ! {
+        runner.run().await
+    }
 
-        #[embassy_executor::task(pool_size = 1)]
-        async fn net_task(
-            mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>,
-        ) -> ! {
-            runner.run().await
-        }
+    #[embassy_executor::task(pool_size = 1)]
+    async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>) -> ! {
+        runner.run().await
+    }
 
-        let fw = include_bytes!("../../../embassy/cyw43-firmware/43439A0.bin");
-        let clm = include_bytes!("../../../embassy/cyw43-firmware/43439A0_clm.bin");
+    let fw = include_bytes!("../../../embassy/cyw43-firmware/43439A0.bin");
+    let clm = include_bytes!("../../../embassy/cyw43-firmware/43439A0_clm.bin");
 
-        let pwr = Output::new(ps.PIN_23, Level::Low);
-        let cs = Output::new(ps.PIN_25, Level::High);
-        let mut pio = Pio::new(ps.PIO2, Irqs);
-        let spi = cyw43_pio::PioSpi::new(
-            &mut pio.common,
-            pio.sm0,
-            cyw43_pio::DEFAULT_CLOCK_DIVIDER,
-            pio.irq0,
-            cs,
-            ps.PIN_24,
-            ps.PIN_29,
-            ps.DMA_CH0,
-        );
+    let pwr = Output::new(ps.PIN_23, Level::Low);
+    let cs = Output::new(ps.PIN_25, Level::High);
+    let mut pio = Pio::new(ps.PIO2, Irqs);
+    let spi = cyw43_pio::PioSpi::new(
+        &mut pio.common,
+        pio.sm0,
+        cyw43_pio::DEFAULT_CLOCK_DIVIDER,
+        pio.irq0,
+        cs,
+        ps.PIN_24,
+        ps.PIN_29,
+        ps.DMA_CH0,
+    );
 
-        static STATE: StaticCell<cyw43::State> = StaticCell::new();
-        let state = STATE.init(cyw43::State::new());
-        let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
-        spawner.spawn(unwrap!(cyw43_task(runner)));
+    static STATE: StaticCell<cyw43::State> = StaticCell::new();
+    let state = STATE.init(cyw43::State::new());
+    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
+    spawner.spawn(unwrap!(cyw43_task(runner)));
 
-        control.init(clm).await;
-        control
-            .set_power_management(cyw43::PowerManagementMode::None)
-            .await;
+    control.init(clm).await;
+    control
+        .set_power_management(cyw43::PowerManagementMode::None)
+        .await;
 
-        // Use a link-local address for communication without DHCP server
-        let config = embassy_net::Config::ipv4_static(embassy_net::StaticConfigV4 {
-            address: embassy_net::Ipv4Cidr::new(embassy_net::Ipv4Address::new(169, 254, 1, 1), 16),
-            dns_servers: heapless::Vec::new(),
-            gateway: None,
-        });
+    // Use a link-local address for communication without DHCP server
+    let config = embassy_net::Config::ipv4_static(embassy_net::StaticConfigV4 {
+        address: embassy_net::Ipv4Cidr::new(embassy_net::Ipv4Address::new(169, 254, 1, 1), 16),
+        dns_servers: heapless::Vec::new(),
+        gateway: None,
+    });
 
-        // Generate random seed
-        let seed = RoscRng.next_u64();
+    // Generate random seed
+    let seed = RoscRng.next_u64();
 
-        // Init network stack
-        static RESOURCES: StaticCell<embassy_net::StackResources<3>> = StaticCell::new();
-        let (stack, runner) = embassy_net::new(
-            net_device,
-            config,
-            RESOURCES.init(embassy_net::StackResources::new()),
-            seed,
-        );
+    // Init network stack
+    static RESOURCES: StaticCell<embassy_net::StackResources<3>> = StaticCell::new();
+    let (stack, runner) = embassy_net::new(
+        net_device,
+        config,
+        RESOURCES.init(embassy_net::StackResources::new()),
+        seed,
+    );
 
-        spawner.spawn(unwrap!(net_task(runner)));
+    spawner.spawn(unwrap!(net_task(runner)));
 
-        control.start_ap_wpa2("TileGlobeMC", "password", 5).await;
-        // control.start_ap_open("TileGlobeMC", 5).await;
+    control.start_ap_wpa2("TileGlobeMC", "password", 5).await;
+    // control.start_ap_open("TileGlobeMC", 5).await;
 
-        let world = WORLD.init(_World::new());
+    let world = WORLD.init(_World::new());
 
-        for cz in -1i16..=1 {
-            for cx in -1i16..=1 {
-                let mut chunk = Chunk::new(-4..=19);
-                for sz in 0..16u8 {
-                    for sx in 0..16u8 {
-                        for y in (-4 * 16)..(19 * 16i16) {
-                            let (x, z) = (cx * 16 + sx as i16, cz * 16 + sz as i16);
-                            let mut blockstate = BlockState(0);
-                            if (-10..=-1).contains(&y) {
-                                blockstate = BlockState(10);
-                            }
-                            if blockstate.0 != 0 {
-                                let _ = chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate);
-                            }
+    for cz in -1i16..=1 {
+        for cx in -1i16..=1 {
+            let mut chunk = Chunk::new(-4..=19);
+            for sz in 0..16u8 {
+                for sx in 0..16u8 {
+                    for y in (-4 * 16)..(19 * 16i16) {
+                        let (x, z) = (cx * 16 + sx as i16, cz * 16 + sz as i16);
+                        let mut blockstate = BlockState(0);
+                        if (-10..=-1).contains(&y) {
+                            blockstate = BlockState(10);
+                        }
+                        if blockstate.0 != 0 {
+                            let _ =
+                                chunk.set_block_state(ChunkLocalPos::new(sx, y, sz), blockstate);
                         }
                     }
                 }
-                world.set_chunk(ChunkPos::new(cx, cz), chunk).await.unwrap();
             }
-        }
-
-        let mc_server = MC_SERVER.init(MCServer::new(world));
-
-        #[embassy_executor::task(pool_size = 3)]
-        async fn socket_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, stack: Stack<'static>) -> ! {
-            let mut rx_buffer = [0u8; 4096];
-            let mut tx_buffer = [0u8; 32768];
-
-            loop {
-                let mut socket = TcpSocket::new(stack, unsafe { &mut *(&mut rx_buffer as *mut [u8]) }, unsafe { &mut *(&mut tx_buffer as *mut [u8]) });
-
-                if let Err(err) = socket.accept(25565).await {
-                    warn!("Failed to accept connection: {:?}", err);
-                    continue;
-                }
-
-                let endpoint = socket.remote_endpoint();
-
-                info!("Connected to {:?}", endpoint);
-
-                let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
-
-                let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(
-                    mc_server,
-                    unsafe { &mut *(&mut rx as *mut TcpReader) },
-                    unsafe { &mut *(&mut tx as *mut TcpWriter) },
-                    endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
-                );
-                let result = client.run().await;
-                info!("Client disconnected: {:?}", result);
-
-                socket.close();
-                if let Err(err) = socket.flush().await {
-                    warn!("Failed to close socket: {:?}", err);
-                }
-                socket.abort();
-            }
-        }
-
-        for _ in 0..3 {
-            spawner.spawn(socket_task(mc_server, stack).unwrap());
+            world.set_chunk(ChunkPos::new(cx, cz), chunk).await.unwrap();
         }
     }
 
+    let mc_server = MC_SERVER.init(MCServer::new(world));
+
+    #[embassy_executor::task(pool_size = 3)]
+    async fn socket_task(
+        mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>,
+        stack: Stack<'static>,
+    ) -> ! {
+        let mut rx_buffer = [0u8; 4096];
+        let mut tx_buffer = [0u8; 32768];
+
+        loop {
+            let mut socket = TcpSocket::new(
+                stack,
+                unsafe { &mut *(&mut rx_buffer as *mut [u8]) },
+                unsafe { &mut *(&mut tx_buffer as *mut [u8]) },
+            );
+
+            if let Err(err) = socket.accept(25565).await {
+                warn!("Failed to accept connection: {:?}", err);
+                continue;
+            }
+
+            let endpoint = socket.remote_endpoint();
+
+            info!("Connected to {:?}", endpoint);
+
+            let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
+
+            let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(
+                mc_server,
+                unsafe { &mut *(&mut rx as *mut TcpReader) },
+                unsafe { &mut *(&mut tx as *mut TcpWriter) },
+                endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
+            );
+            let result = client.run().await;
+            info!("Client disconnected: {:?}", result);
+
+            socket.close();
+            if let Err(err) = socket.flush().await {
+                warn!("Failed to close socket: {:?}", err);
+            }
+            socket.abort();
+        }
+    }
+
+    for _ in 0..3 {
+        spawner.spawn(socket_task(mc_server, stack).unwrap());
+    }
+
+    bind_interrupts!(struct AdcIrqs {
+        ADC_IRQ_FIFO => embassy_rp::adc::InterruptHandler;
+    });
+
+    let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
+    let mut adc40 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
+
+    let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     let mut i = 0;
     loop {
-        info!("Hello world! {}", i);
-        Timer::after_secs(1).await;
-        i += 1;
+        info!("Tick {}", i);
+        let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
+        for i in 0..32 {
+            let state = if i as f32 / 30.0 <= adc_value_1 {
+                BlockState(9)
+            } else {
+                BlockState(0)
+            };
+            world.set_block_state(BlockPos::new(0, i, 0), state).await.unwrap();
+        }
+        world.tick().await;
+        mc_server.tick().await;
+        tick_ticker.next().await;
     }
 }
 

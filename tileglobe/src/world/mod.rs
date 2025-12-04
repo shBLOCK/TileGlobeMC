@@ -1,4 +1,4 @@
-use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
+use glam::{I16Vec2, I16Vec3, IVec2, Vec3Swizzles};
 
 pub mod block;
 pub mod chunk;
@@ -19,6 +19,10 @@ pub mod world;
 #[display("{}", self.0)]
 pub struct BlockPos(I16Vec3);
 impl BlockPos {
+    pub fn new(x: i16, y: i16, z: i16) -> Self {
+        Self(I16Vec3::new(x, y, z))
+    }
+    
     pub fn chunk_pos(self) -> ChunkPos {
         ChunkPos(self.xz().div_euclid(I16Vec2::splat(16)))
     }

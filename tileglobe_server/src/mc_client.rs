@@ -52,9 +52,16 @@ impl<
     WORLD: World,
     SM: RawMutex,
 > Player for MCClient<'_, M, RX, TX, WORLD, SM>
+where
+    RX::Error: 'static,
+    TX::Error: 'static,
 {
     fn uuid(&self) -> Uuid {
         self.player_data.as_ref().unwrap().uuid
+    }
+
+    async fn tick(&self) {
+        self.send_chunk(ChunkPos::new(0, 0)).await;
     }
 }
 
@@ -87,9 +94,9 @@ impl<
 
 impl<
     'a,
-    M: RawMutex + 'static,
-    RX: embedded_io_async::Read + 'static,
-    TX: embedded_io_async::Write + 'static,
+    M: RawMutex,
+    RX: embedded_io_async::Read,
+    TX: embedded_io_async::Write,
     WORLD: World,
     SM: RawMutex,
 > MCClient<'a, M, RX, TX, WORLD, SM>
@@ -97,21 +104,6 @@ where
     RX::Error: 'static,
     TX::Error: 'static,
 {
-    pub fn new(
-        server: &'a MCServer<'a, SM, WORLD>,
-        rx: RX,
-        tx: TX,
-        addr: Option<SocketAddr>,
-    ) -> Self {
-        Self {
-            server,
-            rx: Mutex::new(rx),
-            tx: Mutex::new(tx),
-            addr,
-            player_data: None,
-        }
-    }
-
     async fn skip_unknown_packet(
         &self,
         rx: &mut RX,
@@ -144,6 +136,45 @@ where
             self, packet_type, packet_length
         );
         Ok((packet_length, packet_type))
+    }
+
+    async fn send_chunk(&self, pos: ChunkPos) -> Result<(), MCClientError> {
+        let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
+        pkt.write_be::<i32>(pos.x.to_i32().unwrap()).await?;
+        pkt.write_be::<i32>(pos.y.to_i32().unwrap()).await?;
+
+        self.server.world.write_net_chunk(pos, &mut pkt).await?;
+
+        self.write_mc_packet(pkt).await?;
+        Ok(())
+    }
+}
+
+impl<
+    'a,
+    M: RawMutex + 'static,
+    RX: embedded_io_async::Read + 'static,
+    TX: embedded_io_async::Write + 'static,
+    WORLD: World,
+    SM: RawMutex,
+> MCClient<'a, M, RX, TX, WORLD, SM>
+where
+    RX::Error: 'static,
+    TX::Error: 'static,
+{
+    pub fn new(
+        server: &'a MCServer<'a, SM, WORLD>,
+        rx: RX,
+        tx: TX,
+        addr: Option<SocketAddr>,
+    ) -> Self {
+        Self {
+            server,
+            rx: Mutex::new(rx),
+            tx: Mutex::new(tx),
+            addr,
+            player_data: None,
+        }
     }
 
     async fn handle_handshake(&mut self) -> Result<ClientIntent, MCClientError> {
@@ -324,10 +355,11 @@ where
                 self.handle_configure().await?;
 
                 // self.server.add_player(Box::new(self)).await;
-                let p = unsafe {
-                    &self as *const Self
+                unsafe {
+                    self.server
+                        .add_player(unsafe { &*(&self as *const Self) })
+                        .await
                 };
-                unsafe { (&*p).server.add_player(&*p).await };
 
                 let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
                 pkt.write_be::<u32>(0).await?; // entity id
@@ -384,16 +416,7 @@ where
 
                 for cx in -2i16..=2 {
                     for cz in -2i16..=2 {
-                        let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
-                        pkt.write_be::<i32>(cx.to_i32().unwrap()).await?;
-                        pkt.write_be::<i32>(cz.to_i32().unwrap()).await?;
-
-                        self.server
-                            .world
-                            .write_net_chunk(ChunkPos::new(cx, cz), &mut pkt)
-                            .await?;
-
-                        self.write_mc_packet(pkt).await?;
+                        self.send_chunk(ChunkPos::new(cx, cz)).await;
                     }
                 }
 

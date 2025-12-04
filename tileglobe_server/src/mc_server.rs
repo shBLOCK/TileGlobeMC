@@ -1,5 +1,8 @@
 use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
+use core::mem::MaybeUninit;
+use dynify::Dynify;
+use smallvec::SmallVec;
 use uuid::Uuid;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
@@ -7,13 +10,13 @@ use tileglobe::world::world::World;
 use crate::player::DynifiedPlayer;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {
-    pub world: &'a mut WORLD,
+    pub world: &'a WORLD,
     _phantom: PhantomData<M>,
     players: Mutex<M, BTreeMap<Uuid, &'a dyn DynifiedPlayer>>,
     // players: Mutex<M, BTreeMap<Uuid, Arc<dyn DynifiedPlayer>>>,
 }
 impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
-    pub fn new(world: &'a mut WORLD) -> Self {
+    pub fn new(world: &'a WORLD) -> Self {
         Self {
             world,
             // players: Mutex::new(BTreeMap::new()),
@@ -54,4 +57,11 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
     //         self.world.tick().await;
     //     }
     // }
+
+    pub async fn tick(&self) {
+        for player in self.players.lock().await.values() {
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            player.tick().init(&mut c).await
+        }
+    }
 }
