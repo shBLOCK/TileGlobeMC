@@ -1,10 +1,15 @@
+use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
+use uuid::Uuid;
 use embassy_sync::blocking_mutex::raw::RawMutex;
+use embassy_sync::mutex::Mutex;
 use tileglobe::world::world::World;
+use crate::player::DynifiedPlayer;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {
     pub world: &'a mut WORLD,
     _phantom: PhantomData<M>,
+    players: Mutex<M, BTreeMap<Uuid, &'a dyn DynifiedPlayer>>,
     // players: Mutex<M, BTreeMap<Uuid, Arc<dyn DynifiedPlayer>>>,
 }
 impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
@@ -13,7 +18,16 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
             world,
             // players: Mutex::new(BTreeMap::new()),
             _phantom: Default::default(),
+            players: Mutex::new(BTreeMap::new()),
         }
+    }
+
+    pub async unsafe fn add_player(&self, player: &'a impl DynifiedPlayer) {
+        self.players.lock().await.insert(player.uuid(), player);
+    }
+
+    pub async fn remove_player(&self, uuid: Uuid) {
+        self.players.lock().await.remove(&uuid);
     }
 
     // pub async fn add_player<'s, T: DynifiedPlayer + 'static>(

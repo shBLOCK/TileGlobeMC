@@ -31,7 +31,7 @@ pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
 ];
 
 use embassy_net::Stack;
-use embassy_net::tcp::TcpSocket;
+use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
 use embassy_rp::clocks::RoscRng;
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
@@ -171,11 +171,11 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
         #[embassy_executor::task(pool_size = 3)]
         async fn socket_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, stack: Stack<'static>) -> ! {
-            let mut rx_buffer = [0; 4096];
-            let mut tx_buffer = [0; 32768];
+            let mut rx_buffer = [0u8; 4096];
+            let mut tx_buffer = [0u8; 32768];
 
             loop {
-                let mut socket = TcpSocket::new(stack, &mut rx_buffer, &mut tx_buffer);
+                let mut socket = TcpSocket::new(stack, unsafe { &mut *(&mut rx_buffer as *mut [u8]) }, unsafe { &mut *(&mut tx_buffer as *mut [u8]) });
 
                 if let Err(err) = socket.accept(25565).await {
                     warn!("Failed to accept connection: {:?}", err);
@@ -186,12 +186,12 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
                 info!("Connected to {:?}", endpoint);
 
-                let (mut rx, mut tx) = socket.split();
+                let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
 
                 let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(
                     mc_server,
-                    &mut rx,
-                    &mut tx,
+                    unsafe { &mut *(&mut rx as *mut TcpReader) },
+                    unsafe { &mut *(&mut tx as *mut TcpWriter) },
                     endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
                 );
                 let result = client.run().await;

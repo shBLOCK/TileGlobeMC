@@ -87,9 +87,9 @@ impl<
 
 impl<
     'a,
-    M: RawMutex,
-    RX: embedded_io_async::Read,
-    TX: embedded_io_async::Write,
+    M: RawMutex + 'static,
+    RX: embedded_io_async::Read + 'static,
+    TX: embedded_io_async::Write + 'static,
     WORLD: World,
     SM: RawMutex,
 > MCClient<'a, M, RX, TX, WORLD, SM>
@@ -324,6 +324,10 @@ where
                 self.handle_configure().await?;
 
                 // self.server.add_player(Box::new(self)).await;
+                let p = unsafe {
+                    &self as *const Self
+                };
+                unsafe { (&*p).server.add_player(&*p).await };
 
                 let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
                 pkt.write_be::<u32>(0).await?; // entity id
@@ -395,7 +399,7 @@ where
 
                 self.play().await?;
 
-                // self.server.remove_player(self.uuid()).await;
+                self.server.remove_player(self.uuid()).await;
             }
         };
         Ok(())
