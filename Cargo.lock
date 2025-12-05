@@ -2488,6 +2488,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "tileglobe_runtime_core_rp2"
+version = "0.1.0"
+dependencies = [
+ "cortex-m",
+ "cortex-m-rt",
+ "cyw43",
+ "cyw43-pio",
+ "defmt 1.0.1",
+ "defmt-rtt",
+ "embassy-executor",
+ "embassy-futures",
+ "embassy-net",
+ "embassy-rp",
+ "embassy-sync 0.7.2",
+ "embassy-time",
+ "embedded-alloc",
+ "fixed",
+ "heapless",
+ "panic-probe",
+ "static_cell",
+ "tileglobe",
+ "tileglobe_server",
+]
+
+[[package]]
 name = "tileglobe_runtime_pc"
 version = "0.1.0"
 dependencies = [

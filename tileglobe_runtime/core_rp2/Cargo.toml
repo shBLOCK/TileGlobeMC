@@ -1,0 +1,56 @@
+[package]
+name = "tileglobe_runtime_core_rp2"
+version = "0.1.0"
+edition.workspace = true
+
+[[bin]]
+name = "tileglobe_runtime_core_rp2"
+path = "src/main.rs"
+test = false
+bench = false
+
+[dependencies]
+tileglobe = { path = "../../tileglobe", features = ["defmt"] }
+tileglobe_server = { path = "../../tileglobe_server", features = ["defmt"] }
+
+embassy-executor = { workspace = true, features = [
+    "arch-cortex-m",
+    "executor-interrupt",
+    "defmt"
+] }
+embassy-time = { workspace = true, features = ["defmt"] }
+embassy-sync = { workspace = true, features = ["defmt"] }
+embassy-futures = { workspace = true }
+embassy-rp = { version = "0.8.0", path = "../../embassy/embassy-rp", features = [
+    "rp235xb",
+    "unstable-pac",
+    "time-driver",
+    "critical-section-impl",
+    "binary-info",
+    "defmt"
+] }
+embassy-net = { workspace = true, features = ["defmt"] }
+#embassy-net-esp-hosted = { version = "0.2.1", path = "../../embassy/embassy-net-esp-hosted", features = ["defmt"] }
+
+static_cell = { workspace = true }
+heapless = { workspace = true }
+
+defmt = { workspace = true }
+
+embedded-alloc = "0.6.0"
+
+defmt-rtt = "1.1.0"
+
+cortex-m = { version = "0.7.6", features = ["inline-asm"] }
+cortex-m-rt = "0.7.0"
+panic-probe = { version = "1.0.0", features = ["print-defmt"] }
+
+cyw43 = { version = "0.5.0", path = "../../embassy/cyw43", features = ["defmt", "firmware-logs"] }
+cyw43-pio = { version = "0.8.0", path = "../../embassy/cyw43-pio", features = ["defmt"] }
+
+fixed = "1.23.1"
+
+[package.metadata.embassy]
+build = [
+    { target = "thumbv8m.main-none-eabihf", artifact-dir = "out/rp2350" }
+]

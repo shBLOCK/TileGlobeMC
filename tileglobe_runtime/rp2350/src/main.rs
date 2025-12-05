@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+use alloc::vec::Vec;
 use core::net::SocketAddr;
 use defmt::*;
 use embassy_executor::Executor;
@@ -33,10 +34,10 @@ use embassy_net::Stack;
 use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
 use embassy_rp::adc::Adc;
 use embassy_rp::clocks::RoscRng;
+use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
-use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World};
@@ -58,7 +59,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
             embassy_rp::psram::Config::aps6404l(),
         )
-        .expect("Failed to initialize PSRAM");
+            .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
@@ -224,18 +225,34 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let mut adc41 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
     let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
 
+    // let mut samples = [0f32; 20];
+    let mut samples = Vec::<f32>::new();
+
     let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     let mut i = 0;
     loop {
         info!("Tick8 {}", i);
         let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
         let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
+
+        samples.push(adc_value_1);
+        if samples.len() > 100 {
+            samples.remove(0);
+        }
+
         let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
-        // info!("Adc temp: {}", adc_temperature);
-        for y in 0..32 {
-            for x in 0..32 {
+        info!("Adc temp: {}", adc_temperature);
+        for y in 0i16..32 {
+            for x in 0i16..32 {
+                let ind = samples.len() as i16 - 1 - x;
+                let adc_value_1 = if ind >= 0 {
+                    let a = *samples.get(ind as usize).or(Some(&0f32)).unwrap();
+                    a
+                } else {
+                    adc_value_1
+                };
                 let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
-                    BlockState(if adc_temperature > 0.21 { 4340 } else { 117 })
+                    BlockState(if adc_temperature < 0.19 { 5958 } else if adc_temperature < 0.2 { 86 + 15 } else if adc_temperature < 0.205 { 117 } else { 4340 })
                 } else {
                     BlockState(0)
                 };
