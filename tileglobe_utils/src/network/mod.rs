@@ -6,6 +6,8 @@ mod varint;
 mod enums;
 mod bitbuf;
 mod bytebuf;
+mod block_pos;
+mod bool;
 
 pub use error_wrappers::*;
 pub use mc_packet::*;
@@ -15,6 +17,8 @@ pub use uuid::*;
 pub use varint::*;
 pub use enums::*;
 pub use bitbuf::*;
+pub use block_pos::*;
+pub use bool::*;
 
 use core::mem::MaybeUninit;
 

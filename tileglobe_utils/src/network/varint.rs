@@ -2,12 +2,14 @@
 
 use crate::network::{EIOError, ReadExt};
 use alloc::boxed::Box;
+use core::cmp::max;
 use core::error::Error;
 use core::fmt::Formatter;
 use core::fmt::{Debug, Display};
 use core::ops::{BitAnd, BitOrAssign, Shl, ShrAssign};
+use num_traits::PrimInt;
 
-trait VarIntType<const MAX_BYTES: usize>:
+pub trait VarIntType<const MAX_BYTES: usize>:
     Copy
     + From<u8>
     + TryInto<u8>
@@ -16,7 +18,12 @@ trait VarIntType<const MAX_BYTES: usize>:
     + BitOrAssign
     + BitAnd<Output = Self>
     + Eq
+    + PrimInt
 {
+    fn varint_size(self) -> usize {
+        let bits = size_of::<Self>() * 8 - self.leading_zeros() as usize;
+        max(1, bits.div_ceil(7))
+    }
 }
 impl VarIntType<5> for i32 {}
 impl VarIntType<5> for i64 {}
@@ -38,7 +45,7 @@ pub trait ReadVarInt<const MAX_BYTES: usize>: embedded_io_async::Read {
                 .read_bytes::<1>()
                 .await
                 .map_err(|err| ReadVarIntError::IOError(err.into()))?[0];
-            num |= I::from(byte & 0x7F) << (i * 7);
+            num |= <I as From<u8>>::from(byte & 0x7F) << (i * 7);
             if byte & 0x80 == 0 {
                 return Ok(num);
             }

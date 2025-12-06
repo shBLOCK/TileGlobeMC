@@ -4,6 +4,7 @@ use crate::utils::MCPlayerUUID;
 use alloc::boxed::Box;
 use alloc::format;
 use alloc::string::String;
+use const_for::const_for;
 use core::cmp::max;
 use core::error::Error;
 use core::fmt::{Debug, Formatter};
@@ -11,16 +12,20 @@ use core::net::SocketAddr;
 use defmt_or_log::*;
 use embassy_futures::select::Either;
 use embassy_sync::blocking_mutex::raw::RawMutex;
-use embassy_sync::mutex::Mutex;
+use embassy_sync::mutex::{Mutex, MutexGuard};
 use embassy_time::{Duration, Ticker};
+use glam::Vec3;
 use num_traits::{ToPrimitive, abs};
-use tileglobe::world::ChunkPos;
+use smallvec::SmallVec;
+use tileglobe::world::block::BlockState;
 use tileglobe::world::world::World;
+use tileglobe_utils::direction::Direction;
 use tileglobe_utils::network::{
-    EIOError, EIOReadExactError, MCPacketBuffer, ReadExt, ReadNumPrimitive, ReadUTF8,
-    ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, WriteMCPacket, WriteNumPrimitive,
-    WriteUTF8, WriteUUID, WriteVarInt,
+    EIOError, EIOReadExactError, MCPacketBuffer, ReadBlockPos, ReadBool, ReadExt, ReadIndexedEnum,
+    ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, VarIntType,
+    WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
 };
+use tileglobe_utils::pos::ChunkPos;
 use uuid::Uuid;
 
 #[derive(derive_more::Display)]
@@ -37,12 +42,16 @@ pub struct MCClient<
     rx: Mutex<M, RX>,
     tx: Mutex<M, TX>,
     addr: Option<SocketAddr>,
-    player_data: Option<PlayerData>,
+    player_data: Option<Mutex<M, PlayerData>>,
+
+    _block_changes_to_ack: Mutex<M, SmallVec<[i32; 16]>>,
 }
 
 struct PlayerData {
     uuid: Uuid,
     name: String,
+    selected_hotbar_slot: u8,
+    inventory_items: [u16; 46],
 }
 
 impl<
@@ -56,12 +65,20 @@ where
     RX::Error: 'static,
     TX::Error: 'static,
 {
-    fn uuid(&self) -> Uuid {
-        self.player_data.as_ref().unwrap().uuid
+    async fn uuid(&self) -> Uuid {
+        self.player_data().await.uuid
     }
 
     async fn tick(&self) {
-
+        {
+            let mut _block_changes_to_ack = self._block_changes_to_ack.lock().await;
+            for seq in &*_block_changes_to_ack {
+                let mut pkt = MCPacketBuffer::new(4).await; // block_changed_ack
+                let _ = pkt.write_varint(*seq).await;
+                let _ = self.write_mc_packet(&pkt).await;
+            }
+            _block_changes_to_ack.clear();
+        }
     }
 
     // gross...
@@ -111,6 +128,10 @@ where
     RX::Error: 'static,
     TX::Error: 'static,
 {
+    async fn player_data(&self) -> MutexGuard<M, PlayerData> {
+        self.player_data.as_ref().unwrap().lock().await
+    }
+
     async fn skip_unknown_packet(
         &self,
         rx: &mut RX,
@@ -121,14 +142,8 @@ where
             "{} received unknown packet (type: {}, length: {}), skipping.",
             self, packet_type, packet_length
         );
-        let mut varintlen = 0;
-        let mut pt = packet_type;
-        while pt != 0 {
-            pt >>= 7;
-            varintlen += 1;
-        }
-        varintlen = max(varintlen, 1);
-        rx.skip_bytes(packet_length - varintlen).await
+        rx.skip_bytes(packet_length.saturating_sub(packet_type.varint_size()))
+            .await
     }
 
     async fn write_mc_packet(&self, pkt: &MCPacketBuffer) -> Result<(), EIOError<TX::Error>> {
@@ -138,10 +153,10 @@ where
     async fn read_mc_packet_header(&self, rx: &mut RX) -> Result<(usize, i32), MCClientError> {
         let packet_length = rx.read_varint::<i32>().await? as usize;
         let packet_type = rx.read_varint::<i32>().await?;
-        debug!(
-            "{} recv pkt: type: {}, length: {}",
-            self, packet_type, packet_length
-        );
+        // debug!(
+        //     "{} recv pkt: type: {}, length: {}",
+        //     self, packet_type, packet_length
+        // );
         Ok((packet_length, packet_type))
     }
 
@@ -181,6 +196,7 @@ where
             tx: Mutex::new(tx),
             addr,
             player_data: None,
+            _block_changes_to_ack: Mutex::new(SmallVec::new()),
         }
     }
 
@@ -253,17 +269,19 @@ where
                         let _given_player_uuid = rx.read_uuid().await?;
                         let player_uuid = Uuid::new_mc_offline_player(&player_name);
 
-                        self.player_data = Some(PlayerData {
+                        self.player_data = Some(Mutex::new(PlayerData {
                             uuid: player_uuid,
                             name: player_name,
-                        });
+                            selected_hotbar_slot: 0,
+                            inventory_items: [0; 46],
+                        }));
                     }
 
                     let mut pkt = MCPacketBuffer::new(2).await; // minecraft:login_finished
-                    pkt.write_uuid(self.player_data.as_ref().unwrap().uuid)
-                        .await?;
-                    pkt.write_utf8(&self.player_data.as_ref().unwrap().name)
-                        .await?;
+                    pkt.write_uuid(self.uuid().await).await?;
+                    {
+                        pkt.write_utf8(&self.player_data().await.name).await?;
+                    }
                     pkt.write_varint::<u32>(0).await?; // empty properties array
                     self.write_mc_packet(&pkt).await?;
                 }
@@ -335,6 +353,159 @@ where
         loop {
             let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
             match packet_type {
+                63 => {
+                    // use_item_on
+                    let hand = rx.read_varint::<u32>().await?;
+                    let pos = rx.read_block_pos().await?;
+                    let face = rx.read_indexed_enum::<Direction>().await?;
+                    let _cursor_pos = Vec3::new(
+                        rx.read_be().await?,
+                        rx.read_be().await?,
+                        rx.read_be().await?,
+                    );
+                    let _inside_block = rx.read_bool().await?;
+                    let _world_border_hit = rx.read_bool().await?;
+                    let sequence = rx.read_varint::<i32>().await?;
+
+                    let opos = pos.offset_dir(face);
+                    let player_data = self.player_data().await;
+                    let slot = if hand == 0 {
+                        36 + player_data.selected_hotbar_slot
+                    } else {
+                        45
+                    };
+                    let item = player_data.inventory_items[slot as usize];
+                    const ITEM_TO_BLOCK: [BlockState; 1416] = const {
+                        use const_for::const_for;
+                        let mut table = [BlockState(0); 1416];
+
+                        table[1] = BlockState(1); // stone
+                        table[28] = BlockState(10); // dirt
+                        table[688] = BlockState(3042 + 1160); // redstone
+                        table[689] = BlockState(5916); // redstone torch
+                        table[690] = BlockState(10032); // redstone block
+                        table[691] = BlockState(6063); // redstone repeater
+                        table[692] = BlockState(9985); // redstone comparator
+                        table[703] = BlockState(5802 + 9); // lever
+                        table[713] = BlockState(5926 + 9); // stone button
+                        table[715] = BlockState(9396 + 9); // wood button
+                        table[705] = BlockState(10000 + 16); // daylight detector
+                        table[711] = BlockState(8201 + 1); // redstone lamp
+                        table[1407] = BlockState(25768 + 3); // waxed copper bulb
+                        table[712] = BlockState(581 + 1); // note block
+                        table[697] = BlockState(13573 + 5); // observer
+
+                        const_for!(i in 0u16..16 => { // wools
+                            table[(213 + i) as usize] = BlockState(2093 + i);
+                        });
+
+                        table
+                    };
+
+                    if let Ok(_) = self
+                        .server
+                        .world
+                        .set_block_state(
+                            opos,
+                            *ITEM_TO_BLOCK.get(item as usize).unwrap_or(&BlockState(0)),
+                        )
+                        .await
+                    {
+                        self._block_changes_to_ack.lock().await.push(sequence);
+                    }
+                }
+                52 => {
+                    // set_carries_item
+                    let slot = rx.read_be::<i16>().await?;
+                    self.player_data().await.selected_hotbar_slot = slot.clamp(0, 8) as u8;
+                }
+                55 => {
+                    // set_creative_mode_slot
+                    let mut pkt_consumed = packet_type.varint_size();
+                    let slot = rx.read_be::<i16>().await?;
+                    pkt_consumed += 2;
+                    let item_count = rx.read_varint::<u32>().await?;
+                    pkt_consumed += item_count.varint_size();
+                    let item_id = if item_count > 0 {
+                        let id = rx.read_varint::<i32>().await?;
+                        pkt_consumed += id.varint_size();
+                        max(0, id) as u16
+                    } else {
+                        0
+                    };
+                    rx.skip_bytes(packet_length - pkt_consumed).await?;
+                    self.player_data().await.inventory_items[slot as usize] = item_id;
+                    info!("slot: {} item: {}", slot, item_id);
+                }
+                4 => {
+                    // change_game_mode
+                    let mode = rx.read_varint::<u32>().await?;
+
+                    let mut pkt = MCPacketBuffer::new(34).await;
+                    pkt.write_be(3u8).await?; // change game mode
+                    pkt.write_be(mode as f32).await?;
+                    self.write_mc_packet(&pkt).await?;
+                }
+                29 => {
+                    // move_player_pos
+                    let (_x, _y, _z) = (
+                        rx.read_be::<f64>().await?,
+                        rx.read_be::<f64>().await?,
+                        rx.read_be::<f64>().await?,
+                    );
+                    let _flags = rx.read_be::<u8>().await?;
+                }
+                30 => {
+                    // move_player_pos_rot
+                    let (_x, _y, _z) = (
+                        rx.read_be::<f64>().await?,
+                        rx.read_be::<f64>().await?,
+                        rx.read_be::<f64>().await?,
+                    );
+                    let (_yaw, _pitch) = (rx.read_be::<f32>().await?, rx.read_be::<f32>().await?);
+                    let _flags = rx.read_be::<u8>().await?;
+                }
+                31 => {
+                    // move_player_rot
+                    let (_yaw, _pitch) = (rx.read_be::<f32>().await?, rx.read_be::<f32>().await?);
+                    let _flags = rx.read_be::<u8>().await?;
+                }
+                32 => {
+                    // move_player_status_only
+                    let _flags = rx.read_be::<u8>().await?;
+                }
+                12 => { // client_tick_end
+                }
+                27 => { // keep_alive
+                    let _id = rx.read_be::<u64>().await?;
+                }
+                42 => { // player_input
+                    let _flags = rx.read_be::<u8>().await?;
+                }
+                40 => { // player_action
+                    let action = rx.read_varint::<u32>().await?;
+                    let pos = rx.read_block_pos().await?;
+                    let _face = rx.read_indexed_enum::<Direction>().await?;
+                    let sequence = rx.read_varint::<i32>().await?;
+                    match action {
+                        0 => { // started digging
+                            if let Ok(_) = self
+                                .server
+                                .world
+                                .set_block_state(
+                                    pos,
+                                    BlockState(0),
+                                )
+                                .await
+                            {
+                                self._block_changes_to_ack.lock().await.push(sequence);
+                            }
+                        }
+                        _ => {
+
+                        }
+                    }
+                }
                 _ => {
                     self.skip_unknown_packet(rx, packet_type, packet_length)
                         .await?;
@@ -392,22 +563,14 @@ where
                 pkt.write_be(false as u8).await?; // enforce secure chat
                 self.write_mc_packet(&pkt).await?;
 
+                let mut pkt = MCPacketBuffer::new(30).await; // entity_event
+                pkt.write_be(0u32).await?;
+                pkt.write_be(28u8).await?; //	Set op permission level to 4
+                self.write_mc_packet(&pkt).await?;
+
                 let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
                 pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
                 pkt.write_be::<f32>(0.0).await?;
-                self.write_mc_packet(&pkt).await?;
-
-                let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
-                pkt.write_varint::<u32>(0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(100.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f32>(0.0).await?;
-                pkt.write_be::<f32>(0.0).await?;
-                pkt.write_be::<u32>(0).await?;
                 self.write_mc_packet(&pkt).await?;
 
                 let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
@@ -423,13 +586,26 @@ where
 
                 for cx in -2i16..=2 {
                     for cz in -2i16..=2 {
-                        self.send_chunk(ChunkPos::new(cx, cz)).await;
+                        self.send_chunk(ChunkPos::new(cx, cz)).await?;
                     }
                 }
 
+                let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
+                pkt.write_varint::<u32>(0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(10.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f64>(0.0).await?;
+                pkt.write_be::<f32>(0.0).await?;
+                pkt.write_be::<f32>(0.0).await?;
+                pkt.write_be::<u32>(0).await?;
+                self.write_mc_packet(&pkt).await?;
+
                 self.play().await?;
 
-                self.server.remove_player(self.uuid()).await;
+                self.server.remove_player(self.uuid().await).await;
             }
         };
         Ok(())

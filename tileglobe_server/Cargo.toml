@@ -14,11 +14,13 @@ embassy-net = { workspace = true }
 embedded-io-async = { workspace = true }
 
 num-traits = { workspace = true }
+glam = { workspace = true }
 uuid = { workspace = true }
 md5 = { workspace = true }
 smallvec = { workspace = true }
 derive_more = { workspace = true, features = ["debug", "display", "from", "into", "deref", "deref_mut"] }
 dynify = { workspace = true }
+const_for = "0.1.5"
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }

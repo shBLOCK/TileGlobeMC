@@ -2,13 +2,14 @@ use embassy_executor::{Executor, Spawner};
 use log::{info, warn};
 use static_cell::StaticCell;
 use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
-use embassy_time::Timer;
+use embassy_time::{Duration, Ticker, Timer};
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
-use tileglobe::world::{ChunkLocalPos, ChunkPos};
-use tileglobe::world::world::LocalWorld;
+use tileglobe::world::world::{LocalWorld, World};
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
+use tileglobe_utils::network::{MCPacketBuffer, WriteVarInt};
+use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
 
 #[embassy_executor::task(pool_size = 3)]
 async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
@@ -28,7 +29,7 @@ type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>;
 
 #[embassy_executor::task(pool_size = 1)]
 async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>) {
-    let tcp_listener = async_net::TcpListener::bind("127.0.0.1:25565")
+    let tcp_listener = async_net::TcpListener::bind("169.231.32.189:25565")
         .await
         .unwrap();
 
@@ -75,8 +76,11 @@ async fn main_task(spawner: Spawner) {
 
     spawner.spawn(net_task(spawner, mc_server).unwrap());
 
+    let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     loop {
-        Timer::after_millis(50).await;
+        world.tick().await;
+        mc_server.tick().await;
+        tick_ticker.next().await;
     }
 }
 

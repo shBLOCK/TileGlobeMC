@@ -94,7 +94,7 @@ pub trait BoolProperty<const ID_GROUP_SIZE: StateIdType>: Property<bool, 2> {
     }
 }
 
-pub trait EnumProperty<T: IndexedEnum<u8>>: Property<T, { T::VARIANTS.len() as StateIdType }> {
+pub trait EnumProperty<T: IndexedEnum<Index = u8>>: Property<T, { T::VARIANTS.len() as StateIdType }> {
     fn get(&self) -> T {
         T::from(self.get_raw() as u8)
     }

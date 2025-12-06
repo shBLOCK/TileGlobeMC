@@ -1,10 +1,11 @@
 use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
-use crate::world::{BlockPos, ChunkPos};
 use alloc::vec::Vec;
+use defmt_or_log::info;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use tileglobe_utils::pos::{BlockPos, ChunkPos};
 
 #[allow(async_fn_in_trait)]
 pub trait World {

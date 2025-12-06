@@ -26,7 +26,8 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
     }
 
     pub async unsafe fn add_player(&self, player: &'a impl DynifiedPlayer) {
-        self.players.lock().await.insert(player.uuid(), player);
+        let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+        self.players.lock().await.insert(player.uuid().init(&mut c).await, player);
     }
 
     pub async fn remove_player(&self, uuid: Uuid) {

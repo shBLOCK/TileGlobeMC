@@ -3,7 +3,7 @@ use tileglobe_utils::network::MCPacketBuffer;
 
 #[dynify::dynify(DynifiedPlayer)]
 pub trait Player {
-    fn uuid(&self) -> Uuid;
+    async fn uuid(&self) -> Uuid;
     
     async fn tick(&self);
 

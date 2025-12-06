@@ -49,7 +49,7 @@ async fn write_all_with_log<TX: embedded_io_async::Write>(tx: &mut TX, buf: &[u8
             Ok(n) => buf = &buf[n..],
             Err(e) => return Err(e),
         }
-        debug!("Remaining: {:?}", buf.len());
+        // debug!("Remaining: {:?}", buf.len());
     }
     Ok(())
 }

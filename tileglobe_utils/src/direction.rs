@@ -1,5 +1,5 @@
 use glam::I16Vec3;
-use tileglobe_utils::indexed_enum::IndexedEnum;
+use crate::indexed_enum::IndexedEnum;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
@@ -12,7 +12,8 @@ pub enum Direction {
     EAST = 5,
 }
 
-impl IndexedEnum<u8> for Direction {
+impl IndexedEnum for Direction {
+    type Index = u8;
     const VARIANTS: &'static [Self] = &[
         Self::DOWN,
         Self::UP,
@@ -41,7 +42,7 @@ impl Direction {
     }
 
     pub fn normal_i16(self) -> I16Vec3 {
-        [I16Vec3::NEG_Y, I16Vec3::Y, I16Vec3::NEG_Z, I16Vec3::Z, I16Vec3::NEG_Z, I16Vec3::X][self as usize]
+        [I16Vec3::NEG_Y, I16Vec3::Y, I16Vec3::NEG_Z, I16Vec3::Z, I16Vec3::NEG_X, I16Vec3::X][self as usize]
     }
 }
 

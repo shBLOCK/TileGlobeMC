@@ -1,9 +1,9 @@
 use crate::world::block::BlockState;
-use crate::world::{ChunkLocalPos, ChunkPos};
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
 use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
 
 pub struct Chunk {
     sections: Vec<ChunkSection>,
@@ -54,7 +54,10 @@ impl Chunk {
     ) -> Vec<MCPacketBuffer> {
         let mut vec = Vec::<MCPacketBuffer>::with_capacity(self.sections.len());
         for section in self.sections.iter_mut() {
-            if let Some(pkt) = section.gen_blocks_update_packet_and_clear_changes(chunk_pos).await {
+            if let Some(pkt) = section
+                .gen_blocks_update_packet_and_clear_changes(chunk_pos)
+                .await
+            {
                 vec.push(pkt);
             }
         }
@@ -157,7 +160,9 @@ impl ChunkSection {
         }
         let mut pkt = MCPacketBuffer::new(77).await; // section_blocks_update
         pkt.write_be::<u64>(
-            self.section_y as u64 | ((chunk_pos.y as u64) << 20) | ((chunk_pos.x as u64) << 42),
+            (self.section_y as u64 & 0xFFFFF)
+                | ((chunk_pos.y as u64 & 0x3FFFFF) << 20)
+                | ((chunk_pos.x as u64 & 0x3FFFFF) << 42),
         )
         .await
         .unwrap();
