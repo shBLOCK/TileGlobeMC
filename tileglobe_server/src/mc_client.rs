@@ -8,8 +8,10 @@ use const_for::const_for;
 use core::cmp::max;
 use core::error::Error;
 use core::fmt::{Debug, Formatter};
+use core::mem::MaybeUninit;
 use core::net::SocketAddr;
 use defmt_or_log::*;
+use dynify::Dynify;
 use embassy_futures::select::Either;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::{Mutex, MutexGuard};
@@ -18,7 +20,7 @@ use glam::Vec3;
 use num_traits::{ToPrimitive, abs};
 use smallvec::SmallVec;
 use tileglobe::world::block::BlockState;
-use tileglobe::world::world::World;
+use tileglobe::world::world::{_World, World};
 use tileglobe_utils::direction::Direction;
 use tileglobe_utils::network::{
     EIOError, EIOReadExactError, MCPacketBuffer, ReadBlockPos, ReadBool, ReadExt, ReadIndexedEnum,
@@ -35,10 +37,9 @@ pub struct MCClient<
     M: RawMutex,
     RX: embedded_io_async::Read,
     TX: embedded_io_async::Write,
-    WORLD: World,
     SM: RawMutex,
 > {
-    server: &'a MCServer<'a, SM, WORLD>,
+    server: &'a MCServer<'a, SM, _World>,
     rx: Mutex<M, RX>,
     tx: Mutex<M, TX>,
     addr: Option<SocketAddr>,
@@ -54,13 +55,8 @@ struct PlayerData {
     inventory_items: [u16; 46],
 }
 
-impl<
-    M: RawMutex,
-    RX: embedded_io_async::Read,
-    TX: embedded_io_async::Write,
-    WORLD: World,
-    SM: RawMutex,
-> Player for MCClient<'_, M, RX, TX, WORLD, SM>
+impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, SM: RawMutex> Player
+    for MCClient<'_, M, RX, TX, SM>
 where
     RX::Error: 'static,
     TX::Error: 'static,
@@ -89,13 +85,8 @@ where
     }
 }
 
-impl<
-    M: RawMutex,
-    RX: embedded_io_async::Read,
-    TX: embedded_io_async::Write,
-    WORLD: World,
-    SM: RawMutex,
-> Debug for MCClient<'_, M, RX, TX, WORLD, SM>
+impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, SM: RawMutex> Debug
+    for MCClient<'_, M, RX, TX, SM>
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "MCClient({:?})", self.addr)
@@ -103,27 +94,16 @@ impl<
 }
 
 #[cfg(feature = "defmt")]
-impl<
-    M: RawMutex,
-    RX: embedded_io_async::Read,
-    TX: embedded_io_async::Write,
-    WORLD: World,
-    SM: RawMutex,
-> defmt::Format for MCClient<'_, M, RX, TX, WORLD, SM>
+impl<M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, SM: RawMutex>
+    defmt::Format for MCClient<'_, M, RX, TX, SM>
 {
     fn format(&self, fmt: defmt::Formatter) {
         defmt::write!(fmt, "MCClient({:?})", Debug2Format(&self.addr),)
     }
 }
 
-impl<
-    'a,
-    M: RawMutex,
-    RX: embedded_io_async::Read,
-    TX: embedded_io_async::Write,
-    WORLD: World,
-    SM: RawMutex,
-> MCClient<'a, M, RX, TX, WORLD, SM>
+impl<'a, M: RawMutex, RX: embedded_io_async::Read, TX: embedded_io_async::Write, SM: RawMutex>
+    MCClient<'a, M, RX, TX, SM>
 where
     RX::Error: 'static,
     TX::Error: 'static,
@@ -177,15 +157,14 @@ impl<
     M: RawMutex + 'static,
     RX: embedded_io_async::Read + 'static,
     TX: embedded_io_async::Write + 'static,
-    WORLD: World,
     SM: RawMutex,
-> MCClient<'a, M, RX, TX, WORLD, SM>
+> MCClient<'a, M, RX, TX, SM>
 where
     RX::Error: 'static,
     TX::Error: 'static,
 {
     pub fn new(
-        server: &'a MCServer<'a, SM, WORLD>,
+        server: &'a MCServer<'a, SM, _World>,
         rx: RX,
         tx: TX,
         addr: Option<SocketAddr>,
@@ -358,7 +337,7 @@ where
                     let hand = rx.read_varint::<u32>().await?;
                     let pos = rx.read_block_pos().await?;
                     let face = rx.read_indexed_enum::<Direction>().await?;
-                    let _cursor_pos = Vec3::new(
+                    let cursor_pos = Vec3::new(
                         rx.read_be().await?,
                         rx.read_be().await?,
                         rx.read_be().await?,
@@ -375,43 +354,57 @@ where
                         45
                     };
                     let item = player_data.inventory_items[slot as usize];
-                    const ITEM_TO_BLOCK: [BlockState; 1416] = const {
-                        use const_for::const_for;
-                        let mut table = [BlockState(0); 1416];
 
-                        table[1] = BlockState(1); // stone
-                        table[28] = BlockState(10); // dirt
-                        table[688] = BlockState(3042 + 1160); // redstone
-                        table[689] = BlockState(5916); // redstone torch
-                        table[690] = BlockState(10032); // redstone block
-                        table[691] = BlockState(6063); // redstone repeater
-                        table[692] = BlockState(9985); // redstone comparator
-                        table[703] = BlockState(5802 + 9); // lever
-                        table[713] = BlockState(5926 + 9); // stone button
-                        table[715] = BlockState(9396 + 9); // wood button
-                        table[705] = BlockState(10000 + 16); // daylight detector
-                        table[711] = BlockState(8201 + 1); // redstone lamp
-                        table[1407] = BlockState(25768 + 3); // waxed copper bulb
-                        table[712] = BlockState(581 + 1); // note block
-                        table[697] = BlockState(13573 + 5); // observer
+                    if item == 0 {
+                        if let Ok(blockstate) = self.server.world.get_block_state(pos).await {
+                            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+                            blockstate
+                                .get_block()
+                                .on_use_without_item(self.server.world, pos, blockstate)
+                                .init(&mut c)
+                                .await;
+                        }
+                    } else {
+                        const ITEM_TO_BLOCK: [BlockState; 1416] = const {
+                            use const_for::const_for;
+                            let mut table = [BlockState(0); 1416];
 
-                        const_for!(i in 0u16..16 => { // wools
-                            table[(213 + i) as usize] = BlockState(2093 + i);
-                        });
+                            table[1] = BlockState(1); // stone
+                            table[28] = BlockState(10); // dirt
+                            table[688] = BlockState(3042 + 1160); // redstone
+                            table[689] = BlockState(5916); // redstone torch
+                            table[690] = BlockState(10032); // redstone block
+                            table[691] = BlockState(6063); // redstone repeater
+                            table[692] = BlockState(9985); // redstone comparator
+                            table[703] = BlockState(5802 + 9); // lever
+                            table[713] = BlockState(5926 + 9); // stone button
+                            table[715] = BlockState(9396 + 9); // wood button
+                            table[705] = BlockState(10000 + 16); // daylight detector
+                            table[711] = BlockState(8201 + 1); // redstone lamp
+                            table[1407] = BlockState(25768 + 3); // waxed copper bulb
+                            table[712] = BlockState(581 + 1); // note block
+                            table[697] = BlockState(13573 + 5); // observer
 
-                        table
-                    };
+                            const_for!(i in 0u16..16 => { // wools
+                                table[(213 + i) as usize] = BlockState(2093 + i);
+                            });
 
-                    if let Ok(_) = self
-                        .server
-                        .world
-                        .set_block_state(
-                            opos,
-                            *ITEM_TO_BLOCK.get(item as usize).unwrap_or(&BlockState(0)),
-                        )
-                        .await
-                    {
-                        self._block_changes_to_ack.lock().await.push(sequence);
+                            table
+                        };
+
+                        if let Some(&blockstate) = ITEM_TO_BLOCK.get(item as usize) {
+                            let block = blockstate.get_block();
+                            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+                            let blockstate = block
+                                .get_state_for_placement(self.server.world, opos, face, cursor_pos)
+                                .init(&mut c)
+                                .await;
+
+                            if let Ok(_) = self.server.world.set_block_state(opos, blockstate).await
+                            {
+                                self._block_changes_to_ack.lock().await.push(sequence);
+                            }
+                        }
                     }
                 }
                 52 => {
@@ -476,34 +469,30 @@ where
                 }
                 12 => { // client_tick_end
                 }
-                27 => { // keep_alive
+                27 => {
+                    // keep_alive
                     let _id = rx.read_be::<u64>().await?;
                 }
-                42 => { // player_input
+                42 => {
+                    // player_input
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                40 => { // player_action
+                40 => {
+                    // player_action
                     let action = rx.read_varint::<u32>().await?;
                     let pos = rx.read_block_pos().await?;
                     let _face = rx.read_indexed_enum::<Direction>().await?;
                     let sequence = rx.read_varint::<i32>().await?;
                     match action {
-                        0 => { // started digging
-                            if let Ok(_) = self
-                                .server
-                                .world
-                                .set_block_state(
-                                    pos,
-                                    BlockState(0),
-                                )
-                                .await
+                        0 => {
+                            // started digging
+                            if let Ok(_) =
+                                self.server.world.set_block_state(pos, BlockState(0)).await
                             {
                                 self._block_changes_to_ack.lock().await.push(sequence);
                             }
                         }
-                        _ => {
-
-                        }
+                        _ => {}
                     }
                 }
                 _ => {

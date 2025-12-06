@@ -4,12 +4,12 @@ use crate::indexed_enum::IndexedEnum;
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
 pub enum Direction {
-    DOWN = 0,
-    UP = 1,
-    NORTH = 2,
-    SOUTH = 3,
-    WEST = 4,
-    EAST = 5,
+    DOWN,
+    UP,
+    NORTH,
+    SOUTH,
+    WEST,
+    EAST,
 }
 
 impl IndexedEnum for Direction {

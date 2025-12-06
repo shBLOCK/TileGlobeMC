@@ -2,6 +2,7 @@ use crate::world::block::DynifiedBlock;
 use crate::world::block::blocks::GenericBlock;
 use crate::world::block::{BlockState, BlockStateType, StateId};
 use tileglobe_utils::resloc::ResLoc;
+use crate::world::block::blocks::lever::LeverBlock;
 
 pub struct Blocks;
 impl Blocks {
@@ -9,7 +10,7 @@ impl Blocks {
         generic_block: GenericBlock,
         resloc_consts: BlockResLocs,
         entries: {
-
+            "lever" => &LeverBlock,
         }
     };
 

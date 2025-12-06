@@ -2,7 +2,7 @@ use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
 use alloc::vec::Vec;
 use defmt_or_log::info;
-use embassy_sync::blocking_mutex::raw::RawMutex;
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
 use tileglobe_utils::pos::{BlockPos, ChunkPos};
@@ -27,6 +27,8 @@ pub trait World {
         Vec::new()
     }
 }
+
+pub type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>; // TODO: NO!
 
 pub struct LocalWorld<
     M: RawMutex,

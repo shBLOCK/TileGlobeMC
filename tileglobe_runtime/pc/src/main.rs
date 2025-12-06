@@ -5,7 +5,7 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_time::{Duration, Ticker, Timer};
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
-use tileglobe::world::world::{LocalWorld, World};
+use tileglobe::world::world::{LocalWorld, World, _World};
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
 use tileglobe_utils::network::{MCPacketBuffer, WriteVarInt};
@@ -15,7 +15,7 @@ use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
 async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {
     let adapter = embedded_io_adapters::futures_03::FromFutures::new(socket);
 
-    let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(mc_server, adapter.clone(), adapter.clone(), Some(addr));
+    let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(mc_server, adapter.clone(), adapter.clone(), Some(addr));
     let result = client.run().await;
     info!("{} disconnected: {:?}", addr, result);
 
@@ -24,8 +24,6 @@ async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRaw
         warn!("Failed to shutdown client socket: {}", err);
     }
 }
-
-type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>;
 
 #[embassy_executor::task(pool_size = 1)]
 async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>) {
