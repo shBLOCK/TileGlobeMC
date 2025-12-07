@@ -5,7 +5,6 @@ use crate::world::block::{
 };
 use crate::world::world::{_World, World};
 use glam::Vec3;
-use log::info;
 use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::direction::Direction;
 use tileglobe_utils::pos::BlockPos;
@@ -58,7 +57,6 @@ impl Block for RedstoneTorchBlock {
         face: Direction,
         cursor_pos: Vec3,
     ) -> BlockState {
-        info!("{:?}", face);
         let block_face = match face {
             Direction::DOWN | Direction::UP => Direction::DOWN,
             dir => dir.opposite(),

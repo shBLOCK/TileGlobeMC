@@ -278,6 +278,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     //     // }
 
         world.tick().await;
+        embassy_futures::yield_now().await; // important! or else wifi dies..?
         mc_server.tick().await;
         i += 1;
         tick_ticker.next().await;

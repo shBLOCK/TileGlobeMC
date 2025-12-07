@@ -1,6 +1,7 @@
 use alloc::collections::BTreeMap;
 use core::marker::PhantomData;
 use core::mem::MaybeUninit;
+use defmt_or_log::info;
 use dynify::Dynify;
 use smallvec::SmallVec;
 use uuid::Uuid;
@@ -70,7 +71,7 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
         }
 
         for player in self.players.lock().await.values() {
-            player.tick().init(&mut c).await
+            player.tick().init(&mut c).await;
         }
     }
 }
