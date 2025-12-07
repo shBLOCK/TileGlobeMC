@@ -5,9 +5,13 @@ mod registry;
 mod misc;
 
 use core::fmt::Debug;
+use core::mem::MaybeUninit;
 use defmt_or_log::maybe_derive_format;
+use smallvec::SmallVec;
 pub use registry::*;
 use tileglobe_utils::indexed_enum::IndexedEnum;
+use tileglobe_utils::pos::BlockPos;
+use crate::world::world::_World;
 
 pub type BlockStateType = u16;
 #[derive(

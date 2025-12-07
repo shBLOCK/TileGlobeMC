@@ -1,9 +1,11 @@
-use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
 use crate::direction::Direction;
+use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
 
 #[derive(
     Copy,
     Clone,
+    PartialEq,
+    Eq,
     derive_more::Deref,
     derive_more::DerefMut,
     derive_more::From,
@@ -26,7 +28,7 @@ impl BlockPos {
     pub fn chunk_local_pos(self) -> ChunkLocalPos {
         ChunkLocalPos::new(self.x as u8, self.y, self.z as u8)
     }
-    
+
     pub fn offset_dir(self, direction: Direction) -> Self {
         Self(self.0 + direction.normal_i16())
     }

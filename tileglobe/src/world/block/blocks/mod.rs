@@ -1,5 +1,7 @@
 mod generic;
 pub mod lever;
+pub mod redstone_wire;
+pub mod redstone_repeater;
 
 pub use generic::*;
 use tileglobe_utils::direction::Direction;

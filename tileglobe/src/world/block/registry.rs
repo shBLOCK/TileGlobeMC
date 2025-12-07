@@ -1,8 +1,10 @@
-use crate::world::block::DynifiedBlock;
+use tileglobe_proc_macro::mc_block_id_base;
+use crate::world::block::{Block, DynifiedBlock, StateIdType};
 use crate::world::block::blocks::GenericBlock;
 use crate::world::block::{BlockState, BlockStateType, StateId};
 use tileglobe_utils::resloc::ResLoc;
 use crate::world::block::blocks::lever::LeverBlock;
+use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
 
 pub struct Blocks;
 impl Blocks {
@@ -11,6 +13,14 @@ impl Blocks {
         resloc_consts: BlockResLocs,
         entries: {
             "lever" => &LeverBlock,
+            "repeater" => &RedstoneRepeaterBlock,
+            "white_wool" => &_TmpBlock {
+                resloc: BlockResLocs::WHITE_WOOL,
+                id_base: mc_block_id_base!("white_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
         }
     };
 
@@ -26,4 +36,27 @@ impl Blocks {
 pub struct BlockResLocs;
 impl BlockResLocs {
     tileglobe_proc_macro::mc_block_resloc_consts!();
+}
+
+#[derive(Debug)]
+pub struct _TmpBlock {
+    pub resloc: &'static ResLoc<'static>,
+    pub id_base: BlockStateType,
+    pub num_states: StateIdType,
+    pub default_state: StateId,
+    pub is_redstone_conductor: bool,
+}
+
+impl Block for _TmpBlock {
+    fn resloc(&self) -> &'static ResLoc<'static> {
+        self.resloc
+    }
+
+    fn default_state(&self) -> BlockState {
+        BlockState(self.id_base + self.default_state.0)
+    }
+
+    fn is_redstone_conductor(&self, blockstate: BlockState) -> bool {
+        self.is_redstone_conductor
+    }
 }

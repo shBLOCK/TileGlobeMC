@@ -44,6 +44,17 @@ impl Direction {
     pub fn normal_i16(self) -> I16Vec3 {
         [I16Vec3::NEG_Y, I16Vec3::Y, I16Vec3::NEG_Z, I16Vec3::Z, I16Vec3::NEG_X, I16Vec3::X][self as usize]
     }
+    
+    pub fn opposite(self) -> Direction {
+        match self {
+            Self::DOWN => Self::UP,
+            Self::UP => Self::DOWN,
+            Self::NORTH => Self::SOUTH,
+            Self::SOUTH => Self::NORTH,
+            Self::WEST => Self::EAST,
+            Self::EAST => Self::WEST,
+        }
+    }
 }
 
 //TODO: cleanup using macros

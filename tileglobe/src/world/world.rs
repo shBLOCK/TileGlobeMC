@@ -1,9 +1,16 @@
 use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
+use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
+use core::cmp::{Ordering, max};
+use core::mem::MaybeUninit;
 use defmt_or_log::info;
+use dynify::Dynify;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
+use smallvec::SmallVec;
+use tileglobe_utils::direction::Direction;
+use tileglobe_utils::indexed_enum::IndexedEnum;
 use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
 use tileglobe_utils::pos::{BlockPos, ChunkPos};
 
@@ -15,20 +22,126 @@ pub trait World {
 
     async fn tick(&self);
 
+    async fn update_block(&self, pos: BlockPos);
+    async fn update_neighbors(&self, pos: BlockPos) {
+        for &direction in Direction::variants() {
+            self.update_block(pos.offset_dir(direction)).await;
+        }
+    }
+    async fn update_neighbors_except_for_direction(&self, pos: BlockPos, except: Direction) {
+        for &direction in Direction::variants() {
+            if direction != except {
+                self.update_block(pos.offset_dir(direction)).await;
+            }
+        }
+    }
+
+    async fn schedule_tick(&self, pos: BlockPos, delay: u8, priority: i8);
+
+    async fn get_signal(&self, pos: BlockPos, direction: Direction) -> u8;
+
+    async fn get_strong_signal(&self, pos: BlockPos, direction: Direction) -> u8;
+
+    async fn get_signal_to(&self, pos: BlockPos) -> u8 {
+        let mut signal = 0;
+        for &direction in Direction::variants() {
+            signal = max(
+                signal,
+                self.get_signal(pos.offset_dir(direction), direction.opposite())
+                    .await,
+            );
+        }
+        signal
+    }
+
     async fn write_net_chunk<W: embedded_io_async::Write>(
         &self,
         pos: ChunkPos,
         writer: &mut W,
     ) -> Result<(), EIOError<W::Error>>;
 
-    async fn gen_blocks_update_packets_and_clear_changes(
-        &self,
-    ) -> Vec<MCPacketBuffer> {
+    async fn gen_blocks_update_packets_and_clear_changes(&self) -> Vec<MCPacketBuffer> {
         Vec::new()
     }
 }
 
 pub type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>; // TODO: NO!
+
+#[derive(Debug, Eq, PartialEq)]
+struct BlockTick {
+    pos: BlockPos,
+    tick: u32,
+    priority: i8,
+    sequence: u32,
+}
+impl Ord for BlockTick {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.tick
+            .cmp(&other.tick)
+            .then_with(|| self.priority.cmp(&other.priority))
+            .then_with(|| self.sequence.cmp(&other.sequence))
+    }
+}
+impl PartialOrd for BlockTick {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+#[derive(Debug, Eq, PartialEq)]
+struct OrdBlockPos(BlockPos);
+impl Ord for OrdBlockPos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.0
+            .x
+            .cmp(&other.0.x)
+            .then_with(|| self.0.z.cmp(&other.0.z))
+            .then_with(|| self.0.y.cmp(&other.0.y))
+    }
+}
+impl PartialOrd for OrdBlockPos {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+struct BlockTickScheduler {
+    ticks: BTreeSet<BlockTick>,
+    positions: BTreeSet<OrdBlockPos>,
+    sequence: u32,
+}
+impl BlockTickScheduler {
+    fn new() -> Self {
+        Self {
+            ticks: BTreeSet::new(),
+            positions: BTreeSet::new(),
+            sequence: 0,
+        }
+    }
+
+    pub fn schedule(&mut self, pos: BlockPos, tick: u32, priority: i8) {
+        if self.positions.contains(&OrdBlockPos(pos)) {
+            return;
+        }
+        self.ticks.insert(BlockTick {
+            pos,
+            tick,
+            priority,
+            sequence: self.sequence,
+        });
+        self.sequence += 1;
+    }
+
+    pub fn pop_at_or_before(&mut self, tick: u32) -> Option<BlockTick> {
+        if self.ticks.first()?.tick <= tick {
+            let block_tick = self.ticks.pop_first().unwrap();
+            self.positions.remove(&OrdBlockPos(block_tick.pos));
+            Some(block_tick)
+        } else {
+            None
+        }
+    }
+}
 
 pub struct LocalWorld<
     M: RawMutex,
@@ -38,6 +151,8 @@ pub struct LocalWorld<
     const SIZE_Y: usize,
 > {
     chunks: [[Mutex<M, Option<Chunk>>; SIZE_Y]; SIZE_X],
+    tick_number: Mutex<M, u32>,
+    block_tick_scheduler: Mutex<M, BlockTickScheduler>,
 }
 
 impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const SIZE_Y: usize>
@@ -46,6 +161,8 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
     pub fn new() -> Self {
         Self {
             chunks: core::array::from_fn(|_| core::array::from_fn(|_| Mutex::new(None))),
+            tick_number: Mutex::new(0),
+            block_tick_scheduler: Mutex::new(BlockTickScheduler::new()),
         }
     }
 
@@ -70,11 +187,17 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
         *self.get_chunk_mutex(pos)?.lock().await = Some(chunk);
         Ok(())
     }
+
+    const fn _min_corner() -> (i16, i16) {
+        (MIN_X, MIN_Y)
+    }
+
+    const fn _size() -> (usize, usize) {
+        (SIZE_X, SIZE_Y)
+    }
 }
 
-impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const SIZE_Y: usize>
-    World for LocalWorld<M, MIN_X, MIN_Y, SIZE_X, SIZE_Y>
-{
+impl World for _World {
     async fn get_block_state(&self, pos: BlockPos) -> Result<BlockState, ()> {
         self.get_chunk(pos.chunk_pos())
             .await?
@@ -87,7 +210,123 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
             .set_block_state(pos.chunk_local_pos(), value)
     }
 
-    async fn tick(&self) {}
+    async fn tick(&self) {
+        let current_tick = {
+            let mut tick_number_mutex = self.tick_number.lock().await;
+            let value = *tick_number_mutex;
+            *tick_number_mutex += 1;
+            value
+        };
+
+        // info!("tick {}", current_tick);
+
+        let mut c = SmallVec::<[MaybeUninit<u8>; 256]>::new();
+        while let Some(block_tick) = {
+            self.block_tick_scheduler.lock().await.pop_at_or_before(current_tick)
+        } {
+            if let Ok(blockstate) = self.get_block_state(block_tick.pos).await {
+                blockstate
+                    .get_block()
+                    .tick(self, block_tick.pos, blockstate)
+                    .init(&mut c)
+                    .await;
+            }
+        }
+    }
+
+    async fn update_block(&self, pos: BlockPos) {
+        if let Ok(blockstate) = self.get_block_state(pos).await {
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            blockstate
+                .get_block()
+                .update(self, pos, blockstate)
+                .init(&mut c)
+                .await;
+        }
+    }
+
+    async fn schedule_tick(&self, pos: BlockPos, delay: u8, priority: i8) {
+        info!("schedule_tick {:?}", pos);
+        self.block_tick_scheduler.lock().await.schedule(
+            pos,
+            *self.tick_number.lock().await + delay as u32,
+            priority,
+        );
+        info!("schedule done");
+    }
+
+    async fn get_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
+        if let Ok(blockstate) = self.get_block_state(pos).await {
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            let block = blockstate.get_block();
+            let mut signal = block
+                .get_signal(self, pos, blockstate, direction)
+                .init(&mut c)
+                .await;
+            if signal == 0xF {
+                return signal;
+            }
+            if !block.is_redstone_conductor(blockstate) {
+                return signal;
+            }
+            for &neighbor_dir in Direction::variants() {
+                if neighbor_dir == direction {
+                    continue;
+                }
+                let neighbor_pos = pos.offset_dir(neighbor_dir);
+                let neighbor_signal =
+                    if let Ok(blockstate) = self.get_block_state(neighbor_pos).await {
+                        blockstate
+                            .get_block()
+                            .get_signal(self, pos, blockstate, neighbor_dir.opposite())
+                            .init(&mut c)
+                            .await
+                    } else {
+                        0
+                    };
+                signal = max(signal, neighbor_signal);
+                if signal == 0xF {
+                    return signal;
+                }
+            }
+            signal
+        } else {
+            0
+        }
+    }
+
+    async fn get_strong_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
+        if let Ok(blockstate) = self.get_block_state(pos).await {
+            let mut signal = 0;
+            if !blockstate.get_block().is_redstone_conductor(blockstate) {
+                return signal;
+            }
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            for &neighbor_dir in Direction::variants() {
+                if neighbor_dir == direction {
+                    continue;
+                }
+                let neighbor_pos = pos.offset_dir(neighbor_dir);
+                let neighbor_signal =
+                    if let Ok(blockstate) = self.get_block_state(neighbor_pos).await {
+                        blockstate
+                            .get_block()
+                            .get_strong_signal(self, pos, blockstate, neighbor_dir.opposite())
+                            .init(&mut c)
+                            .await
+                    } else {
+                        0
+                    };
+                signal = max(signal, neighbor_signal);
+                if signal == 0xF {
+                    return signal;
+                }
+            }
+            signal
+        } else {
+            0
+        }
+    }
 
     async fn write_net_chunk<W: embedded_io_async::Write>(
         &self,
@@ -168,8 +407,10 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
 
     async fn gen_blocks_update_packets_and_clear_changes(&self) -> Vec<MCPacketBuffer> {
         let mut vec = Vec::<MCPacketBuffer>::new();
-        for x in MIN_X..(MIN_X + SIZE_X as i16) {
-            for y in MIN_Y..(MIN_Y + SIZE_Y as i16) {
+        let (min_x, min_y) = Self::_min_corner();
+        let (size_x, size_y) = Self::_size();
+        for x in min_x..(min_x + size_x as i16) {
+            for y in min_y..(min_y + size_y as i16) {
                 let pos = ChunkPos::new(x, y);
                 if let Ok(mut chunk) = self.get_chunk(pos).await {
                     vec.extend(chunk.gen_blocks_update_packets_and_clear_changes(pos).await);
