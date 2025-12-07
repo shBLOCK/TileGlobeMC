@@ -4,7 +4,7 @@ pub mod redstone_wire;
 pub mod redstone_repeater;
 pub mod redstone_comparator;
 pub mod redstone_block;
-mod redstone_torch;
+pub mod redstone_torch;
 
 pub use generic::*;
 use tileglobe_utils::direction::Direction;

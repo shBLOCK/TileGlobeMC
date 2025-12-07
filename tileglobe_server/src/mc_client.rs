@@ -499,6 +499,9 @@ where
                         _ => {}
                     }
                 }
+                60 => { // swing
+                    rx.skip_bytes(1).await?;
+                }
                 _ => {
                     self.skip_unknown_packet(rx, packet_type, packet_length)
                         .await?;

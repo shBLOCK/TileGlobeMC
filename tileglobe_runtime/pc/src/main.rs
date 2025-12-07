@@ -27,7 +27,7 @@ async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRaw
 
 #[embassy_executor::task(pool_size = 1)]
 async fn net_task(spawner: Spawner, mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>) {
-    let tcp_listener = async_net::TcpListener::bind("169.231.32.189:25565")
+    let tcp_listener = async_net::TcpListener::bind("127.0.0.1:25565")
         .await
         .unwrap();
 

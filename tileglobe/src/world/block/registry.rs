@@ -8,6 +8,7 @@ use crate::world::block::{Block, DynifiedBlock, StateIdType};
 use crate::world::block::{BlockState, BlockStateType, StateId};
 use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::resloc::ResLoc;
+use crate::world::block::blocks::redstone_torch::{RedstoneTorchBlock, RedstoneTorchType};
 
 pub struct Blocks;
 impl Blocks {
@@ -20,6 +21,8 @@ impl Blocks {
             "comparator" => &RedstoneComparatorBlock,
             "redstone_wire" => &RedstoneWireBlock,
             "redstone_block" => &RedstoneBlock,
+            "redstone_torch" => &RedstoneTorchBlock { torch_type: RedstoneTorchType::Floor },
+            "redstone_wall_torch" => &RedstoneTorchBlock { torch_type: RedstoneTorchType::Wall },
             "white_wool" => &_TmpBlock {
                 resloc: BlockResLocs::WHITE_WOOL,
                 id_base: mc_block_id_base!("white_wool"),
