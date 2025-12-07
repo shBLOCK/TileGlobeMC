@@ -5,6 +5,7 @@ use crate::world::block::{BlockState, BlockStateType, StateId};
 use tileglobe_utils::resloc::ResLoc;
 use crate::world::block::blocks::lever::LeverBlock;
 use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
+use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
 
 pub struct Blocks;
 impl Blocks {
@@ -14,6 +15,7 @@ impl Blocks {
         entries: {
             "lever" => &LeverBlock,
             "repeater" => &RedstoneRepeaterBlock,
+            "redstone_wire" => &RedstoneWireBlock,
             "white_wool" => &_TmpBlock {
                 resloc: BlockResLocs::WHITE_WOOL,
                 id_base: mc_block_id_base!("white_wool"),

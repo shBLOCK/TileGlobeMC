@@ -35,7 +35,7 @@ impl From<AttachFace> for u8 {
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
-enum HorizontalDirection {
+pub enum HorizontalDirection {
     NORTH = 0,
     SOUTH,
     WEST,
@@ -58,6 +58,19 @@ impl From<u8> for HorizontalDirection {
 impl From<HorizontalDirection> for u8 {
     fn from(value: HorizontalDirection) -> Self {
         value as Self
+    }
+}
+impl TryFrom<Direction> for HorizontalDirection {
+    type Error = ();
+
+    fn try_from(value: Direction) -> Result<Self, Self::Error> {
+        match value {
+            Direction::NORTH => Ok(Self::NORTH),
+            Direction::SOUTH => Ok(Self::SOUTH),
+            Direction::WEST => Ok(Self::WEST),
+            Direction::EAST => Ok(Self::EAST),
+            _ => Err(()),
+        }
     }
 }
 impl HorizontalDirection {

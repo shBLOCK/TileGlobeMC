@@ -17,6 +17,8 @@ derive_more = { workspace = true, features = ["display", "from", "into"] }
 num-traits = { workspace = true }
 dynify = { workspace = true }
 smallvec = { workspace = true }
+itertools = { workspace = true }
+ordered-float = { version = "5.1.0", default-features = false }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }

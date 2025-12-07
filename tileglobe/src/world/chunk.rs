@@ -2,7 +2,6 @@ use crate::world::block::BlockState;
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use defmt_or_log::info;
 use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
 use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
 
@@ -172,7 +171,6 @@ impl ChunkSection {
             let blockstate = self.get_block_state(pos);
             let encoded_pos = (pos & 0xF) << 8 | ((pos >> 8) & 0xF) | (pos & 0xF0);
             let element = ((blockstate.0 as u64) << 12) | (encoded_pos as u64);
-            info!("{:x}", element);
             pkt.write_varint::<u64>(element)
                 .await
                 .unwrap();

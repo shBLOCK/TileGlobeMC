@@ -403,6 +403,7 @@ where
                             if let Ok(_) = self.server.world.set_block_state(opos, blockstate).await
                             {
                                 self._block_changes_to_ack.lock().await.push(sequence);
+                                block.on_placed(self.server.world, opos, blockstate).init(&mut c).await;
                             }
                         }
                     }
@@ -485,11 +486,13 @@ where
                     let sequence = rx.read_varint::<i32>().await?;
                     match action {
                         0 => {
-                            // started digging
-                            if let Ok(_) =
+                            // started digging 
+                            if let Ok(blockstate) =
                                 self.server.world.set_block_state(pos, BlockState(0)).await
                             {
                                 self._block_changes_to_ack.lock().await.push(sequence);
+                                let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+                                blockstate.get_block().on_destroyed(self.server.world, pos, blockstate).init(&mut c).await;
                             }
                         }
                         _ => {}

@@ -4,7 +4,6 @@ use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::cmp::{Ordering, max};
 use core::mem::MaybeUninit;
-use defmt_or_log::info;
 use dynify::Dynify;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
@@ -33,6 +32,13 @@ pub trait World {
             if direction != except {
                 self.update_block(pos.offset_dir(direction)).await;
             }
+        }
+    }
+
+    async fn update_block_shape(&self, pos: BlockPos);
+    async fn update_neighbors_shape(&self, pos: BlockPos) {
+        for &direction in Direction::variants() {
+            self.update_block_shape(pos.offset_dir(direction)).await;
         }
     }
 
@@ -120,16 +126,15 @@ impl BlockTickScheduler {
     }
 
     pub fn schedule(&mut self, pos: BlockPos, tick: u32, priority: i8) {
-        if self.positions.contains(&OrdBlockPos(pos)) {
-            return;
+        if self.positions.insert(OrdBlockPos(pos)) {
+            self.ticks.insert(BlockTick {
+                pos,
+                tick,
+                priority,
+                sequence: self.sequence,
+            });
+            self.sequence += 1;
         }
-        self.ticks.insert(BlockTick {
-            pos,
-            tick,
-            priority,
-            sequence: self.sequence,
-        });
-        self.sequence += 1;
     }
 
     pub fn pop_at_or_before(&mut self, tick: u32) -> Option<BlockTick> {
@@ -245,14 +250,24 @@ impl World for _World {
         }
     }
 
+    async fn update_block_shape(&self, pos: BlockPos) {
+        if let Ok(blockstate) = self.get_block_state(pos).await {
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            blockstate
+                .get_block()
+                .update_shape(self, pos, blockstate)
+                .init(&mut c)
+                .await;
+        }
+    }
+
+
     async fn schedule_tick(&self, pos: BlockPos, delay: u8, priority: i8) {
-        info!("schedule_tick {:?}", pos);
         self.block_tick_scheduler.lock().await.schedule(
             pos,
             *self.tick_number.lock().await + delay as u32,
             priority,
         );
-        info!("schedule done");
     }
 
     async fn get_signal(&self, pos: BlockPos, direction: Direction) -> u8 {

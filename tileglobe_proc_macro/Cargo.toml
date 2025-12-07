@@ -13,6 +13,6 @@ quote = "1.0.42"
 serde = { workspace = true, features = ["default"] }
 serde_json = "1.0.145"
 walkdir = "2.5.0"
-itertools = "0.14.0"
+itertools = { workspace = true, features = ["use_std"] }
 
 tileglobe_utils = { path = "../tileglobe_utils", features = ["std"] }

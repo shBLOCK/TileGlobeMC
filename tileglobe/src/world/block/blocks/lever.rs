@@ -35,6 +35,11 @@ impl Block for LeverBlock {
         BlockState(mc_block_id_base!("lever") + 9)
     }
 
+    fn is_attract_redstone_wire_connection(&self, blockstate: BlockState, direction: HorizontalDirection) -> bool {
+        true
+    }
+
+
     async fn get_state_for_placement(
         &self,
         world: &_World,

@@ -49,8 +49,8 @@ static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = St
 async fn main_task(spawner: Spawner) {
     let world = WORLD.init(_World::new());
 
-    for cz in -1i16..1 {
-        for cx in -1i16..1 {
+    for cz in -1i16..=1 {
+        for cx in -1i16..=1 {
             let mut chunk = Chunk::new(-4..=19);
             for sz in 0..16u8 {
                 for sx in 0..16u8 {

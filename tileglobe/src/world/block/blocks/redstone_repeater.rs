@@ -1,12 +1,14 @@
-use defmt_or_log::info;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, IntProperty,
     Property, SimpleBlockState, StateId,
 };
 use crate::world::world::{_World, World};
+use glam::{Vec2, Vec3, Vec3Swizzles};
+use ordered_float::OrderedFloat;
 use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::direction::Direction;
+use tileglobe_utils::indexed_enum::IndexedEnum;
 use tileglobe_utils::pos::BlockPos;
 use tileglobe_utils::resloc::ResLoc;
 
@@ -32,6 +34,46 @@ impl Block for RedstoneRepeaterBlock {
         BlockState(mc_block_id_base!("repeater") + 3)
     }
 
+    fn is_attract_redstone_wire_connection(
+        &self,
+        blockstate: BlockState,
+        direction: HorizontalDirection,
+    ) -> bool {
+        RedstoneRepeaterState::from(blockstate).facing() == direction
+            || RedstoneRepeaterState::from(blockstate)
+                .facing()
+                .direction()
+                .opposite()
+                == direction.direction()
+    }
+
+    async fn get_state_for_placement(
+        &self,
+        world: &_World,
+        pos: BlockPos,
+        face: Direction,
+        cursor_pos: Vec3,
+    ) -> BlockState {
+        let mut state = RedstoneRepeaterState::from(self.default_state());
+
+        state.set_facing(
+            HorizontalDirection::variants()
+                .iter()
+                .max_by_key(|d| {
+                    OrderedFloat(
+                        d.direction()
+                            .normal_i16()
+                            .xz()
+                            .as_vec2()
+                            .dot(cursor_pos.xz() - Vec2::new(0.5, 0.5)),
+                    )
+                })
+                .map(|it| HorizontalDirection::try_from(it.direction().opposite()).unwrap())
+                .unwrap(),
+        );
+        state.block_state()
+    }
+
     async fn on_use_without_item(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
         let mut state = RedstoneRepeaterState::from(blockstate);
         state.set_delay(if state.delay() == 4 {
@@ -39,29 +81,42 @@ impl Block for RedstoneRepeaterBlock {
         } else {
             state.delay() + 1
         });
-        let _ = world.set_block_state(pos, state.into()).await;
+        if let Ok(_) = world.set_block_state(pos, state.into()).await {
+            world.update_block(pos).await;
+        }
     }
 
     async fn tick(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
         let mut state = RedstoneRepeaterState::from(blockstate);
         let has_input = Self::get_input_signal(world, pos, blockstate).await > 0;
-        if has_input != state.powered() {
-            state.set_powered(has_input);
-            let _ = world.set_block_state(pos, state.into()).await;
-            world.update_neighbors(pos).await;
-            world
-                .update_neighbors_except_for_direction(
-                    pos.offset_dir(state.facing().direction().opposite()),
-                    state.facing().direction(),
-                )
-                .await;
+
+        if !state.powered() {
+            if !has_input {
+                world.schedule_tick(pos, (state.delay() * 2) as u8, 0).await;
+            }
+            state.set_powered(true);
+        } else {
+            if !has_input {
+                state.set_powered(false);
+            }
+        }
+
+        if state.block_state() != blockstate {
+            if let Ok(_) = world.set_block_state(pos, state.into()).await {
+                world.update_neighbors(pos).await;
+                world
+                    .update_neighbors_except_for_direction(
+                        pos.offset_dir(state.facing().direction().opposite()),
+                        state.facing().direction(),
+                    )
+                    .await;
+            }
         }
     }
 
     async fn update(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
         let state = RedstoneRepeaterState::from(blockstate);
         let has_input = Self::get_input_signal(world, pos, blockstate).await > 0;
-        info!("update {:?} {:?}", pos, Self::get_input_signal(world, pos, blockstate).await);
         if has_input != state.powered() {
             world.schedule_tick(pos, (state.delay() * 2) as u8, 0).await;
         }
