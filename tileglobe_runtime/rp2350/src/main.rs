@@ -41,9 +41,9 @@ use log::warn;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World};
-use tileglobe::world::{BlockPos, ChunkLocalPos, ChunkPos};
 use tileglobe_server::MCClient;
 use tileglobe_server::mc_server::MCServer;
+use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -195,7 +195,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
             let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
 
-            let mut client = MCClient::<CriticalSectionRawMutex, _, _, _, _>::new(
+            let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(
                 mc_server,
                 unsafe { &mut *(&mut rx as *mut TcpReader) },
                 unsafe { &mut *(&mut tx as *mut TcpWriter) },
@@ -216,65 +216,66 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         spawner.spawn(socket_task(mc_server, stack).unwrap());
     }
 
-    bind_interrupts!(struct AdcIrqs {
-        ADC_IRQ_FIFO => embassy_rp::adc::InterruptHandler;
-    });
-
-    let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
-    let mut adc40 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
-    let mut adc41 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
-    let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
-
-    // let mut samples = [0f32; 20];
-    let mut samples = Vec::<f32>::new();
-
     let mut tick_ticker = Ticker::every(Duration::from_hz(20));
-    let mut i = 0;
+    let mut i = 0u32;
+
+    // bind_interrupts!(struct AdcIrqs {
+    //     ADC_IRQ_FIFO => embassy_rp::adc::InterruptHandler;
+    // });
+    //
+    // let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
+    // let mut adc40 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
+    // let mut adc41 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
+    // let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
+    //
+    // // let mut samples = [0f32; 20];
+    // let mut samples = Vec::<f32>::new();
+    //
     loop {
-        info!("Tick8 {}", i);
-        let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
-        let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
-
-        samples.push(adc_value_1);
-        if samples.len() > 100 {
-            samples.remove(0);
-        }
-
-        let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
-        info!("Adc temp: {}", adc_temperature);
-        for y in 0i16..32 {
-            for x in 0i16..32 {
-                let ind = samples.len() as i16 - 1 - x;
-                let adc_value_1 = if ind >= 0 {
-                    let a = *samples.get(ind as usize).or(Some(&0f32)).unwrap();
-                    a
-                } else {
-                    adc_value_1
-                };
-                let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
-                    BlockState(if adc_temperature < 0.19 { 5958 } else if adc_temperature < 0.2 { 86 + 15 } else if adc_temperature < 0.205 { 117 } else { 4340 })
-                } else {
-                    BlockState(0)
-                };
-                // if x > 10 && x < 16 {
-                let _ = world.set_block_state(BlockPos::new(x, y, 0), state).await;
-                // }
-            }
-            embassy_futures::yield_now().await;
-            // Timer::after_micros(1).await;
-        }
-
-        // for y in 0..32 {
-        //     let state = if y as f32 / 32.0 < adc_value_1 {
-        //         BlockState(4340)
-        //     } else {
-        //         BlockState(0)
-        //     };
-        //     world
-        //         .set_block_state(BlockPos::new(0, y, 0), state)
-        //         .await
-        //         .unwrap();
-        // }
+        info!("Tick {}", i);
+    //     let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
+    //     let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
+    //
+    //     samples.push(adc_value_1);
+    //     if samples.len() > 100 {
+    //         samples.remove(0);
+    //     }
+    //
+    //     let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
+    //     info!("Adc temp: {}", adc_temperature);
+    //     for y in 0i16..32 {
+    //         for x in 0i16..32 {
+    //             let ind = samples.len() as i16 - 1 - x;
+    //             let adc_value_1 = if ind >= 0 {
+    //                 let a = *samples.get(ind as usize).or(Some(&0f32)).unwrap();
+    //                 a
+    //             } else {
+    //                 adc_value_1
+    //             };
+    //             let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
+    //                 BlockState(if adc_temperature < 0.19 { 5958 } else if adc_temperature < 0.2 { 86 + 15 } else if adc_temperature < 0.205 { 117 } else { 4340 })
+    //             } else {
+    //                 BlockState(0)
+    //             };
+    //             // if x > 10 && x < 16 {
+    //             let _ = world.set_block_state(BlockPos::new(x, y, 0), state).await;
+    //             // }
+    //         }
+    //         embassy_futures::yield_now().await;
+    //         // Timer::after_micros(1).await;
+    //     }
+    //
+    //     // for y in 0..32 {
+    //     //     let state = if y as f32 / 32.0 < adc_value_1 {
+    //     //         BlockState(4340)
+    //     //     } else {
+    //     //         BlockState(0)
+    //     //     };
+    //     //     world
+    //     //         .set_block_state(BlockPos::new(0, y, 0), state)
+    //     //         .await
+    //     //         .unwrap();
+    //     // }
 
         world.tick().await;
         mc_server.tick().await;

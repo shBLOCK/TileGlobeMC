@@ -11,6 +11,7 @@ test = false
 bench = false
 
 [dependencies]
+tileglobe_utils = { path = "../../tileglobe_utils", features = ["defmt"] }
 tileglobe = { path = "../../tileglobe", features = ["defmt"] }
 tileglobe_server = { path = "../../tileglobe_server", features = ["defmt"] }
 

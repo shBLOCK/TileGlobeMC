@@ -6,6 +6,7 @@ use crate::world::block::{
 use crate::world::world::{_World, World};
 use core::cmp::max;
 use core::mem::MaybeUninit;
+use defmt_or_log::{info, Debug2Format};
 use dynify::Dynify;
 use glam::{I16Vec3, Vec3};
 use itertools::iproduct;
@@ -19,7 +20,7 @@ use tileglobe_utils::resloc::ResLoc;
 #[derive(Debug)]
 pub struct RedstoneWireBlock;
 impl RedstoneWireBlock {
-    fn is_redstone_wire(blockstate: BlockState) -> bool {
+    pub fn is_redstone_wire(blockstate: BlockState) -> bool {
         (mc_block_id_base!("redstone_wire")..(mc_block_id_base!("redstone_wire") + 1296))
             .contains(&blockstate.0)
     }
@@ -280,7 +281,13 @@ impl Block for RedstoneWireBlock {
         }
     }
 
+    async fn tick(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
+        self.update(world, pos, blockstate).await;
+    }
+
+
     async fn update(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
+        // info!("Redstone Wire Update: {:?}", Debug2Format(&pos));
         let state = RedstoneWireState::from(blockstate);
         let power = Self::calculate_power(world, pos, state).await;
         if state.power() != power as i8 {
@@ -288,6 +295,10 @@ impl Block for RedstoneWireBlock {
             new_state.set_power(power as i8);
             if let Ok(_) = world.set_block_state(pos, new_state.block_state()).await {
                 Self::update_neighbors(world, pos).await;
+                // for update_pos in Self::update_positions(pos) {
+                //     world.update_block(update_pos).await;
+                    // world.schedule_tick(update_pos, 1, 0).await;
+                // }
             }
         }
     }

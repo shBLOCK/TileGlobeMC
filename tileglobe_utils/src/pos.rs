@@ -1,3 +1,4 @@
+use core::cmp::Ordering;
 use crate::direction::Direction;
 use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
 
@@ -31,6 +32,19 @@ impl BlockPos {
 
     pub fn offset_dir(self, direction: Direction) -> Self {
         Self(self.0 + direction.normal_i16())
+    }
+}
+
+impl Ord for BlockPos {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.x.cmp(&other.x)
+            .then_with(|| self.z.cmp(&other.z))
+            .then_with(|| self.y.cmp(&other.y))
+    }
+}
+impl PartialOrd for BlockPos {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

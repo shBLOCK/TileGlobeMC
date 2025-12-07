@@ -1,11 +1,13 @@
-use tileglobe_proc_macro::mc_block_id_base;
-use crate::world::block::{Block, DynifiedBlock, StateIdType};
 use crate::world::block::blocks::GenericBlock;
-use crate::world::block::{BlockState, BlockStateType, StateId};
-use tileglobe_utils::resloc::ResLoc;
 use crate::world::block::blocks::lever::LeverBlock;
+use crate::world::block::blocks::redstone_block::RedstoneBlock;
+use crate::world::block::blocks::redstone_comparator::RedstoneComparatorBlock;
 use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
 use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
+use crate::world::block::{Block, DynifiedBlock, StateIdType};
+use crate::world::block::{BlockState, BlockStateType, StateId};
+use tileglobe_proc_macro::mc_block_id_base;
+use tileglobe_utils::resloc::ResLoc;
 
 pub struct Blocks;
 impl Blocks {
@@ -15,7 +17,9 @@ impl Blocks {
         entries: {
             "lever" => &LeverBlock,
             "repeater" => &RedstoneRepeaterBlock,
+            "comparator" => &RedstoneComparatorBlock,
             "redstone_wire" => &RedstoneWireBlock,
+            "redstone_block" => &RedstoneBlock,
             "white_wool" => &_TmpBlock {
                 resloc: BlockResLocs::WHITE_WOOL,
                 id_base: mc_block_id_base!("white_wool"),

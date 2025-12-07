@@ -2573,6 +2573,7 @@ dependencies = [
  "static_cell",
  "tileglobe",
  "tileglobe_server",
+ "tileglobe_utils",
 ]
 
 [[package]]

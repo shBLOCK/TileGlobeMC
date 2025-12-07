@@ -2,6 +2,9 @@ mod generic;
 pub mod lever;
 pub mod redstone_wire;
 pub mod redstone_repeater;
+pub mod redstone_comparator;
+pub mod redstone_block;
+mod redstone_torch;
 
 pub use generic::*;
 use tileglobe_utils::direction::Direction;
@@ -10,7 +13,7 @@ use tileglobe_utils::indexed_enum::IndexedEnum;
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
 enum AttachFace {
-    FLOOR = 0,
+    FLOOR,
     WALL,
     CEILING,
 }
@@ -36,7 +39,7 @@ impl From<AttachFace> for u8 {
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
 pub enum HorizontalDirection {
-    NORTH = 0,
+    NORTH,
     SOUTH,
     WEST,
     EAST,
@@ -80,6 +83,22 @@ impl HorizontalDirection {
             HorizontalDirection::EAST => Direction::EAST,
             HorizontalDirection::SOUTH => Direction::SOUTH,
             HorizontalDirection::WEST => Direction::WEST,
+        }
+    }
+    fn cw(self) -> HorizontalDirection {
+        match self {
+            HorizontalDirection::NORTH => HorizontalDirection::EAST,
+            HorizontalDirection::EAST => HorizontalDirection::SOUTH,
+            HorizontalDirection::SOUTH => HorizontalDirection::WEST,
+            HorizontalDirection::WEST => HorizontalDirection::NORTH,
+        }
+    }
+    fn ccw(self) -> HorizontalDirection {
+        match self {
+            HorizontalDirection::NORTH => HorizontalDirection::WEST,
+            HorizontalDirection::WEST => HorizontalDirection::SOUTH,
+            HorizontalDirection::SOUTH => HorizontalDirection::EAST,
+            HorizontalDirection::EAST => HorizontalDirection::NORTH,
         }
     }
 }

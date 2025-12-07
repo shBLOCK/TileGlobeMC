@@ -84,7 +84,7 @@ impl Ord for BlockTick {
     fn cmp(&self, other: &Self) -> Ordering {
         self.tick
             .cmp(&other.tick)
-            .then_with(|| self.priority.cmp(&other.priority))
+            .then_with(|| self.priority.cmp(&other.priority).reverse())
             .then_with(|| self.sequence.cmp(&other.sequence))
     }
 }
@@ -94,26 +94,9 @@ impl PartialOrd for BlockTick {
     }
 }
 
-#[derive(Debug, Eq, PartialEq)]
-struct OrdBlockPos(BlockPos);
-impl Ord for OrdBlockPos {
-    fn cmp(&self, other: &Self) -> Ordering {
-        self.0
-            .x
-            .cmp(&other.0.x)
-            .then_with(|| self.0.z.cmp(&other.0.z))
-            .then_with(|| self.0.y.cmp(&other.0.y))
-    }
-}
-impl PartialOrd for OrdBlockPos {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
-}
-
 struct BlockTickScheduler {
     ticks: BTreeSet<BlockTick>,
-    positions: BTreeSet<OrdBlockPos>,
+    positions: BTreeSet<BlockPos>,
     sequence: u32,
 }
 impl BlockTickScheduler {
@@ -126,7 +109,7 @@ impl BlockTickScheduler {
     }
 
     pub fn schedule(&mut self, pos: BlockPos, tick: u32, priority: i8) {
-        if self.positions.insert(OrdBlockPos(pos)) {
+        if self.positions.insert(pos) {
             self.ticks.insert(BlockTick {
                 pos,
                 tick,
@@ -140,7 +123,7 @@ impl BlockTickScheduler {
     pub fn pop_at_or_before(&mut self, tick: u32) -> Option<BlockTick> {
         if self.ticks.first()?.tick <= tick {
             let block_tick = self.ticks.pop_first().unwrap();
-            self.positions.remove(&OrdBlockPos(block_tick.pos));
+            self.positions.remove(&block_tick.pos);
             Some(block_tick)
         } else {
             None
@@ -216,12 +199,7 @@ impl World for _World {
     }
 
     async fn tick(&self) {
-        let current_tick = {
-            let mut tick_number_mutex = self.tick_number.lock().await;
-            let value = *tick_number_mutex;
-            *tick_number_mutex += 1;
-            value
-        };
+        let current_tick = { *self.tick_number.lock().await };
 
         // info!("tick {}", current_tick);
 
@@ -237,6 +215,8 @@ impl World for _World {
                     .await;
             }
         }
+
+        *self.tick_number.lock().await += 1;
     }
 
     async fn update_block(&self, pos: BlockPos) {

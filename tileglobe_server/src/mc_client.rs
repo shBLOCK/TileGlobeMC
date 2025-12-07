@@ -363,6 +363,7 @@ where
                                 .on_use_without_item(self.server.world, pos, blockstate)
                                 .init(&mut c)
                                 .await;
+                            self._block_changes_to_ack.lock().await.push(sequence);
                         }
                     } else {
                         const ITEM_TO_BLOCK: [BlockState; 1416] = const {

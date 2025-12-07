@@ -15,6 +15,10 @@ use tileglobe_utils::resloc::ResLoc;
 #[derive(Debug)]
 pub struct RedstoneRepeaterBlock;
 impl RedstoneRepeaterBlock {
+    pub fn is_redstone_repeater(blockstate: BlockState) -> bool {
+        (mc_block_id_base!("repeater")..(mc_block_id_base!("repeater") + 16)).contains(&blockstate.0)
+    }
+
     async fn get_input_signal(world: &_World, pos: BlockPos, blockstate: BlockState) -> u8 {
         let state = RedstoneRepeaterState::from(blockstate);
         world
