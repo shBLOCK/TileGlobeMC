@@ -1,18 +1,18 @@
 use alloc::collections::BTreeMap;
-use core::marker::PhantomData;
 use core::mem::MaybeUninit;
-use defmt_or_log::info;
 use dynify::Dynify;
 use smallvec::SmallVec;
 use uuid::Uuid;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
+use tileglobe::world::block::BlockState;
 use tileglobe::world::world::World;
+use tileglobe_utils::direction::Direction;
+use tileglobe_utils::pos::BlockPos;
 use crate::player::DynifiedPlayer;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {
     pub world: &'a WORLD,
-    _phantom: PhantomData<M>,
     players: Mutex<M, BTreeMap<Uuid, &'a dyn DynifiedPlayer>>,
     // players: Mutex<M, BTreeMap<Uuid, Arc<dyn DynifiedPlayer>>>,
 }
@@ -21,7 +21,6 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
         Self {
             world,
             // players: Mutex::new(BTreeMap::new()),
-            _phantom: Default::default(),
             players: Mutex::new(BTreeMap::new()),
         }
     }

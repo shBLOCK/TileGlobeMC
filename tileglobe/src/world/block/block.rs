@@ -349,7 +349,7 @@ impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
         'world: 'dynify,
     {
         dynify::from_fn!(
-            BlockImplementor::get_signal,
+            BlockImplementor::get_strong_signal,
             self,
             world,
             pos,

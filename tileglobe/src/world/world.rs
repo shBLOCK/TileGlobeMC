@@ -1,5 +1,6 @@
 use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
+use alloc::boxed::Box;
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::cmp::{Ordering, max};
@@ -71,6 +72,9 @@ pub trait World {
     }
 }
 
+#[cfg(feature = "rp")]
+pub type _World = LocalWorld<embassy_rp::spinlock_mutex::SpinlockRawMutex<1>, -1, -1, 3, 3>;
+#[cfg(not(feature = "rp"))]
 pub type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>; // TODO: NO!
 
 #[derive(Debug, Eq, PartialEq)]
@@ -131,8 +135,20 @@ impl BlockTickScheduler {
     }
 }
 
+#[dynify::dynify(DynifiedRedstoneOverride)]
+pub trait RedstoneOverride {
+    async fn redstone_override(
+        &mut self,
+        world: &_World,
+        pos: BlockPos,
+        blockstate: BlockState,
+        direction: Direction,
+        strong: bool,
+    ) -> Option<u8>;
+}
+
 pub struct LocalWorld<
-    M: RawMutex,
+    M: RawMutex + 'static,
     const MIN_X: i16,
     const MIN_Y: i16,
     const SIZE_X: usize,
@@ -141,6 +157,7 @@ pub struct LocalWorld<
     chunks: [[Mutex<M, Option<Chunk>>; SIZE_Y]; SIZE_X],
     tick_number: Mutex<M, u32>,
     block_tick_scheduler: Mutex<M, BlockTickScheduler>,
+    pub redstone_override: Option<Mutex<M, Box<dyn DynifiedRedstoneOverride>>>,
 }
 
 impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const SIZE_Y: usize>
@@ -151,6 +168,7 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
             chunks: core::array::from_fn(|_| core::array::from_fn(|_| Mutex::new(None))),
             tick_number: Mutex::new(0),
             block_tick_scheduler: Mutex::new(BlockTickScheduler::new()),
+            redstone_override: None,
         }
     }
 
@@ -185,6 +203,27 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
     }
 }
 
+impl _World {
+    async fn get_redstone_override(
+        &self,
+        pos: BlockPos,
+        blockstate: BlockState,
+        direction: Direction,
+        strong: bool,
+    ) -> Option<u8> {
+        if let Some(rso) = &self.redstone_override {
+            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            rso.lock()
+                .await
+                .redstone_override(self, pos, blockstate, direction, strong)
+                .init(&mut c)
+                .await
+        } else {
+            None
+        }
+    }
+}
+
 impl World for _World {
     async fn get_block_state(&self, pos: BlockPos) -> Result<BlockState, ()> {
         self.get_chunk(pos.chunk_pos())
@@ -205,7 +244,10 @@ impl World for _World {
 
         let mut c = SmallVec::<[MaybeUninit<u8>; 256]>::new();
         while let Some(block_tick) = {
-            self.block_tick_scheduler.lock().await.pop_at_or_before(current_tick)
+            self.block_tick_scheduler
+                .lock()
+                .await
+                .pop_at_or_before(current_tick)
         } {
             if let Ok(blockstate) = self.get_block_state(block_tick.pos).await {
                 blockstate
@@ -241,7 +283,6 @@ impl World for _World {
         }
     }
 
-
     async fn schedule_tick(&self, pos: BlockPos, delay: u8, priority: i8) {
         self.block_tick_scheduler.lock().await.schedule(
             pos,
@@ -252,6 +293,10 @@ impl World for _World {
 
     async fn get_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
         if let Ok(blockstate) = self.get_block_state(pos).await {
+            if let Some(signal) = self.get_redstone_override(pos, blockstate, direction, false).await {
+                return signal;
+            }
+
             let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
             let block = blockstate.get_block();
             let mut signal = block
@@ -292,6 +337,10 @@ impl World for _World {
 
     async fn get_strong_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
         if let Ok(blockstate) = self.get_block_state(pos).await {
+            if let Some(signal) = self.get_redstone_override(pos, blockstate, direction, false).await {
+                return signal;
+            }
+
             let mut signal = 0;
             if !blockstate.get_block().is_redstone_conductor(blockstate) {
                 return signal;

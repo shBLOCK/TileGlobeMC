@@ -2477,6 +2477,7 @@ dependencies = [
  "derive_more",
  "dynify",
  "embassy-executor",
+ "embassy-rp",
  "embassy-sync 0.7.2",
  "embedded-io-async",
  "glam",
@@ -2560,6 +2561,7 @@ dependencies = [
  "cyw43-pio",
  "defmt 1.0.1",
  "defmt-rtt",
+ "dynify",
  "embassy-executor",
  "embassy-futures",
  "embassy-net",
@@ -2572,6 +2574,7 @@ dependencies = [
  "panic-probe",
  "static_cell",
  "tileglobe",
+ "tileglobe_proc_macro",
  "tileglobe_server",
  "tileglobe_utils",
 ]

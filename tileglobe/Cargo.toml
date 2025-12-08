@@ -24,6 +24,15 @@ defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
 
+embassy-rp = { version = "0.8.0", path = "../embassy/embassy-rp", features = [
+    "unstable-pac",
+    "time-driver",
+    "critical-section-impl",
+    "binary-info",
+    "defmt"
+], optional = true }
+
 [features]
 defmt = ["dep:defmt", "defmt-or-log/defmt"]
 log = ["dep:log", "defmt-or-log/log"]
+rp = ["dep:embassy-rp"]

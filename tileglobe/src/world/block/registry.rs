@@ -30,6 +30,48 @@ impl Blocks {
                 default_state: StateId(0),
                 is_redstone_conductor: true,
             },
+            "red_wool" => &_TmpBlock {
+                resloc: BlockResLocs::RED_WOOL,
+                id_base: mc_block_id_base!("red_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "orange_wool" => &_TmpBlock {
+                resloc: BlockResLocs::ORANGE_WOOL,
+                id_base: mc_block_id_base!("orange_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "yellow_wool" => &_TmpBlock {
+                resloc: BlockResLocs::YELLOW_WOOL,
+                id_base: mc_block_id_base!("yellow_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "green_wool" => &_TmpBlock {
+                resloc: BlockResLocs::GREEN_WOOL,
+                id_base: mc_block_id_base!("green_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "blue_wool" => &_TmpBlock {
+                resloc: BlockResLocs::BLUE_WOOL,
+                id_base: mc_block_id_base!("blue_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "black_wool" => &_TmpBlock {
+                resloc: BlockResLocs::BLACK_WOOL,
+                id_base: mc_block_id_base!("black_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
         }
     };
 

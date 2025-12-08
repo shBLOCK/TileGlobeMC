@@ -3,6 +3,7 @@
 
 extern crate alloc;
 
+use alloc::boxed::Box;
 use alloc::vec::Vec;
 use core::net::SocketAddr;
 use defmt::*;
@@ -16,6 +17,7 @@ use embassy_rp::pio::Pio;
 use embassy_rp::{Peripherals, bind_interrupts};
 use embassy_time::{Duration, Ticker, Timer};
 use static_cell::StaticCell;
+use tileglobe::world::world::{_World, RedstoneOverride};
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -36,21 +38,23 @@ use embassy_rp::adc::Adc;
 use embassy_rp::clocks::RoscRng;
 use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
+use embassy_sync::mutex::Mutex;
 use embedded_alloc::LlffHeap as Heap;
 use log::warn;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World};
+use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_server::MCClient;
 use tileglobe_server::mc_server::MCServer;
-use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
+use tileglobe_utils::direction::Direction;
+use tileglobe_utils::pos::{BlockPos, ChunkLocalPos, ChunkPos};
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
 
-type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>;
 static WORLD: StaticCell<_World> = StaticCell::new();
-static MC_SERVER: StaticCell<MCServer<'_, CriticalSectionRawMutex, _World>> = StaticCell::new();
+static MC_SERVER: StaticCell<MCServer<'_, SpinlockRawMutex<0>, _World>> = StaticCell::new();
 
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
@@ -59,7 +63,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
             embassy_rp::psram::Config::aps6404l(),
         )
-            .expect("Failed to initialize PSRAM");
+        .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
@@ -167,11 +171,63 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         }
     }
 
+    let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
+    let mut adc0 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
+    let mut adc1 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
+    let mut adc2 = embassy_rp::adc::Channel::new_pin(ps.PIN_42, Pull::None);
+    let mut out0 = embassy_rp::gpio::Output::new(ps.PIN_20, Level::Low);
+    let mut out1 = embassy_rp::gpio::Output::new(ps.PIN_21, Level::Low);
+    let mut out2 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
+
+    struct GPIORedstoneOverride<'a, const N: usize> {
+        adc: Adc<'a, embassy_rp::adc::Async>,
+        block_to_adc: [(BlockState, embassy_rp::adc::Channel<'a>); N],
+    }
+    impl<'a, const N: usize> RedstoneOverride for GPIORedstoneOverride<'a, N> {
+        async fn redstone_override(
+            &mut self,
+            world: &_World,
+            pos: BlockPos,
+            blockstate: BlockState,
+            direction: Direction,
+            strong: bool,
+        ) -> Option<u8> {
+            if let Some((_, channel)) = self
+                .block_to_adc
+                .iter_mut()
+                .find(|(bs, _)| *bs == blockstate)
+            {
+                return Some((self.adc.read(channel).await.unwrap() / (4096 / 16)) as u8);
+            }
+            None
+        }
+    }
+
+    const ADC_BLOCKS: [BlockState; 3] = [
+        BlockState(mc_block_id_base!("red_wool")),
+        BlockState(mc_block_id_base!("orange_wool")),
+        BlockState(mc_block_id_base!("yellow_wool")),
+    ];
+    let mut dac_blocks = [
+        (BlockState(mc_block_id_base!("green_wool")), out0),
+        (BlockState(mc_block_id_base!("blue_wool")), out1),
+        (BlockState(mc_block_id_base!("black_wool")), out2)
+    ];
+
+    world.redstone_override = Some(Mutex::new(Box::new(GPIORedstoneOverride {
+        adc,
+        block_to_adc: [
+            (ADC_BLOCKS[0], adc0),
+            (ADC_BLOCKS[1], adc1),
+            (ADC_BLOCKS[2], adc2),
+        ],
+    })));
+
     let mc_server = MC_SERVER.init(MCServer::new(world));
 
     #[embassy_executor::task(pool_size = 3)]
     async fn socket_task(
-        mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>,
+        mc_server: &'static MCServer<'static, SpinlockRawMutex<0>, _World>,
         stack: Stack<'static>,
     ) -> ! {
         let mut rx_buffer = [0u8; 4096];
@@ -195,7 +251,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
             let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
 
-            let mut client = MCClient::<CriticalSectionRawMutex, _, _, _>::new(
+            let mut client = MCClient::<SpinlockRawMutex<1>, _, _, _>::new(
                 mc_server,
                 unsafe { &mut *(&mut rx as *mut TcpReader) },
                 unsafe { &mut *(&mut tx as *mut TcpWriter) },
@@ -219,64 +275,83 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     let mut i = 0u32;
 
-    // bind_interrupts!(struct AdcIrqs {
-    //     ADC_IRQ_FIFO => embassy_rp::adc::InterruptHandler;
-    // });
-    //
-    // let mut adc = Adc::new(ps.ADC, AdcIrqs, embassy_rp::adc::Config::default());
-    // let mut adc40 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
-    // let mut adc41 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
+    bind_interrupts!(struct AdcIrqs {
+        ADC_IRQ_FIFO => embassy_rp::adc::InterruptHandler;
+    });
+
     // let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
     //
     // // let mut samples = [0f32; 20];
     // let mut samples = Vec::<f32>::new();
     //
+    // struct RedstoneOverride<'a> {
+    //     adc0: embassy_rp::adc::Channel<'a>,
+    //     adc1: embassy_rp::adc::Channel<'a>,
+    //     adc2: embassy_rp::adc::Channel<'a>,
+    // }
+
     loop {
         info!("Tick {}", i);
-    //     let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
-    //     let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
-    //
-    //     samples.push(adc_value_1);
-    //     if samples.len() > 100 {
-    //         samples.remove(0);
-    //     }
-    //
-    //     let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
-    //     info!("Adc temp: {}", adc_temperature);
-    //     for y in 0i16..32 {
-    //         for x in 0i16..32 {
-    //             let ind = samples.len() as i16 - 1 - x;
-    //             let adc_value_1 = if ind >= 0 {
-    //                 let a = *samples.get(ind as usize).or(Some(&0f32)).unwrap();
-    //                 a
-    //             } else {
-    //                 adc_value_1
-    //             };
-    //             let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
-    //                 BlockState(if adc_temperature < 0.19 { 5958 } else if adc_temperature < 0.2 { 86 + 15 } else if adc_temperature < 0.205 { 117 } else { 4340 })
-    //             } else {
-    //                 BlockState(0)
-    //             };
-    //             // if x > 10 && x < 16 {
-    //             let _ = world.set_block_state(BlockPos::new(x, y, 0), state).await;
-    //             // }
-    //         }
-    //         embassy_futures::yield_now().await;
-    //         // Timer::after_micros(1).await;
-    //     }
-    //
-    //     // for y in 0..32 {
-    //     //     let state = if y as f32 / 32.0 < adc_value_1 {
-    //     //         BlockState(4340)
-    //     //     } else {
-    //     //         BlockState(0)
-    //     //     };
-    //     //     world
-    //     //         .set_block_state(BlockPos::new(0, y, 0), state)
-    //     //         .await
-    //     //         .unwrap();
-    //     // }
+        //     let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
+        //     let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
+        //
+        //     samples.push(adc_value_1);
+        //     if samples.len() > 100 {
+        //         samples.remove(0);
+        //     }
+        //
+        //     let adc_temperature = adc.read(&mut adc_temp).await.unwrap() as f32 / 4096.0;
+        //     info!("Adc temp: {}", adc_temperature);
+        //     for y in 0i16..32 {
+        //         for x in 0i16..32 {
+        //             let ind = samples.len() as i16 - 1 - x;
+        //             let adc_value_1 = if ind >= 0 {
+        //                 let a = *samples.get(ind as usize).or(Some(&0f32)).unwrap();
+        //                 a
+        //             } else {
+        //                 adc_value_1
+        //             };
+        //             let state = if y as f32 / 32.0 <= adc_value_1 && x as f32 / 32.0 <= adc_value_2 {
+        //                 BlockState(if adc_temperature < 0.19 { 5958 } else if adc_temperature < 0.2 { 86 + 15 } else if adc_temperature < 0.205 { 117 } else { 4340 })
+        //             } else {
+        //                 BlockState(0)
+        //             };
+        //             // if x > 10 && x < 16 {
+        //             let _ = world.set_block_state(BlockPos::new(x, y, 0), state).await;
+        //             // }
+        //         }
+        //         embassy_futures::yield_now().await;
+        //         // Timer::after_micros(1).await;
+        //     }
+        //
+        //     // for y in 0..32 {
+        //     //     let state = if y as f32 / 32.0 < adc_value_1 {
+        //     //         BlockState(4340)
+        //     //     } else {
+        //     //         BlockState(0)
+        //     //     };
+        //     //     world
+        //     //         .set_block_state(BlockPos::new(0, y, 0), state)
+        //     //         .await
+        //     //         .unwrap();
+        //     // }
 
+        // let adc_value_0 =
+
+        for x in -16i16..32i16 {
+            let z = -16i16;
+            let pos = BlockPos::new(x, 0, z);
+            if let Ok(blockstate) = world.get_block_state(pos).await {
+                if ADC_BLOCKS.contains(&blockstate) {
+                    world.update_neighbors(pos).await;
+                }
+                if let Some((_, out)) = dac_blocks.iter_mut().find(|(bs, _)| *bs == blockstate) {
+                    let signal = world.get_signal_to(pos).await;
+                    out.set_level((signal > 0).into());
+                }
+            }
+        }
+        embassy_futures::yield_now().await; // important! or else wifi dies..?
         world.tick().await;
         embassy_futures::yield_now().await; // important! or else wifi dies..?
         mc_server.tick().await;

@@ -6,7 +6,7 @@ use crate::world::block::{
 use crate::world::world::{_World, World};
 use core::cmp::max;
 use core::mem::MaybeUninit;
-use defmt_or_log::{info, Debug2Format};
+use defmt_or_log::{Debug2Format, info};
 use dynify::Dynify;
 use glam::{I16Vec3, Vec3};
 use itertools::iproduct;
@@ -62,7 +62,9 @@ impl RedstoneWireBlock {
 
         let down_blocked = if let Ok(blockstate) = side_blockstate {
             blockstate.get_block().is_redstone_conductor(blockstate)
-        } else {false};
+        } else {
+            false
+        };
         if !down_blocked {
             let down_is_wire = world
                 .get_block_state(
@@ -148,6 +150,15 @@ impl RedstoneWireBlock {
         }
     }
 
+    async fn get_redstone_wire_signal(world: &_World, pos: BlockPos) -> Option<u8> {
+        if let Ok(blockstate) = world.get_block_state(pos).await {
+            if Self::is_redstone_wire(blockstate) {
+                return Some(RedstoneWireState::from(blockstate).power() as u8);
+            }
+        }
+        None
+    }
+
     async fn calculate_power(world: &_World, pos: BlockPos, state: RedstoneWireState) -> u8 {
         let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
         let mut power = 0u8;
@@ -170,21 +181,14 @@ impl RedstoneWireBlock {
             if state.connection(direction) != Connection::SIDE {
                 continue;
             }
-            if let Ok(blockstate) = world
-                .get_block_state(pos.offset_dir(direction.direction()))
-                .await
-            {
+            let opos = pos.offset_dir(direction.direction());
+            if let Ok(blockstate) = world.get_block_state(opos).await {
                 if !Self::is_redstone_wire(blockstate) {
                     power = max(
                         power,
                         blockstate
                             .get_block()
-                            .get_signal(
-                                world,
-                                pos.offset_dir(direction.direction()),
-                                blockstate,
-                                direction.direction().opposite(),
-                            )
+                            .get_signal(world, opos, blockstate, direction.direction().opposite())
                             .init(&mut c)
                             .await,
                     );
@@ -197,24 +201,42 @@ impl RedstoneWireBlock {
 
         // wire signals
         for &direction in HorizontalDirection::variants() {
-            let wire_pos = match state.connection(direction) {
-                Connection::SIDE => Some(pos.offset_dir(direction.direction())),
-                Connection::UP => Some(
-                    pos.offset_dir(direction.direction())
-                        .offset_dir(Direction::UP),
-                ),
-                Connection::NONE => None,
-            };
-            if let Some(wire_pos) = wire_pos {
-                if let Ok(blockstate) = world.get_block_state(wire_pos).await {
-                    if Self::is_redstone_wire(blockstate) {
-                        power = max(
-                            power,
-                            (RedstoneWireState::from(blockstate).power() as u8).saturating_sub(1),
-                        );
+            let opos = pos.offset_dir(direction.direction());
+            match state.connection(direction) {
+                Connection::SIDE => {
+                    power = max(
+                        power,
+                        Self::get_redstone_wire_signal(world, opos)
+                            .await
+                            .unwrap_or(0)
+                            .saturating_sub(1),
+                    );
+                    if let Ok(blockstate) = world
+                        .get_block_state(opos.offset_dir(Direction::DOWN))
+                        .await
+                    {
+                        if Self::is_redstone_wire(blockstate) {
+                            let state = RedstoneWireState::from(blockstate);
+                            if state
+                                .connection(direction.direction().opposite().try_into().unwrap())
+                                == Connection::UP
+                            {
+                                power = max(power, (state.power() as u8).saturating_sub(1));
+                            }
+                        }
                     }
                 }
-            }
+                Connection::UP => {
+                    power = max(
+                        power,
+                        Self::get_redstone_wire_signal(world, opos.offset_dir(Direction::UP))
+                            .await
+                            .unwrap_or(0)
+                            .saturating_sub(1),
+                    );
+                }
+                Connection::NONE => {}
+            };
         }
 
         power
@@ -285,7 +307,6 @@ impl Block for RedstoneWireBlock {
         self.update(world, pos, blockstate).await;
     }
 
-
     async fn update(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
         // info!("Redstone Wire Update: {:?}", Debug2Format(&pos));
         let state = RedstoneWireState::from(blockstate);
@@ -297,7 +318,7 @@ impl Block for RedstoneWireBlock {
                 Self::update_neighbors(world, pos).await;
                 // for update_pos in Self::update_positions(pos) {
                 //     world.update_block(update_pos).await;
-                    // world.schedule_tick(update_pos, 1, 0).await;
+                // world.schedule_tick(update_pos, 1, 0).await;
                 // }
             }
         }
