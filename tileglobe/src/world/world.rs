@@ -5,6 +5,7 @@ use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::cmp::{Ordering, max};
 use core::mem::MaybeUninit;
+use defmt_or_log::info;
 use dynify::Dynify;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
@@ -158,6 +159,7 @@ pub struct LocalWorld<
     tick_number: Mutex<M, u32>,
     block_tick_scheduler: Mutex<M, BlockTickScheduler>,
     pub redstone_override: Option<Mutex<M, Box<dyn DynifiedRedstoneOverride>>>,
+    block_updates: Mutex<M, SmallVec<[BlockPos; 1024]>>,
 }
 
 impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const SIZE_Y: usize>
@@ -169,6 +171,7 @@ impl<M: RawMutex, const MIN_X: i16, const MIN_Y: i16, const SIZE_X: usize, const
             tick_number: Mutex::new(0),
             block_tick_scheduler: Mutex::new(BlockTickScheduler::new()),
             redstone_override: None,
+            block_updates: Mutex::new(SmallVec::new()),
         }
     }
 
@@ -212,7 +215,7 @@ impl _World {
         strong: bool,
     ) -> Option<u8> {
         if let Some(rso) = &self.redstone_override {
-            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            let mut c = [MaybeUninit::uninit(); 64];
             rso.lock()
                 .await
                 .redstone_override(self, pos, blockstate, direction, strong)
@@ -240,9 +243,9 @@ impl World for _World {
     async fn tick(&self) {
         let current_tick = { *self.tick_number.lock().await };
 
-        // info!("tick {}", current_tick);
+        info!("tick {}", current_tick);
 
-        let mut c = SmallVec::<[MaybeUninit<u8>; 256]>::new();
+        let mut c = [MaybeUninit::uninit(); 512];
         while let Some(block_tick) = {
             self.block_tick_scheduler
                 .lock()
@@ -258,18 +261,31 @@ impl World for _World {
             }
         }
 
+        while let Some(pos) = { self.block_updates.lock().await.pop() } {
+            if let Ok(blockstate) = self.get_block_state(pos).await {
+                let mut c = [MaybeUninit::<u8>::uninit(); 512];
+                blockstate
+                    .get_block()
+                    .update(self, pos, blockstate)
+                    .init(&mut c)
+                    .await;
+                // info!("{:?} {}", blockstate.get_block(), c.capacity());
+            }
+        }
+
         *self.tick_number.lock().await += 1;
     }
 
     async fn update_block(&self, pos: BlockPos) {
-        if let Ok(blockstate) = self.get_block_state(pos).await {
-            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
-            blockstate
-                .get_block()
-                .update(self, pos, blockstate)
-                .init(&mut c)
-                .await;
-        }
+        // if let Ok(blockstate) = self.get_block_state(pos).await {
+        //     let mut c = SmallVec::<[MaybeUninit<u8>; 1024]>::new();
+        //     blockstate
+        //         .get_block()
+        //         .update(self, pos, blockstate)
+        //         .init(&mut c)
+        //         .await;
+        // }
+        self.block_updates.lock().await.push(pos);
     }
 
     async fn update_block_shape(&self, pos: BlockPos) {
@@ -293,11 +309,14 @@ impl World for _World {
 
     async fn get_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
         if let Ok(blockstate) = self.get_block_state(pos).await {
-            if let Some(signal) = self.get_redstone_override(pos, blockstate, direction, false).await {
+            if let Some(signal) = self
+                .get_redstone_override(pos, blockstate, direction, false)
+                .await
+            {
                 return signal;
             }
 
-            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            let mut c = [MaybeUninit::uninit(); 64];
             let block = blockstate.get_block();
             let mut signal = block
                 .get_signal(self, pos, blockstate, direction)
@@ -337,7 +356,10 @@ impl World for _World {
 
     async fn get_strong_signal(&self, pos: BlockPos, direction: Direction) -> u8 {
         if let Ok(blockstate) = self.get_block_state(pos).await {
-            if let Some(signal) = self.get_redstone_override(pos, blockstate, direction, false).await {
+            if let Some(signal) = self
+                .get_redstone_override(pos, blockstate, direction, false)
+                .await
+            {
                 return signal;
             }
 
@@ -345,7 +367,7 @@ impl World for _World {
             if !blockstate.get_block().is_redstone_conductor(blockstate) {
                 return signal;
             }
-            let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+            let mut c = [MaybeUninit::uninit(); 64];
             for &neighbor_dir in Direction::variants() {
                 if neighbor_dir == direction {
                     continue;

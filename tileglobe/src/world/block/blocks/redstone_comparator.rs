@@ -78,7 +78,7 @@ impl RedstoneComparatorBlock {
                     0
                 }
             }
-            Mode::SUBTRACT => max(0, input - side_input),
+            Mode::SUBTRACT => input.saturating_sub(side_input),
         }
     }
 }

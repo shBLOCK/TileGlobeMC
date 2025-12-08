@@ -15,7 +15,7 @@ use embassy_rp::peripherals::{DMA_CH0, DMA_CH15, PIO2};
 use embassy_rp::pio::InterruptHandler;
 use embassy_rp::pio::Pio;
 use embassy_rp::{Peripherals, bind_interrupts};
-use embassy_time::{Duration, Ticker, Timer};
+use embassy_time::{Duration, Instant, Ticker, Timer};
 use static_cell::StaticCell;
 use tileglobe::world::world::{_World, RedstoneOverride};
 
@@ -175,9 +175,10 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let mut adc0 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
     let mut adc1 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
     let mut adc2 = embassy_rp::adc::Channel::new_pin(ps.PIN_42, Pull::None);
-    let mut out0 = embassy_rp::gpio::Output::new(ps.PIN_20, Level::Low);
+    let mut out0 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
     let mut out1 = embassy_rp::gpio::Output::new(ps.PIN_21, Level::Low);
-    let mut out2 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
+    let mut out2 = embassy_rp::gpio::Output::new(ps.PIN_20, Level::Low);
+    let mut out3 = embassy_rp::gpio::Output::new(ps.PIN_19, Level::Low);
 
     struct GPIORedstoneOverride<'a, const N: usize> {
         adc: Adc<'a, embassy_rp::adc::Async>,
@@ -204,14 +205,15 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     }
 
     const ADC_BLOCKS: [BlockState; 3] = [
-        BlockState(mc_block_id_base!("red_wool")),
-        BlockState(mc_block_id_base!("orange_wool")),
         BlockState(mc_block_id_base!("yellow_wool")),
+        BlockState(mc_block_id_base!("orange_wool")),
+        BlockState(mc_block_id_base!("red_wool")),
     ];
     let mut dac_blocks = [
         (BlockState(mc_block_id_base!("green_wool")), out0),
         (BlockState(mc_block_id_base!("blue_wool")), out1),
-        (BlockState(mc_block_id_base!("black_wool")), out2)
+        (BlockState(mc_block_id_base!("black_wool")), out2),
+        (BlockState(mc_block_id_base!("white_wool")), out3),
     ];
 
     world.redstone_override = Some(Mutex::new(Box::new(GPIORedstoneOverride {
@@ -231,7 +233,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         stack: Stack<'static>,
     ) -> ! {
         let mut rx_buffer = [0u8; 4096];
-        let mut tx_buffer = [0u8; 32768];
+        let mut tx_buffer = [0u8; 4096];
 
         loop {
             let mut socket = TcpSocket::new(
@@ -272,7 +274,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         spawner.spawn(socket_task(mc_server, stack).unwrap());
     }
 
-    let mut tick_ticker = Ticker::every(Duration::from_hz(20));
+    let mut tick_ticker = Ticker::every(Duration::from_hz(20000));
     let mut i = 0u32;
 
     bind_interrupts!(struct AdcIrqs {
@@ -338,6 +340,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
         // let adc_value_0 =
 
+        let st = Instant::now();
         for x in -16i16..32i16 {
             let z = -16i16;
             let pos = BlockPos::new(x, 0, z);
@@ -351,10 +354,20 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
                 }
             }
         }
+        info!("GPIO: {}", Instant::now() - st);
+
         embassy_futures::yield_now().await; // important! or else wifi dies..?
+
+        let st = Instant::now();
         world.tick().await;
+        info!("World Tick: {}", Instant::now() - st);
+
         embassy_futures::yield_now().await; // important! or else wifi dies..?
+
+        let st = Instant::now();
         mc_server.tick().await;
+        info!("Server Tick: {}", Instant::now() - st);
+
         i += 1;
         tick_ticker.next().await;
     }

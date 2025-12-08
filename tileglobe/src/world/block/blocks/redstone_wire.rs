@@ -160,7 +160,7 @@ impl RedstoneWireBlock {
     }
 
     async fn calculate_power(world: &_World, pos: BlockPos, state: RedstoneWireState) -> u8 {
-        let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
+        let mut c = [MaybeUninit::uninit(); 64];
         let mut power = 0u8;
 
         // strong signals
