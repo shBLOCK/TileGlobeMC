@@ -7,7 +7,7 @@ use core::cmp::{Ordering, max};
 use core::mem::MaybeUninit;
 use defmt_or_log::info;
 use dynify::Dynify;
-use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, RawMutex};
+use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 use smallvec::SmallVec;
 use tileglobe_utils::direction::Direction;
@@ -73,10 +73,11 @@ pub trait World {
     }
 }
 
-#[cfg(feature = "rp")]
-pub type _World = LocalWorld<embassy_rp::spinlock_mutex::SpinlockRawMutex<1>, -1, -1, 3, 3>;
-#[cfg(not(feature = "rp"))]
-pub type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>; // TODO: NO!
+// #[cfg(feature = "rp")]
+// pub type _World = LocalWorld<embassy_rp::spinlock_mutex::SpinlockRawMutex<1>, -1, -1, 3, 3>;
+// #[cfg(not(feature = "rp"))]
+// pub type _World = LocalWorld<CriticalSectionRawMutex, -1, -1, 3, 3>; // TODO: NO!
+pub type _World = LocalWorld<NoopRawMutex, -1, -1, 3, 3>;
 
 #[derive(Debug, Eq, PartialEq)]
 struct BlockTick {

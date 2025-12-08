@@ -39,7 +39,7 @@ use embassy_rp::clocks::RoscRng;
 use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embassy_sync::mutex::Mutex;
-use embedded_alloc::LlffHeap as Heap;
+use embedded_alloc::TlsfHeap as Heap;
 use log::warn;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
@@ -59,9 +59,12 @@ static MC_SERVER: StaticCell<MCServer<'_, SpinlockRawMutex<0>, _World>> = Static
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     {
+        let mut cfg = embassy_rp::psram::Config::aps6404l();
+        cfg.clock_hz = 300_000_000;
+        cfg.max_mem_freq = 144_000_000;
         embassy_rp::psram::Psram::new(
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
-            embassy_rp::psram::Config::aps6404l(),
+            cfg,
         )
         .expect("Failed to initialize PSRAM");
 
@@ -274,7 +277,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         spawner.spawn(socket_task(mc_server, stack).unwrap());
     }
 
-    let mut tick_ticker = Ticker::every(Duration::from_hz(20000));
+    let mut tick_ticker = Ticker::every(Duration::from_hz(20));
     let mut i = 0u32;
 
     bind_interrupts!(struct AdcIrqs {
@@ -376,7 +379,8 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 #[cortex_m_rt::entry]
 fn main() -> ! {
     #[allow(unused_mut)]
-    let mut clock_config = embassy_rp::clocks::ClockConfig::crystal(12_000_000);
+    // let mut clock_config = embassy_rp::clocks::ClockConfig::crystal(12_000_000);
+    let mut clock_config = embassy_rp::clocks::ClockConfig::system_freq(300_000_000).unwrap();
     let ps = embassy_rp::init(embassy_rp::config::Config::new(clock_config));
 
     static EXECUTOR: StaticCell<Executor> = StaticCell::new();
