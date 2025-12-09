@@ -25,6 +25,13 @@ impl Blocks {
             "redstone_torch" => &RedstoneTorchBlock { torch_type: RedstoneTorchType::Floor },
             "redstone_wall_torch" => &RedstoneTorchBlock { torch_type: RedstoneTorchType::Wall },
             "redstone_lamp" => &RedstoneLampBlock,
+            "iron_block" => &_TmpBlock {
+                resloc: BlockResLocs::IRON_BLOCK,
+                id_base: mc_block_id_base!("iron_block"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
             "white_wool" => &_TmpBlock {
                 resloc: BlockResLocs::WHITE_WOOL,
                 id_base: mc_block_id_base!("white_wool"),
@@ -70,6 +77,13 @@ impl Blocks {
             "black_wool" => &_TmpBlock {
                 resloc: BlockResLocs::BLACK_WOOL,
                 id_base: mc_block_id_base!("black_wool"),
+                num_states: 1,
+                default_state: StateId(0),
+                is_redstone_conductor: true,
+            },
+            "magenta_wool" => &_TmpBlock {
+                resloc: BlockResLocs::MAGENTA_WOOL,
+                id_base: mc_block_id_base!("magenta_wool"),
                 num_states: 1,
                 default_state: StateId(0),
                 is_redstone_conductor: true,

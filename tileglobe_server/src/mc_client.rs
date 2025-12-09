@@ -385,6 +385,7 @@ where
                             table[1407] = BlockState(25768 + 3); // waxed copper bulb
                             table[712] = BlockState(581 + 1); // note block
                             table[697] = BlockState(13573 + 5); // observer
+                            table[90] = BlockState(2138); // iron block
 
                             const_for!(i in 0u16..16 => { // wools
                                 table[(213 + i) as usize] = BlockState(2093 + i);

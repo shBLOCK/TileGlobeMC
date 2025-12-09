@@ -108,7 +108,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let spi = cyw43_pio::PioSpi::new(
         &mut pio.common,
         pio.sm0,
-        cyw43_pio::DEFAULT_CLOCK_DIVIDER,
+        cyw43_pio::RM2_CLOCK_DIVIDER,
         pio.irq0,
         cs,
         ps.PIN_24,
@@ -178,14 +178,15 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let mut adc0 = embassy_rp::adc::Channel::new_pin(ps.PIN_40, Pull::None);
     let mut adc1 = embassy_rp::adc::Channel::new_pin(ps.PIN_41, Pull::None);
     let mut adc2 = embassy_rp::adc::Channel::new_pin(ps.PIN_42, Pull::None);
-    let mut out0 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
-    let mut out1 = embassy_rp::gpio::Output::new(ps.PIN_21, Level::Low);
-    let mut out2 = embassy_rp::gpio::Output::new(ps.PIN_20, Level::Low);
-    let mut out3 = embassy_rp::gpio::Output::new(ps.PIN_19, Level::Low);
+    let mut adc_temp = embassy_rp::adc::Channel::new_temp_sensor(ps.ADC_TEMP_SENSOR);
+    let mut out0 = embassy_rp::gpio::Output::new(ps.PIN_19, Level::Low);
+    let mut out1 = embassy_rp::gpio::Output::new(ps.PIN_20, Level::Low);
+    let mut out2 = embassy_rp::gpio::Output::new(ps.PIN_21, Level::Low);
+    let mut out3 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
 
     struct GPIORedstoneOverride<'a, const N: usize> {
         adc: Adc<'a, embassy_rp::adc::Async>,
-        block_to_adc: [(BlockState, embassy_rp::adc::Channel<'a>); N],
+        block_to_adc: [(BlockState, embassy_rp::adc::Channel<'a>, Box<dyn Fn(u16) -> u8>); N],
     }
     impl<'a, const N: usize> RedstoneOverride for GPIORedstoneOverride<'a, N> {
         async fn redstone_override(
@@ -196,35 +197,37 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             direction: Direction,
             strong: bool,
         ) -> Option<u8> {
-            if let Some((_, channel)) = self
+            if let Some((_, channel, mapping)) = self
                 .block_to_adc
                 .iter_mut()
-                .find(|(bs, _)| *bs == blockstate)
+                .find(|(bs, _, _)| *bs == blockstate)
             {
-                return Some((self.adc.read(channel).await.unwrap() / (4096 / 16)) as u8);
+                return Some(mapping(self.adc.read(channel).await.unwrap()));
             }
             None
         }
     }
 
-    const ADC_BLOCKS: [BlockState; 3] = [
-        BlockState(mc_block_id_base!("yellow_wool")),
+    const ADC_BLOCKS: [BlockState; 4] = [
+        BlockState(mc_block_id_base!("white_wool")),
+        BlockState(mc_block_id_base!("black_wool")),
         BlockState(mc_block_id_base!("orange_wool")),
-        BlockState(mc_block_id_base!("red_wool")),
+        BlockState(mc_block_id_base!("magenta_wool")),
     ];
     let mut dac_blocks = [
-        (BlockState(mc_block_id_base!("green_wool")), out0),
-        (BlockState(mc_block_id_base!("blue_wool")), out1),
-        (BlockState(mc_block_id_base!("black_wool")), out2),
-        (BlockState(mc_block_id_base!("white_wool")), out3),
+        (BlockState(mc_block_id_base!("red_wool")), out0),
+        (BlockState(mc_block_id_base!("yellow_wool")), out1),
+        (BlockState(mc_block_id_base!("green_wool")), out2),
+        (BlockState(mc_block_id_base!("blue_wool")), out3),
     ];
 
     world.redstone_override = Some(Mutex::new(Box::new(GPIORedstoneOverride {
         adc,
         block_to_adc: [
-            (ADC_BLOCKS[0], adc0),
-            (ADC_BLOCKS[1], adc1),
-            (ADC_BLOCKS[2], adc2),
+            (ADC_BLOCKS[0], adc0, Box::new(|t| (t / (4096 / 16)) as u8)),
+            (ADC_BLOCKS[1], adc1, Box::new(|t| (t / (4096 / 16)) as u8)),
+            (ADC_BLOCKS[2], adc2, Box::new(|t| (t / (4096 / 16)) as u8)),
+            (ADC_BLOCKS[3], adc_temp, Box::new(|t| ((870 - t as i16) / 3).clamp(0, 15) as u8)),
         ],
     })));
 
