@@ -6,7 +6,7 @@ members = [
     "tileglobe",
     "tileglobe_server",
     "tileglobe_runtime/pc",
-    "tileglobe_runtime/rp2350", "tileglobe_runtime/core_rp2",
+    "tileglobe_runtime/rp2350", "tileglobe_runtime/core_rp2", "tileglobe_runtime/fruit_jam",
 ]
 
 [workspace.package]
