@@ -28,7 +28,7 @@ class BlockDefDatagen(
 
                 val blockData = JsonObject()
 
-                blockData.addProperty("resource_location", resLoc.toString())
+                blockData.addProperty("resloc", resLoc.toString())
 
                 val possibleStates = block.stateDefinition.possibleStates.toMutableList()
                     .apply { sortBy { it.id } }

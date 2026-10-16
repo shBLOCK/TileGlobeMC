@@ -1,4 +1,0 @@
-[toolchain]
-targets = [
-    "thumbv8m.main-none-eabihf"
-]

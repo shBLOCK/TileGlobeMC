@@ -27,6 +27,7 @@ pub trait ReadExt: embedded_io_async::Read {
     async fn read_bytes<const BYTES: usize>(
         &mut self,
     ) -> Result<[u8; BYTES], EIOReadExactError<Self::Error>> {
+        #[allow(clippy::uninit_assumed_init)]
         let mut buf = unsafe { MaybeUninit::<[u8; BYTES]>::uninit().assume_init() };
         self.read_exact(&mut buf).await?;
         Ok(buf)

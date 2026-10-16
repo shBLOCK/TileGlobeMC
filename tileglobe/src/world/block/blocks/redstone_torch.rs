@@ -5,10 +5,10 @@ use crate::world::block::{
 };
 use crate::world::world::{_World, World};
 use glam::Vec3;
-use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::direction::Direction;
 use tileglobe_utils::pos::BlockPos;
 use tileglobe_utils::resloc::ResLoc;
+use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct RedstoneTorchBlock {

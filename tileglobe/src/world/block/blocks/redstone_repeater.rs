@@ -6,11 +6,11 @@ use crate::world::block::{
 use crate::world::world::{_World, World};
 use glam::{Vec2, Vec3, Vec3Swizzles};
 use ordered_float::OrderedFloat;
-use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::direction::Direction;
 use tileglobe_utils::indexed_enum::IndexedEnum;
 use tileglobe_utils::pos::BlockPos;
 use tileglobe_utils::resloc::ResLoc;
+use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct RedstoneRepeaterBlock;

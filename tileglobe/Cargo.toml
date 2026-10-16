@@ -5,7 +5,6 @@ edition.workspace = true
 
 [dependencies]
 tileglobe_utils = { path = "../tileglobe_utils" }
-tileglobe_proc_macro = { path = "../tileglobe_proc_macro" }
 
 embassy-executor = { workspace = true }
 embassy-sync = { workspace = true }
@@ -19,6 +18,8 @@ dynify = { workspace = true }
 smallvec = { workspace = true }
 itertools = { workspace = true }
 ordered-float = { version = "5.1.0", default-features = false }
+
+pymeta = { workspace = true }
 
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }

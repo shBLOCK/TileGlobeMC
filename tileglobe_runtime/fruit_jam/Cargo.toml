@@ -13,7 +13,6 @@ bench = false
 tileglobe_utils = { path = "../../tileglobe_utils", features = ["defmt"] }
 tileglobe = { path = "../../tileglobe", features = ["defmt", "rp"] }
 tileglobe_server = { path = "../../tileglobe_server", features = ["defmt"] }
-tileglobe_proc_macro = { path = "../../tileglobe_proc_macro" }
 
 embassy-executor = { workspace = true, features = [
     "arch-cortex-m",

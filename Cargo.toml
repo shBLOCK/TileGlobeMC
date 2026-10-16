@@ -2,12 +2,12 @@
 resolver = "3"
 members = [
     "tileglobe_utils",
-    "tileglobe_proc_macro",
     "tileglobe",
     "tileglobe_server",
     "tileglobe_runtime/pc",
     "tileglobe_runtime/rp2350", "tileglobe_runtime/core_rp2", "tileglobe_runtime/fruit_jam",
 ]
+exclude = ["embassy"]
 
 [workspace.package]
 edition = "2024"
@@ -39,6 +39,8 @@ md5 = { version = "0.8.0", default-features = false }
 bit-vec = { version = "0.8.0", default-features = false }
 itertools = { version = "0.14.0", default-features = false, features = ["use_alloc"] }
 
-defmt = { version = "1.0.1", features = ["alloc"] }
-log = "0.4.28"
-defmt-or-log = "0.2.2"
+defmt = { version = "1.1.1", features = ["alloc"] }
+log = "0.4.34"
+defmt-or-log = "0.2.3"
+
+pymeta = { version = "1.1.2", features = ["nightly_diagnostic", "dump_source_on_error"] }

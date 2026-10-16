@@ -2,6 +2,8 @@
 
 #![feature(generic_const_exprs)]
 
+//TODO: now that tileglobe_proc_macro is gone, merge this into the tileglobe crate
+
 extern crate alloc;
 
 pub mod resloc;

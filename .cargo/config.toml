@@ -1,0 +1,3 @@
+[env]
+VIRTUAL_ENV = { value = "tileglobe_pymeta/.venv", relative = true }
+PYTHONPATH = { value = "tileglobe_pymeta/.venv/lib/python3.14/site-packages:tileglobe_pymeta/src", relative = true }

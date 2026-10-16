@@ -1,7 +1,7 @@
-use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_utils::pos::BlockPos;
 use tileglobe_utils::resloc::ResLoc;
 use crate::world::block::{Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState, StateId};
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{World, _World};
 
 #[derive(Debug)]

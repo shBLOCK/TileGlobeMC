@@ -1,0 +1,15 @@
+[project]
+name = "tg_utils"
+version = "0.1.0"
+description = "venv and helpers for pymeta macros in tileglobe"
+authors = [
+    { name = "shblock", email = "shblock3@gmail.com" }
+]
+requires-python = ">=3.14"
+dependencies = [
+    "mashumaro==3.23"
+]
+
+[build-system]
+requires = ["uv_build>=0.13.0,<0.14.0"]
+build-backend = "uv_build"
