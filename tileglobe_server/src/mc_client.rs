@@ -21,13 +21,13 @@ use num_traits::{ToPrimitive, abs};
 use smallvec::SmallVec;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::world::{_World, World};
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::network::{
+use tileglobe::utils::Direction;
+use tileglobe::utils::network::{
     EIOError, EIOReadExactError, MCPacketBuffer, ReadBlockPos, ReadBool, ReadExt, ReadIndexedEnum,
     ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, VarIntType,
     WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
 };
-use tileglobe_utils::pos::ChunkPos;
+use tileglobe::utils::ChunkPos;
 use uuid::Uuid;
 
 #[derive(derive_more::Display)]

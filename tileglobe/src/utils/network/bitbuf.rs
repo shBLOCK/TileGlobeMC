@@ -2,7 +2,7 @@ use alloc::vec::Vec;
 use core::cmp::min;
 use core::iter::repeat_n;
 use num_traits::PrimInt;
-use crate::network::{EIOError, WriteNumPrimitive, WriteVarInt};
+use crate::utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
 
 pub struct BitBuf {
     buf: Vec<u8>,

@@ -1,5 +1,5 @@
 use core::cmp::Ordering;
-use crate::direction::Direction;
+use crate::utils::Direction;
 use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
 
 #[derive(

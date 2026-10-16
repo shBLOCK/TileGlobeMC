@@ -1,5 +1,5 @@
 use glam::I16Vec3;
-use crate::indexed_enum::IndexedEnum;
+use crate::utils::IndexedEnum;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]

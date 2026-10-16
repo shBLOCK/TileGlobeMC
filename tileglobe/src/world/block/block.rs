@@ -4,10 +4,10 @@ use crate::world::block::misc::MapColor;
 use crate::world::world::{_World, LocalWorld, World};
 use core::fmt::Debug;
 use glam::Vec3;
-use tileglobe_utils::color::RGBA8;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::pos::BlockPos;
-use tileglobe_utils::resloc::ResLoc;
+use crate::utils::RGBA8;
+use crate::utils::Direction;
+use crate::utils::BlockPos;
+use crate::utils::ResLoc;
 
 #[allow(async_fn_in_trait)]
 pub trait Block: Debug + 'static {

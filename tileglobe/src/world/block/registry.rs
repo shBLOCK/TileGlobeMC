@@ -1,4 +1,5 @@
 use pymeta::pymeta;
+use crate::utils::MINECRAFT;
 use crate::world::block::blocks::GenericBlock;
 use crate::world::block::blocks::lever::LeverBlock;
 use crate::world::block::blocks::redstone_block::RedstoneBlock;
@@ -7,7 +8,7 @@ use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
 use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
 use crate::world::block::{Block, DynifiedBlock, StateIdType};
 use crate::world::block::{BlockState, BlockStateType, StateId};
-use tileglobe_utils::resloc::ResLoc;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::redstone_lamp::RedstoneLampBlock;
 use crate::world::block::blocks::redstone_torch::{RedstoneTorchBlock, RedstoneTorchType};
 use crate::world::utils::mc_block_id_base;
@@ -145,7 +146,7 @@ impl BlockResLocs {
         $from tg_utils.block_def import BlockDef;
         $for resloc, _ in BlockDef.all_reslocs():{
             pub const $resloc.as_ident().upper()$: &'static ResLoc<'static> = &ResLoc::new(
-                ${{ tileglobe_utils::MINECRAFT }} if resloc.is_minecraft() else lit(resloc.namespace)$,
+                ${{ MINECRAFT }} if resloc.is_minecraft() else lit(resloc.namespace)$,
                 $lit(resloc.path)$
             );
         }

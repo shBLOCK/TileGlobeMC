@@ -1,7 +1,7 @@
 use crate::world::block::{
     Block, BlockState, BlockStateType, StateId, StateIdType,
 };
-use tileglobe_utils::resloc::ResLoc;
+use crate::utils::ResLoc;
 
 #[derive(derive_more::Debug)]
 #[debug("GenericBlock(\"{}\")", self.resloc)]

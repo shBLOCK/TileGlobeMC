@@ -8,8 +8,8 @@ use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World, _World};
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_server::MCClient;
-use tileglobe_utils::network::{MCPacketBuffer, WriteVarInt};
-use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
+use tileglobe::utils::network::{MCPacketBuffer, WriteVarInt};
+use tileglobe::utils::{ChunkLocalPos, ChunkPos};
 
 #[embassy_executor::task(pool_size = 3)]
 async fn mc_client_task(mc_server: &'static MCServer<'static, CriticalSectionRawMutex, _World>, socket: async_net::TcpStream, addr: async_net::SocketAddr) {

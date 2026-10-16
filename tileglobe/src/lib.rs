@@ -5,3 +5,4 @@
 extern crate alloc;
 
 pub mod world;
+pub mod utils;

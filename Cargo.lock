@@ -2276,8 +2276,9 @@ dependencies = [
  "num-traits",
  "ordered-float",
  "pymeta",
+ "serde",
  "smallvec",
- "tileglobe_utils",
+ "uuid",
 ]
 
 [[package]]
@@ -2327,7 +2328,6 @@ dependencies = [
  "static_cell",
  "tileglobe",
  "tileglobe_server",
- "tileglobe_utils",
 ]
 
 [[package]]
@@ -2348,7 +2348,6 @@ dependencies = [
  "static_cell",
  "tileglobe",
  "tileglobe_server",
- "tileglobe_utils",
 ]
 
 [[package]]
@@ -2375,7 +2374,6 @@ dependencies = [
  "static_cell",
  "tileglobe",
  "tileglobe_server",
- "tileglobe_utils",
 ]
 
 [[package]]
@@ -2398,22 +2396,6 @@ dependencies = [
  "num-traits",
  "smallvec",
  "tileglobe",
- "tileglobe_utils",
- "uuid",
-]
-
-[[package]]
-name = "tileglobe_utils"
-version = "0.1.0"
-dependencies = [
- "defmt 1.1.1",
- "defmt-or-log",
- "derive_more",
- "embedded-io-async",
- "glam",
- "log",
- "num-traits",
- "serde",
  "uuid",
 ]
 

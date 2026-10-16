@@ -1,6 +1,6 @@
 #![allow(private_bounds)]
 
-use crate::network::{EIOError, ReadExt};
+use crate::utils::network::{EIOError, ReadExt};
 use alloc::boxed::Box;
 use core::cmp::max;
 use core::error::Error;

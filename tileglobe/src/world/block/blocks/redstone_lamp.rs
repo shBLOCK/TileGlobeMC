@@ -1,5 +1,5 @@
-use tileglobe_utils::pos::BlockPos;
-use tileglobe_utils::resloc::ResLoc;
+use crate::utils::BlockPos;
+use crate::utils::ResLoc;
 use crate::world::block::{Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState, StateId};
 use crate::world::utils::mc_block_id_base;
 use crate::world::world::{World, _World};

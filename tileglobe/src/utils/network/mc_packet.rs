@@ -1,4 +1,4 @@
-use crate::network::{EIOError, WriteVarInt};
+use crate::utils::network::{EIOError, WriteVarInt};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use defmt_or_log::debug;

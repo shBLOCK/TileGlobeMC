@@ -1,7 +1,6 @@
 [workspace]
 resolver = "3"
 members = [
-    "tileglobe_utils",
     "tileglobe",
     "tileglobe_server",
     "tileglobe_runtime/pc",

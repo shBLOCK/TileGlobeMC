@@ -1,4 +1,4 @@
-use crate::network::{EIOError, EIOReadExactError, ReadExt};
+use crate::utils::network::{EIOError, EIOReadExactError, ReadExt};
 use uuid::Uuid;
 
 #[allow(async_fn_in_trait)]

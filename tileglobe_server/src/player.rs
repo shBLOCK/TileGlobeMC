@@ -1,5 +1,5 @@
 use uuid::Uuid;
-use tileglobe_utils::network::MCPacketBuffer;
+use tileglobe::utils::network::MCPacketBuffer;
 
 #[dynify::dynify(DynifiedPlayer)]
 pub trait Player {

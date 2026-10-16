@@ -2,8 +2,8 @@ use crate::world::block::BlockState;
 use alloc::collections::BTreeSet;
 use alloc::vec::Vec;
 use core::ops::RangeInclusive;
-use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
-use tileglobe_utils::pos::{ChunkLocalPos, ChunkPos};
+use crate::utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use crate::utils::{ChunkLocalPos, ChunkPos};
 
 pub struct Chunk {
     sections: Vec<ChunkSection>,

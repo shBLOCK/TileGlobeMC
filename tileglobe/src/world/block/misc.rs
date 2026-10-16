@@ -1,4 +1,4 @@
-use tileglobe_utils::color::RGBA8;
+use crate::utils::RGBA8;
 
 //TODO: paletted / id based?
 #[derive(Debug)]

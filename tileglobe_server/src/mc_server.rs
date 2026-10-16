@@ -7,8 +7,8 @@ use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::world::World;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::pos::BlockPos;
+use tileglobe::utils::Direction;
+use tileglobe::utils::BlockPos;
 use crate::player::DynifiedPlayer;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {

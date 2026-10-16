@@ -1,4 +1,4 @@
-use crate::network::{EIOError, EIOReadExactError, ReadVarInt, ReadVarIntError, WriteVarInt};
+use crate::utils::network::{EIOError, EIOReadExactError, ReadVarInt, ReadVarIntError, WriteVarInt};
 use alloc::boxed::Box;
 use alloc::string::{FromUtf8Error, String};
 use core::error::Error;

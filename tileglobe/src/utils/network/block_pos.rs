@@ -1,5 +1,5 @@
-use crate::network::{EIOReadExactError, ReadNumPrimitive};
-use crate::pos::BlockPos;
+use crate::utils::network::{EIOReadExactError, ReadNumPrimitive};
+use crate::utils::BlockPos;
 use num_traits::PrimInt;
 
 pub trait ReadBlockPos: embedded_io_async::Read {

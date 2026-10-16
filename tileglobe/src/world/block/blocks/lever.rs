@@ -1,14 +1,14 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::{AttachFace, HorizontalDirection};
 use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId, StateIdType,
 };
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{_World, World};
 use glam::Vec3;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::pos::BlockPos;
-use tileglobe_utils::resloc::ResLoc;
-use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct LeverBlock;
@@ -35,10 +35,13 @@ impl Block for LeverBlock {
         BlockState(mc_block_id_base!("lever") + 9)
     }
 
-    fn is_attract_redstone_wire_connection(&self, blockstate: BlockState, direction: HorizontalDirection) -> bool {
+    fn is_attract_redstone_wire_connection(
+        &self,
+        blockstate: BlockState,
+        direction: HorizontalDirection,
+    ) -> bool {
         true
     }
-
 
     async fn get_state_for_placement(
         &self,
@@ -69,7 +72,9 @@ impl Block for LeverBlock {
         let _ = world.set_block_state(pos, state.into()).await;
         world.update_neighbors(pos).await;
         let direction = Self::facing_direction(state);
-        world.update_neighbors_except_for_direction(pos.offset_dir(direction), direction.opposite()).await;
+        world
+            .update_neighbors_except_for_direction(pos.offset_dir(direction), direction.opposite())
+            .await;
     }
 
     async fn get_signal(

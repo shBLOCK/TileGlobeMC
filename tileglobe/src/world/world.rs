@@ -10,10 +10,10 @@ use dynify::Dynify;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 use smallvec::SmallVec;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::indexed_enum::IndexedEnum;
-use tileglobe_utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
-use tileglobe_utils::pos::{BlockPos, ChunkPos};
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
+use crate::utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use crate::utils::{BlockPos, ChunkPos};
 
 #[allow(async_fn_in_trait)]
 pub trait World {

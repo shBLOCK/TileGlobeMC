@@ -1,6 +1,6 @@
 #![allow(unused)]
 
-use crate::MINECRAFT;
+use crate::utils::MINECRAFT;
 use alloc::borrow::{Cow, ToOwned};
 use alloc::string::String;
 use core::fmt::{Display, Formatter};

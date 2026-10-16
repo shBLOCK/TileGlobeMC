@@ -8,8 +8,8 @@ pub mod redstone_torch;
 pub mod redstone_lamp;
 
 pub use generic::*;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::indexed_enum::IndexedEnum;
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]

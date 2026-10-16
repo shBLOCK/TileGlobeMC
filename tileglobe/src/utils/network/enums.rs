@@ -1,5 +1,5 @@
-use crate::indexed_enum::IndexedEnum;
-use crate::network::{EIOError, EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
+use crate::utils::IndexedEnum;
+use crate::utils::network::{EIOError, EIOReadExactError, ReadNumPrimitive, WriteNumPrimitive};
 use num_traits::{FromBytes, ToBytes};
 
 #[allow(async_fn_in_trait)]

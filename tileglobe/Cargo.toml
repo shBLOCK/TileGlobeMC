@@ -4,15 +4,15 @@ version = "0.1.0"
 edition.workspace = true
 
 [dependencies]
-tileglobe_utils = { path = "../tileglobe_utils" }
-
 embassy-executor = { workspace = true }
 embassy-sync = { workspace = true }
 embedded-io-async = { workspace = true }
 
 libm = { workspace = true }
 glam = { workspace = true }
-derive_more = { workspace = true, features = ["display", "from", "into"] }
+serde = { workspace = true }
+derive_more = { workspace = true, features = ["debug", "display", "from", "into", "deref", "deref_mut"] }
+uuid = { workspace = true }
 num-traits = { workspace = true }
 dynify = { workspace = true }
 smallvec = { workspace = true }

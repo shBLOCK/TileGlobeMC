@@ -1,4 +1,4 @@
-use crate::network::{EIOReadExactError, ReadNumPrimitive};
+use crate::utils::network::{EIOReadExactError, ReadNumPrimitive};
 
 pub trait ReadBool: embedded_io_async::Read {
     async fn read_bool(mut self: &mut Self) -> Result<bool, EIOReadExactError<Self::Error>> {

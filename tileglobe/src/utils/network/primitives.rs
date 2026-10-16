@@ -1,4 +1,4 @@
-use crate::network::{EIOError, EIOReadExactError, ReadExt};
+use crate::utils::network::{EIOError, EIOReadExactError, ReadExt};
 use num_traits::{FromBytes, ToBytes};
 
 #[allow(async_fn_in_trait)]

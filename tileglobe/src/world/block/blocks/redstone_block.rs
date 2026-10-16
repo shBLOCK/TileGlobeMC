@@ -1,6 +1,6 @@
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::pos::BlockPos;
-use tileglobe_utils::resloc::ResLoc;
+use crate::utils::Direction;
+use crate::utils::BlockPos;
+use crate::utils::ResLoc;
 use crate::world::block::{Block, BlockResLocs, BlockState};
 use crate::world::utils::mc_block_id_base;
 use crate::world::world::_World;
