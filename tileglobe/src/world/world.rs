@@ -1,3 +1,7 @@
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
+use crate::utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use crate::utils::{BlockPos, ChunkPos};
 use crate::world::block::BlockState;
 use crate::world::chunk::{Chunk, ChunkSection};
 use alloc::boxed::Box;
@@ -10,10 +14,6 @@ use dynify::Dynify;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex, RawMutex};
 use embassy_sync::mutex::{MappedMutexGuard, Mutex, MutexGuard};
 use smallvec::SmallVec;
-use crate::utils::Direction;
-use crate::utils::IndexedEnum;
-use crate::utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
-use crate::utils::{BlockPos, ChunkPos};
 
 #[allow(async_fn_in_trait)]
 pub trait World {

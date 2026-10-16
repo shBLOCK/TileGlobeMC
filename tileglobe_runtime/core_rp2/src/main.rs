@@ -33,10 +33,10 @@ use embassy_net::Stack;
 use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
 use embassy_rp::adc::Adc;
 use embassy_rp::clocks::RoscRng;
+use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embedded_alloc::LlffHeap as Heap;
 use fixed::FixedU32;
-use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::{LocalWorld, World};
@@ -54,7 +54,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_0),
             embassy_rp::psram::Config::aps6404l(),
         )
-            .expect("Failed to initialize PSRAM");
+        .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;

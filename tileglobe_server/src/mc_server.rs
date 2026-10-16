@@ -1,15 +1,15 @@
+use crate::player::DynifiedPlayer;
 use alloc::collections::BTreeMap;
 use core::mem::MaybeUninit;
 use dynify::Dynify;
-use smallvec::SmallVec;
-use uuid::Uuid;
 use embassy_sync::blocking_mutex::raw::RawMutex;
 use embassy_sync::mutex::Mutex;
+use smallvec::SmallVec;
+use tileglobe::utils::BlockPos;
+use tileglobe::utils::Direction;
 use tileglobe::world::block::BlockState;
 use tileglobe::world::world::World;
-use tileglobe::utils::Direction;
-use tileglobe::utils::BlockPos;
-use crate::player::DynifiedPlayer;
+use uuid::Uuid;
 
 pub struct MCServer<'a, M: RawMutex, WORLD: World> {
     pub world: &'a WORLD,
@@ -27,7 +27,10 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
 
     pub async unsafe fn add_player(&self, player: &'a impl DynifiedPlayer) {
         let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
-        self.players.lock().await.insert(player.uuid().init(&mut c).await, player);
+        self.players
+            .lock()
+            .await
+            .insert(player.uuid().init(&mut c).await, player);
     }
 
     pub async fn remove_player(&self, uuid: Uuid) {
@@ -62,7 +65,10 @@ impl<'a, M: RawMutex, WORLD: World> MCServer<'a, M, WORLD> {
     pub async fn tick(&self) {
         let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
 
-        let block_update_packets = self.world.gen_blocks_update_packets_and_clear_changes().await;
+        let block_update_packets = self
+            .world
+            .gen_blocks_update_packets_and_clear_changes()
+            .await;
         for player in self.players.lock().await.values() {
             for pkt in &block_update_packets {
                 let _ = player.send_mc_packet(pkt).init(&mut c).await;

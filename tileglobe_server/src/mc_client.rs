@@ -19,15 +19,15 @@ use embassy_time::{Duration, Ticker};
 use glam::Vec3;
 use num_traits::{ToPrimitive, abs};
 use smallvec::SmallVec;
-use tileglobe::world::block::BlockState;
-use tileglobe::world::world::{_World, World};
+use tileglobe::utils::ChunkPos;
 use tileglobe::utils::Direction;
 use tileglobe::utils::network::{
     EIOError, EIOReadExactError, MCPacketBuffer, ReadBlockPos, ReadBool, ReadExt, ReadIndexedEnum,
     ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, VarIntType,
     WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
 };
-use tileglobe::utils::ChunkPos;
+use tileglobe::world::block::BlockState;
+use tileglobe::world::world::{_World, World};
 use uuid::Uuid;
 
 #[derive(derive_more::Display)]
@@ -405,7 +405,10 @@ where
                             if let Ok(_) = self.server.world.set_block_state(opos, blockstate).await
                             {
                                 self._block_changes_to_ack.lock().await.push(sequence);
-                                block.on_placed(self.server.world, opos, blockstate).init(&mut c).await;
+                                block
+                                    .on_placed(self.server.world, opos, blockstate)
+                                    .init(&mut c)
+                                    .await;
                             }
                         }
                     }
@@ -488,19 +491,24 @@ where
                     let sequence = rx.read_varint::<i32>().await?;
                     match action {
                         0 => {
-                            // started digging 
+                            // started digging
                             if let Ok(blockstate) =
                                 self.server.world.set_block_state(pos, BlockState(0)).await
                             {
                                 self._block_changes_to_ack.lock().await.push(sequence);
                                 let mut c = SmallVec::<[MaybeUninit<u8>; 64]>::new();
-                                blockstate.get_block().on_destroyed(self.server.world, pos, blockstate).init(&mut c).await;
+                                blockstate
+                                    .get_block()
+                                    .on_destroyed(self.server.world, pos, blockstate)
+                                    .init(&mut c)
+                                    .await;
                             }
                         }
                         _ => {}
                     }
                 }
-                60 => { // swing
+                60 => {
+                    // swing
                     rx.skip_bytes(1).await?;
                 }
                 _ => {

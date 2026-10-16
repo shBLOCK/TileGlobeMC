@@ -62,11 +62,8 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         let mut cfg = embassy_rp::psram::Config::aps6404l();
         cfg.clock_hz = 300_000_000;
         cfg.max_mem_freq = 144_000_000;
-        embassy_rp::psram::Psram::new(
-            embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
-            cfg,
-        )
-        .expect("Failed to initialize PSRAM");
+        embassy_rp::psram::Psram::new(embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47), cfg)
+            .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
@@ -186,7 +183,11 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 
     struct GPIORedstoneOverride<'a, const N: usize> {
         adc: Adc<'a, embassy_rp::adc::Async>,
-        block_to_adc: [(BlockState, embassy_rp::adc::Channel<'a>, Box<dyn Fn(u16) -> u8>); N],
+        block_to_adc: [(
+            BlockState,
+            embassy_rp::adc::Channel<'a>,
+            Box<dyn Fn(u16) -> u8>,
+        ); N],
     }
     impl<'a, const N: usize> RedstoneOverride for GPIORedstoneOverride<'a, N> {
         async fn redstone_override(
@@ -227,7 +228,11 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
             (ADC_BLOCKS[0], adc0, Box::new(|t| (t / (4096 / 16)) as u8)),
             (ADC_BLOCKS[1], adc1, Box::new(|t| (t / (4096 / 16)) as u8)),
             (ADC_BLOCKS[2], adc2, Box::new(|t| (t / (4096 / 16)) as u8)),
-            (ADC_BLOCKS[3], adc_temp, Box::new(|t| ((870 - t as i16) / 3).clamp(0, 15) as u8)),
+            (
+                ADC_BLOCKS[3],
+                adc_temp,
+                Box::new(|t| ((870 - t as i16) / 3).clamp(0, 15) as u8),
+            ),
         ],
     })));
 

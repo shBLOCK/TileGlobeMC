@@ -4,16 +4,6 @@
 use tileglobe::world::world::World;
 extern crate alloc;
 
-use tileglobe_server::MCClient;
-use tileglobe_proc_macro::mc_block_id_base;
-use tileglobe_server::mc_server::MCServer;
-use tileglobe::world::chunk::Chunk;
-use tileglobe_utils::pos::ChunkLocalPos;
-use tileglobe_utils::pos::ChunkPos;
-use tileglobe::world::world::RedstoneOverride;
-use tileglobe_utils::pos::BlockPos;
-use tileglobe::world::world::_World;
-use tileglobe::world::block::BlockState;
 use alloc::boxed::Box;
 use core::net::SocketAddr;
 use defmt::*;
@@ -28,6 +18,16 @@ use embassy_rp::{Peripherals, bind_interrupts};
 use embassy_time::{Delay, Duration, Instant, Ticker, Timer};
 use embedded_hal_bus::spi::ExclusiveDevice;
 use static_cell::StaticCell;
+use tileglobe::world::block::BlockState;
+use tileglobe::world::chunk::Chunk;
+use tileglobe::world::world::_World;
+use tileglobe::world::world::RedstoneOverride;
+use tileglobe_proc_macro::mc_block_id_base;
+use tileglobe_server::MCClient;
+use tileglobe_server::mc_server::MCServer;
+use tileglobe_utils::pos::BlockPos;
+use tileglobe_utils::pos::ChunkLocalPos;
+use tileglobe_utils::pos::ChunkPos;
 
 use {defmt_rtt as _, panic_probe as _};
 
@@ -60,11 +60,8 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         let mut cfg = embassy_rp::psram::Config::aps6404l();
         cfg.clock_hz = 300_000_000;
         cfg.max_mem_freq = 144_000_000;
-        embassy_rp::psram::Psram::new(
-            embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47),
-            cfg,
-        )
-        .expect("Failed to initialize PSRAM");
+        embassy_rp::psram::Psram::new(embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47), cfg)
+            .expect("Failed to initialize PSRAM");
 
         unsafe extern "C" {
             static __psram_heap_start: u8;
