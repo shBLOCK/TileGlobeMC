@@ -1,13 +1,13 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::RGBA8;
+use crate::utils::ResLoc;
 use crate::world::block::BlockState;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::misc::MapColor;
 use crate::world::world::{_World, LocalWorld, World};
 use core::fmt::Debug;
 use glam::Vec3;
-use crate::utils::RGBA8;
-use crate::utils::Direction;
-use crate::utils::BlockPos;
-use crate::utils::ResLoc;
 
 #[allow(async_fn_in_trait)]
 pub trait Block: Debug + 'static {
@@ -87,7 +87,11 @@ pub trait DynifiedBlock: Debug + 'static {
 
     fn is_redstone_conductor(&self, blockstate: BlockState) -> bool;
 
-    fn is_attract_redstone_wire_connection(&self, blockstate: BlockState, direction: HorizontalDirection) -> bool;
+    fn is_attract_redstone_wire_connection(
+        &self,
+        blockstate: BlockState,
+        direction: HorizontalDirection,
+    ) -> bool;
 
     fn get_state_for_placement<'this, 'world, 'dynify>(
         &'this self,
@@ -196,7 +200,11 @@ impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
         BlockImplementor::is_redstone_conductor(self, blockstate)
     }
 
-    fn is_attract_redstone_wire_connection(&self, blockstate: BlockState, direction: HorizontalDirection) -> bool {
+    fn is_attract_redstone_wire_connection(
+        &self,
+        blockstate: BlockState,
+        direction: HorizontalDirection,
+    ) -> bool {
         BlockImplementor::is_attract_redstone_wire_connection(self, blockstate, direction)
     }
 
@@ -231,13 +239,7 @@ impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
         'this: 'dynify,
         'world: 'dynify,
     {
-        dynify::from_fn!(
-            BlockImplementor::on_placed,
-            self,
-            world,
-            pos,
-            blockstate
-        )
+        dynify::from_fn!(BlockImplementor::on_placed, self, world, pos, blockstate)
     }
 
     fn on_destroyed<'this, 'world, 'dynify>(
@@ -250,13 +252,7 @@ impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
         'this: 'dynify,
         'world: 'dynify,
     {
-        dynify::from_fn!(
-            BlockImplementor::on_destroyed,
-            self,
-            world,
-            pos,
-            blockstate
-        )
+        dynify::from_fn!(BlockImplementor::on_destroyed, self, world, pos, blockstate)
     }
 
     fn on_use_without_item<'this, 'world, 'dynify>(
@@ -312,7 +308,8 @@ impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
     ) -> dynify::Fn!(&'this Self, &'world _World, BlockPos, BlockState => dyn 'dynify + Future<Output = ()>)
     where
         'this: 'dynify,
-        'world: 'dynify {
+        'world: 'dynify,
+    {
         dynify::from_fn!(BlockImplementor::update_shape, self, world, pos, blockstate)
     }
 

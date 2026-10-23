@@ -1,3 +1,7 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
 use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
@@ -5,6 +9,7 @@ use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId,
 };
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{_World, World};
 use alloc::collections::BTreeMap;
 use core::cmp::max;
@@ -12,11 +17,6 @@ use embassy_sync::blocking_mutex::raw::CriticalSectionRawMutex;
 use embassy_sync::mutex::Mutex;
 use glam::{Vec2, Vec3, Vec3Swizzles};
 use ordered_float::OrderedFloat;
-use crate::utils::Direction;
-use crate::utils::IndexedEnum;
-use crate::utils::BlockPos;
-use crate::utils::ResLoc;
-use crate::world::utils::mc_block_id_base;
 
 static SIGNALS: Mutex<CriticalSectionRawMutex, BTreeMap<BlockPos, u8>> =
     Mutex::new(BTreeMap::new()); // hack! should actually be implemented with blockentity

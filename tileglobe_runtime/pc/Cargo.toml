@@ -7,18 +7,18 @@ edition.workspace = true
 tileglobe = { path = "../../tileglobe", features = ["log"] }
 tileglobe_server = { path = "../../tileglobe_server", features = ["log"] }
 
-embassy-executor = { workspace = true, features = ["arch-std", "log"] }
+embassy-executor = { workspace = true, features = ["platform-std", "log"] }
 embassy-time = { workspace = true, features = ["std", "log"] }
 embassy-sync = { workspace = true, features = ["std", "log"] }
 embedded-io-async = { workspace = true }
-embedded-io-adapters = { version = "0.6.1", features = ["std", "futures-03"] }
+embedded-io-adapters = { version = "0.7.0", features = ["std", "futures-03"] }
 critical-section = { workspace = true, features = ["std"] }
 
 heapless = { workspace = true }
 static_cell = { workspace = true }
 
 log = { workspace = true }
-env_logger = "0.11.8"
+env_logger = "0.11.11"
 
-rand_core = { version = "0.9.3", features = ["std", "os_rng"] }
+rand_core = { version = "0.10.1" }
 async-net = "2.0.0"

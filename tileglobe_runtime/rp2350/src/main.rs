@@ -5,14 +5,13 @@ extern crate alloc;
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use core::net::SocketAddr;
+use core::net::{Ipv4Addr, SocketAddr};
 use defmt::*;
 use embassy_executor::Executor;
 use embassy_executor::Spawner;
 use embassy_rp::gpio::Output;
 use embassy_rp::gpio::{Input, Level, Pull};
 use embassy_rp::peripherals::{DMA_CH0, DMA_CH15, PIO2};
-use embassy_rp::pio::InterruptHandler;
 use embassy_rp::pio::Pio;
 use embassy_rp::{Peripherals, bind_interrupts};
 use embassy_time::{Duration, Instant, Ticker, Timer};
@@ -32,23 +31,25 @@ pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
     embassy_rp::binary_info::rp_program_build_attribute!(),
 ];
 
-use embassy_net::Stack;
-use embassy_net::tcp::{TcpReader, TcpSocket, TcpWriter};
+use embassy_net::tcp::{TcpListener, TcpReader, TcpSocket, TcpWriter};
+use embassy_net::wire::{IpCidr, Ipv4Cidr};
+use embassy_net::{Stack, StaticPool};
 use embassy_rp::adc::Adc;
-use embassy_rp::clocks::RoscRng;
+use embassy_rp::clocks::{CoreVoltage, RoscRng};
 use embassy_rp::spinlock_mutex::SpinlockRawMutex;
 use embassy_sync::blocking_mutex::raw::{CriticalSectionRawMutex, NoopRawMutex};
 use embassy_sync::mutex::Mutex;
 use embedded_alloc::TlsfHeap as Heap;
 use log::warn;
+use tileglobe::utils::Direction;
+use tileglobe::utils::{BlockPos, ChunkLocalPos, ChunkPos};
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
+use tileglobe::world::utils::mc_block_id_base;
 use tileglobe::world::world::{LocalWorld, World};
-use tileglobe_proc_macro::mc_block_id_base;
 use tileglobe_server::MCClient;
+use tileglobe_server::mc_client::TMP_TICK_RATE;
 use tileglobe_server::mc_server::MCServer;
-use tileglobe_utils::direction::Direction;
-use tileglobe_utils::pos::{BlockPos, ChunkLocalPos, ChunkPos};
 
 #[global_allocator]
 static HEAP: Heap = Heap::empty();
@@ -56,11 +57,197 @@ static HEAP: Heap = Heap::empty();
 static WORLD: StaticCell<_World> = StaticCell::new();
 static MC_SERVER: StaticCell<MCServer<'_, SpinlockRawMutex<0>, _World>> = StaticCell::new();
 
+const SYS_CLK_FREQ: u32 = 290_000_000;
+
+#[cfg(feature = "net_cyw43")]
+mod setup_net {
+    use cyw43::aligned_bytes;
+    use cyw43_pio::PioSpi;
+    use defmt::unwrap;
+    use embassy_executor::Spawner;
+    use embassy_net::StaticPool;
+    use embassy_rp::gpio::{Level, Output};
+    use embassy_rp::peripherals::{DMA_CH0, DMA_CH1, PIN_23, PIN_24, PIN_25, PIN_29, PIO2};
+    use embassy_rp::pio::Pio;
+    use embassy_rp::{Peri, bind_interrupts};
+    use static_cell::StaticCell;
+
+    pub(super) type NetDriver<'a> = cyw43::NetDriver<'a>;
+
+    pub(super) static POOL: StaticPool<{ cyw43::RX_BUF_SIZE }, 16, { cyw43::RX_BUF_ALIGN }> =
+        StaticPool::new();
+
+    pub(super) async fn _setup_net(
+        spawner: &Spawner,
+        pwr: Peri<'static, PIN_23>,
+        cs: Peri<'static, PIN_25>,
+        pio: Peri<'static, PIO2>,
+        dio: Peri<'static, PIN_24>,
+        clk: Peri<'static, PIN_29>,
+        dma_tx: Peri<'static, DMA_CH0>,
+        dma_rx: Peri<'static, DMA_CH1>,
+    ) -> NetDriver<'static> {
+        bind_interrupts!(struct Irqs {
+            PIO2_IRQ_0 => embassy_rp::pio::InterruptHandler<PIO2>;
+            DMA_IRQ_0 => embassy_rp::dma::InterruptHandler<DMA_CH0>, embassy_rp::dma::InterruptHandler<DMA_CH1>;
+        });
+
+        #[embassy_executor::task(pool_size = 1)]
+        async fn cyw43_task(
+            runner: cyw43::Runner<
+                'static,
+                cyw43::SpiBus<Output<'static>, PioSpi<'static, PIO2, 0>>,
+                cyw43::Cyw43439,
+            >,
+        ) -> ! {
+            runner.run().await
+        }
+
+        let fw = aligned_bytes!("../../../embassy/cyw43-firmware/43439A0.bin");
+        let clm = aligned_bytes!("../../../embassy/cyw43-firmware/43439A0_clm.bin");
+        let nvram = aligned_bytes!("../../../embassy/cyw43-firmware/nvram_rp2040.bin");
+
+        let pwr = Output::new(pwr, Level::Low);
+        let cs = Output::new(cs, Level::High);
+        let mut pio = Pio::new(pio, Irqs);
+        let spi = cyw43_pio::PioSpi::new(
+            &mut pio.common,
+            pio.sm0,
+            cyw43_pio::RM2_CLOCK_DIVIDER,
+            pio.irq0,
+            cs,
+            dio,
+            clk,
+            embassy_rp::dma::Channel::new(dma_tx, Irqs),
+            embassy_rp::dma::Channel::new(dma_rx, Irqs),
+        );
+
+        static STATE: StaticCell<cyw43::State> = StaticCell::new();
+        let state = STATE.init(cyw43::State::new());
+        let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw, nvram).await;
+        spawner.spawn(unwrap!(cyw43_task(runner)));
+
+        control.init(clm).await;
+        control
+            .set_power_management(cyw43::PowerManagementMode::None)
+            .await;
+
+        control.start_ap_wpa2("TileGlobeMC", "password", 8).await;
+
+        net_device
+    }
+
+    macro_rules! setup_net {
+        ($spawner: expr, $ps: expr) => {
+            $crate::setup_net::_setup_net(
+                $spawner,
+                $ps.PIN_23,
+                $ps.PIN_25,
+                $ps.PIO2,
+                $ps.PIN_24,
+                $ps.PIN_29,
+                $ps.DMA_CH0,
+                $ps.DMA_CH1,
+            )
+        };
+    }
+    pub(super) use setup_net;
+}
+
+#[cfg(feature = "net_usb")]
+mod setup_net {
+    use defmt::unwrap;
+    use embassy_executor::Spawner;
+    use embassy_net::StaticPool;
+    use embassy_rp::peripherals::USB;
+    use embassy_rp::usb::Driver;
+    use embassy_rp::{Peri, bind_interrupts};
+    use embassy_usb::class::cdc_ncm::device::embassy_net::{Runner, State as NetState};
+    use embassy_usb::class::cdc_ncm::device::{CdcNcmClass, State};
+    use embassy_usb::{Builder, Config, UsbDevice};
+    use static_cell::StaticCell;
+
+    pub(super) type NetDriver<'a> = embassy_usb::class::cdc_ncm::device::embassy_net::Device<'a>;
+
+    pub(super) static POOL: StaticPool = StaticPool::new();
+
+    pub(super) async fn _setup_net(
+        spawner: &Spawner,
+        usb: Peri<'static, USB>,
+    ) -> NetDriver<'static> {
+        bind_interrupts!(struct Irqs {
+            USBCTRL_IRQ => embassy_rp::usb::InterruptHandler<USB>;
+        });
+
+        let driver = Driver::new(usb, Irqs);
+
+        let mut config = Config::new(0xc0de, 0xcafe);
+        config.manufacturer = Some("shBLOCK");
+        config.product = Some("TileGlobeMC");
+        config.serial_number = Some("12345678");
+        config.max_power = 500;
+        config.max_packet_size_0 = 64;
+
+        // Create embassy-usb DeviceBuilder using the driver and config.
+        static CONFIG_DESC: StaticCell<[u8; 256]> = StaticCell::new();
+        static BOS_DESC: StaticCell<[u8; 256]> = StaticCell::new();
+        static CONTROL_BUF: StaticCell<[u8; 128]> = StaticCell::new();
+        let mut builder = Builder::new(
+            driver,
+            config,
+            &mut CONFIG_DESC.init([0; 256])[..],
+            &mut BOS_DESC.init([0; 256])[..],
+            &mut [], // no msos descriptors
+            &mut CONTROL_BUF.init([0; 128])[..],
+        );
+
+        // Our MAC addr.
+        let our_mac_addr = [0xCC, 0xCC, 0xCC, 0xCC, 0xCC, 0xCC];
+        // Host's MAC addr. This is the MAC the host "thinks" its USB-to-ethernet adapter has.
+        let host_mac_addr = [0x88, 0x88, 0x88, 0x88, 0x88, 0x88];
+
+        // Create classes on the builder.
+        static STATE: StaticCell<State> = StaticCell::new();
+        let class = CdcNcmClass::new(&mut builder, STATE.init(State::new()), host_mac_addr, 64);
+
+        // Build the builder.
+        let usb = builder.build();
+
+        #[embassy_executor::task]
+        async fn usb_task(mut device: UsbDevice<'static, Driver<'static, USB>>) -> ! {
+            device.run().await
+        }
+        spawner.spawn(unwrap!(usb_task(usb)));
+
+        static NET_STATE: StaticCell<NetState<4, 4>> = StaticCell::new();
+        let (runner, device) = class.into_embassy_net_device::<4, 4>(
+            NET_STATE.init(NetState::new()),
+            our_mac_addr,
+            1514,
+        );
+
+        #[embassy_executor::task]
+        async fn usb_ncm_task(class: Runner<'static, Driver<'static, USB>>) -> ! {
+            class.run().await
+        }
+        spawner.spawn(unwrap!(usb_ncm_task(runner)));
+
+        device
+    }
+
+    macro_rules! setup_net {
+        ($spawner: expr, $ps: expr) => {
+            $crate::setup_net::_setup_net($spawner, $ps.USB)
+        };
+    }
+    pub(super) use setup_net;
+}
+
 #[embassy_executor::task(pool_size = 1)]
 async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     {
         let mut cfg = embassy_rp::psram::Config::aps6404l();
-        cfg.clock_hz = 300_000_000;
+        cfg.clock_hz = SYS_CLK_FREQ;
         cfg.max_mem_freq = 144_000_000;
         embassy_rp::psram::Psram::new(embassy_rp::qmi_cs1::QmiCs1::new(ps.QMI_CS1, ps.PIN_47), cfg)
             .expect("Failed to initialize PSRAM");
@@ -76,75 +263,31 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         unsafe { HEAP.init(start, end - start) }
     }
 
-    bind_interrupts!(struct Irqs {
-        PIO2_IRQ_0 => InterruptHandler<PIO2>;
-    });
-
-    #[embassy_executor::task(pool_size = 1)]
-    async fn cyw43_task(
-        runner: cyw43::Runner<
-            'static,
-            Output<'static>,
-            cyw43_pio::PioSpi<'static, PIO2, 0, DMA_CH0>,
-        >,
-    ) -> ! {
-        runner.run().await
-    }
-
-    #[embassy_executor::task(pool_size = 1)]
-    async fn net_task(mut runner: embassy_net::Runner<'static, cyw43::NetDriver<'static>>) -> ! {
-        runner.run().await
-    }
-
-    let fw = include_bytes!("../../../embassy/cyw43-firmware/43439A0.bin");
-    let clm = include_bytes!("../../../embassy/cyw43-firmware/43439A0_clm.bin");
-
-    let pwr = Output::new(ps.PIN_23, Level::Low);
-    let cs = Output::new(ps.PIN_25, Level::High);
-    let mut pio = Pio::new(ps.PIO2, Irqs);
-    let spi = cyw43_pio::PioSpi::new(
-        &mut pio.common,
-        pio.sm0,
-        cyw43_pio::RM2_CLOCK_DIVIDER,
-        pio.irq0,
-        cs,
-        ps.PIN_24,
-        ps.PIN_29,
-        ps.DMA_CH0,
-    );
-
-    static STATE: StaticCell<cyw43::State> = StaticCell::new();
-    let state = STATE.init(cyw43::State::new());
-    let (net_device, mut control, runner) = cyw43::new(state, pwr, spi, fw).await;
-    spawner.spawn(unwrap!(cyw43_task(runner)));
-
-    control.init(clm).await;
-    control
-        .set_power_management(cyw43::PowerManagementMode::None)
-        .await;
-
-    // Use a link-local address for communication without DHCP server
-    let config = embassy_net::Config::ipv4_static(embassy_net::StaticConfigV4 {
-        address: embassy_net::Ipv4Cidr::new(embassy_net::Ipv4Address::new(169, 254, 1, 1), 16),
-        dns_servers: heapless::Vec::new(),
-        gateway: None,
-    });
+    let net_device = setup_net::setup_net!(&spawner, ps).await;
 
     // Generate random seed
     let seed = RoscRng.next_u64();
 
     // Init network stack
-    static RESOURCES: StaticCell<embassy_net::StackResources<3>> = StaticCell::new();
-    let (stack, runner) = embassy_net::new(
-        net_device,
-        config,
-        RESOURCES.init(embassy_net::StackResources::new()),
+    static STACK_STORAGE: StaticCell<embassy_net::StackStorage> = StaticCell::new();
+    let (stack, runner) = embassy_net::Stack::new(
+        STACK_STORAGE.init(embassy_net::StackStorage::new()),
+        &setup_net::POOL,
         seed,
     );
+    static DEVICE: StaticCell<setup_net::NetDriver<'static>> = StaticCell::new();
+    let iface = stack.add_iface_borrowed(DEVICE.init(net_device)).unwrap();
+    iface
+        .add_ip_addr(IpCidr::new(Ipv4Addr::new(169, 254, 1, 1).into(), 16))
+        .unwrap();
+
+    #[embassy_executor::task(pool_size = 1)]
+    async fn net_task(mut runner: embassy_net::Runner<'static>) -> ! {
+        runner.run().await
+    }
 
     spawner.spawn(unwrap!(net_task(runner)));
 
-    control.start_ap_wpa2("TileGlobeMC", "password", 8).await;
     // control.start_ap_open("TileGlobeMC", 5).await;
 
     let world = WORLD.init(_World::new());
@@ -182,7 +325,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     let mut out3 = embassy_rp::gpio::Output::new(ps.PIN_22, Level::Low);
 
     struct GPIORedstoneOverride<'a, const N: usize> {
-        adc: Adc<'a, embassy_rp::adc::Async>,
+        adc: Adc<'a, embassy_rp::mode::Async>,
         block_to_adc: [(
             BlockState,
             embassy_rp::adc::Channel<'a>,
@@ -246,21 +389,33 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         let mut rx_buffer = [0u8; 4096];
         let mut tx_buffer = [0u8; 4096];
 
+        let mut listener = TcpListener::new(stack).unwrap();
+        listener.listen(25565).unwrap();
+
         loop {
+            let accept_token = match listener.accept().await {
+                Ok(token) => token,
+                Err(err) => {
+                    warn!("Failed to accept connection: {:?}", err);
+                    continue;
+                }
+            };
+
             let mut socket = TcpSocket::new(
                 stack,
                 unsafe { &mut *(&mut rx_buffer as *mut [u8]) },
                 unsafe { &mut *(&mut tx_buffer as *mut [u8]) },
-            );
+            )
+            .unwrap();
 
-            if let Err(err) = socket.accept(25565).await {
+            if let Err(err) = socket.accept(accept_token).await {
                 warn!("Failed to accept connection: {:?}", err);
                 continue;
             }
 
-            let endpoint = socket.remote_endpoint();
+            let remote_addr = socket.remote_addr();
 
-            info!("Connected to {:?}", endpoint);
+            info!("Connected to {:?}", remote_addr);
 
             let (mut rx, mut tx) = unsafe { &mut *(&mut socket as *mut TcpSocket) }.split();
 
@@ -268,7 +423,7 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
                 mc_server,
                 unsafe { &mut *(&mut rx as *mut TcpReader) },
                 unsafe { &mut *(&mut tx as *mut TcpWriter) },
-                endpoint.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
+                remote_addr.map(|ep| SocketAddr::new(ep.addr.into(), ep.port)),
             );
             let result = client.run().await;
             info!("Client disconnected: {:?}", result);
@@ -281,11 +436,12 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
         }
     }
 
-    for _ in 0..3 {
+    for _ in 0..1 {
         spawner.spawn(socket_task(mc_server, stack).unwrap());
     }
 
-    let mut tick_ticker = Ticker::every(Duration::from_hz(20000));
+    let mut tick_rate = unsafe { TMP_TICK_RATE };
+    let mut tick_ticker = Ticker::every(Duration::from_hz(tick_rate as u64));
     let mut i = 0u32;
 
     bind_interrupts!(struct AdcIrqs {
@@ -303,8 +459,9 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     //     adc2: embassy_rp::adc::Channel<'a>,
     // }
 
+    info!("Starting tick loop");
     loop {
-        info!("Tick {}", i);
+        // info!("Tick {}", i);
         //     let adc_value_1 = adc.read(&mut adc40).await.unwrap() as f32 / 4096.0;
         //     let adc_value_2 = adc.read(&mut adc41).await.unwrap() as f32 / 4096.0;
         //
@@ -365,21 +522,26 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
                 }
             }
         }
-        info!("GPIO: {}", Instant::now() - st);
+        // info!("GPIO: {}", Instant::now() - st);
 
         embassy_futures::yield_now().await; // important! or else wifi dies..?
 
         let st = Instant::now();
         world.tick().await;
-        info!("World Tick: {}", Instant::now() - st);
+        // info!("World Tick: {}", Instant::now() - st);
 
         embassy_futures::yield_now().await; // important! or else wifi dies..?
 
         let st = Instant::now();
         mc_server.tick().await;
-        info!("Server Tick: {}", Instant::now() - st);
+        // info!("Server Tick: {}", Instant::now() - st);
 
         i += 1;
+
+        if tick_rate != unsafe { TMP_TICK_RATE } {
+            tick_rate = unsafe { TMP_TICK_RATE };
+            tick_ticker = Ticker::every(Duration::from_hz(tick_rate as u64));
+        }
         tick_ticker.next().await;
     }
 }
@@ -388,7 +550,8 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
 fn main() -> ! {
     #[allow(unused_mut)]
     // let mut clock_config = embassy_rp::clocks::ClockConfig::crystal(12_000_000);
-    let mut clock_config = embassy_rp::clocks::ClockConfig::system_freq(300_000_000).unwrap();
+    let mut clock_config = embassy_rp::clocks::ClockConfig::system_freq(SYS_CLK_FREQ).unwrap();
+    clock_config.core_voltage = CoreVoltage::V1_30;
     let ps = embassy_rp::init(embassy_rp::config::Config::new(clock_config));
 
     static EXECUTOR: StaticCell<Executor> = StaticCell::new();

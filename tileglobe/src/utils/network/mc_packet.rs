@@ -41,7 +41,10 @@ impl MCPacketBuffer {
     }
 }
 
-async fn write_all_with_log<TX: embedded_io_async::Write>(tx: &mut TX, buf: &[u8]) -> Result<(), TX::Error> {
+async fn write_all_with_log<TX: embedded_io_async::Write>(
+    tx: &mut TX,
+    buf: &[u8],
+) -> Result<(), TX::Error> {
     let mut buf = buf;
     while !buf.is_empty() {
         match tx.write(buf).await {

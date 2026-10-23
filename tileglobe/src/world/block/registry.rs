@@ -1,24 +1,24 @@
-use pymeta::pymeta;
 use crate::utils::MINECRAFT;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::GenericBlock;
 use crate::world::block::blocks::lever::LeverBlock;
 use crate::world::block::blocks::redstone_block::RedstoneBlock;
 use crate::world::block::blocks::redstone_comparator::RedstoneComparatorBlock;
+use crate::world::block::blocks::redstone_lamp::RedstoneLampBlock;
 use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
+use crate::world::block::blocks::redstone_torch::{RedstoneTorchBlock, RedstoneTorchType};
 use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
 use crate::world::block::{Block, DynifiedBlock, StateIdType};
 use crate::world::block::{BlockState, BlockStateType, StateId};
-use crate::utils::ResLoc;
-use crate::world::block::blocks::redstone_lamp::RedstoneLampBlock;
-use crate::world::block::blocks::redstone_torch::{RedstoneTorchBlock, RedstoneTorchType};
 use crate::world::utils::mc_block_id_base;
+use pymeta::pymeta;
 
 pub struct Blocks;
 impl Blocks {
     const _ID_BASE_TO_BLOCK_SORTED: &[(BlockStateType, &'static dyn DynifiedBlock)] = &pymeta! {${
         from tg_utils import *;
 
-        ENTRIES = {
+        BLOCKS = {
             "lever": {{ &LeverBlock }},
             "repeater": {{ &RedstoneRepeaterBlock }},
             "comparator": {{ &RedstoneComparatorBlock }},
@@ -109,14 +109,14 @@ impl Blocks {
                 }
             }},
         };
-        ENTRIES = {ResLoc(k): v for k, v in ENTRIES.items()};
-        
-        elements = [];
+        BLOCKS = {ResLoc(k): v for k, v in BLOCKS.items()};
+
+        entries = [];
         for block in sorted(BlockDef.load_all(), key = lambda it: it.id_base):{
-            if block.resloc in ENTRIES:{
-                element = ENTRIES[block.resloc];
+            if block.resloc in BLOCKS:{
+                entry = BLOCKS[block.resloc];
             } else:{
-                element = {{
+                entry = {{
                     &GenericBlock {
                         resloc: BlockResLocs::$block.resloc.as_ident().upper()$,
                         id_base: $block.id_base$,
@@ -125,10 +125,10 @@ impl Blocks {
                     }
                 }};
             }
-            elements.append({{ ($block.id_base$, $element$) }});
+            entries.append({{ ($block.id_base$, $entry$) }});
         }
 
-        emit({{ [$Punct(',').join(elements)$] }});
+        emit({{ [$Punct(',').join(entries)$] }});
     }};
 
     pub(super) fn get_block(&self, bs: BlockState) -> &'static dyn DynifiedBlock {

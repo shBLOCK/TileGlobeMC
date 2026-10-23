@@ -1,15 +1,15 @@
 mod generic;
 pub mod lever;
-pub mod redstone_wire;
-pub mod redstone_repeater;
-pub mod redstone_comparator;
 pub mod redstone_block;
-pub mod redstone_torch;
+pub mod redstone_comparator;
 pub mod redstone_lamp;
+pub mod redstone_repeater;
+pub mod redstone_torch;
+pub mod redstone_wire;
 
-pub use generic::*;
 use crate::utils::Direction;
 use crate::utils::IndexedEnum;
+pub use generic::*;
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone, Hash)]
 #[repr(u8)]
@@ -20,11 +20,7 @@ enum AttachFace {
 }
 impl IndexedEnum for AttachFace {
     type Index = u8;
-    const VARIANTS: &'static [Self] = &[
-        Self::FLOOR,
-        Self::WALL,
-        Self::CEILING,
-    ];
+    const VARIANTS: &'static [Self] = &[Self::FLOOR, Self::WALL, Self::CEILING];
 }
 impl From<u8> for AttachFace {
     fn from(value: u8) -> Self {
@@ -47,12 +43,7 @@ pub enum HorizontalDirection {
 }
 impl IndexedEnum for HorizontalDirection {
     type Index = u8;
-    const VARIANTS: &'static [Self] = &[
-        Self::NORTH,
-        Self::SOUTH,
-        Self::WEST,
-        Self::EAST,
-    ];
+    const VARIANTS: &'static [Self] = &[Self::NORTH, Self::SOUTH, Self::WEST, Self::EAST];
 }
 impl From<u8> for HorizontalDirection {
     fn from(value: u8) -> Self {

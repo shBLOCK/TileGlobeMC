@@ -1,7 +1,5 @@
-use crate::world::block::{
-    Block, BlockState, BlockStateType, StateId, StateIdType,
-};
 use crate::utils::ResLoc;
+use crate::world::block::{Block, BlockState, BlockStateType, StateId, StateIdType};
 
 #[derive(derive_more::Debug)]
 #[debug("GenericBlock(\"{}\")", self.resloc)]

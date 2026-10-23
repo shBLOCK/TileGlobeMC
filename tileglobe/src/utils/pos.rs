@@ -1,5 +1,5 @@
-use core::cmp::Ordering;
 use crate::utils::Direction;
+use core::cmp::Ordering;
 use glam::{I16Vec2, I16Vec3, Vec3Swizzles};
 
 #[derive(
@@ -37,7 +37,8 @@ impl BlockPos {
 
 impl Ord for BlockPos {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.x.cmp(&other.x)
+        self.x
+            .cmp(&other.x)
             .then_with(|| self.z.cmp(&other.z))
             .then_with(|| self.y.cmp(&other.y))
     }

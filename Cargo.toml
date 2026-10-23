@@ -16,30 +16,34 @@ embassy-time-driver = { path = "embassy/embassy-time-driver" }
 embassy-rp = { path = "embassy/embassy-rp" }
 
 [workspace.dependencies]
-embassy-executor = { version = "0.9.1", path = "embassy/embassy-executor", features = ["executor-thread"] }
-embassy-time = { version = "0.5.0", path = "embassy/embassy-time" }
-embassy-sync = { version = "0.7.2", path = "embassy/embassy-sync" }
+embassy-executor = { version = "0.10.0", path = "embassy/embassy-executor", features = ["executor-thread"] }
+embassy-time = { version = "0.5.1", path = "embassy/embassy-time" }
+embassy-sync = { version = "0.8.0", path = "embassy/embassy-sync" }
 embassy-futures = { version = "0.1.2", path = "embassy/embassy-futures" }
-embassy-net = { version = "0.7.1", path = "embassy/embassy-net", features = ["alloc", "tcp", "proto-ipv4", "medium-ethernet"] }
-embedded-io-async = "0.6.1"
+embassy-net = { version = "0.9.1", path = "embassy/embassy-net", features = ["tcp", "tcp-listener", "ipv4", "medium-ethernet"] }
+embedded-io-async = "0.7.0"
 critical-section = "1.2.0"
 
-libm = { version = "0.2.15" }
-glam = { version = "0.30.9", default-features = false, features = ["libm"] }
+libm = { version = "0.2.16" }
+glam = { version = "0.34.1", default-features = false, features = ["libm", "i16"] }
 num-traits = { version = "0.2.19", default-features = false }
-heapless = "0.8.0"
+heapless = "0.9.3"
 static_cell = "2.1.1"
-derive_more = { version = "2.0.1", default-features = false }
-serde = { version = "1.0.228", default-features = false, features = ["alloc", "derive"] }
+derive_more = { version = "2.1.1", default-features = false }
+serde = { version = "1.0.229", default-features = false, features = ["alloc", "derive"] }
 dynify = { version = "0.1.2", features = ["smallvec"] }
-smallvec = { version = "1.15.1" }
-uuid = { version = "1.18.1", default-features = false, features = ["v3"] }
-md5 = { version = "0.8.0", default-features = false }
-bit-vec = { version = "0.8.0", default-features = false }
-itertools = { version = "0.14.0", default-features = false, features = ["use_alloc"] }
+smallvec = { version = "1.16.2" }
+uuid = { version = "1.28.0", default-features = false, features = ["v3"] }
+md5 = { version = "0.8.1", default-features = false }
+bit-vec = { version = "0.10.1", default-features = false }
+itertools = { version = "0.15.0", default-features = false, features = ["use_alloc"] }
 
-defmt = { version = "1.1.1", features = ["alloc"] }
+defmt = { version = "1.2.0", features = ["alloc"] }
 log = "0.4.34"
 defmt-or-log = "0.2.3"
 
 pymeta = { version = "1.1.2", features = ["nightly_diagnostic", "dump_source_on_error"] }
+
+[profile.release]
+debug = true
+strip = "none"

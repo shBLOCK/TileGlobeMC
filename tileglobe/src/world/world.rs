@@ -244,8 +244,6 @@ impl World for _World {
     async fn tick(&self) {
         let current_tick = { *self.tick_number.lock().await };
 
-        info!("tick {}", current_tick);
-
         let mut c = [MaybeUninit::uninit(); 512];
         while let Some(block_tick) = {
             self.block_tick_scheduler

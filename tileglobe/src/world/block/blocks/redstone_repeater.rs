@@ -1,22 +1,23 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, IntProperty,
     Property, SimpleBlockState, StateId,
 };
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{_World, World};
 use glam::{Vec2, Vec3, Vec3Swizzles};
 use ordered_float::OrderedFloat;
-use crate::utils::Direction;
-use crate::utils::IndexedEnum;
-use crate::utils::BlockPos;
-use crate::utils::ResLoc;
-use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct RedstoneRepeaterBlock;
 impl RedstoneRepeaterBlock {
     pub fn is_redstone_repeater(blockstate: BlockState) -> bool {
-        (mc_block_id_base!("repeater")..(mc_block_id_base!("repeater") + 16)).contains(&blockstate.0)
+        (mc_block_id_base!("repeater")..(mc_block_id_base!("repeater") + 16))
+            .contains(&blockstate.0)
     }
 
     async fn get_input_signal(world: &_World, pos: BlockPos, blockstate: BlockState) -> u8 {

@@ -9,7 +9,7 @@ impl RGBA8 {
         let (r, g, b, a) = (r as u32, g as u32, b as u32, a as u32);
         RGBA8(r | (g << 8) | (b << 16) | (a << 24))
     }
-    
+
     pub const fn r(self) -> u8 {
         self.0 as u8
     }

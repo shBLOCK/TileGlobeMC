@@ -152,6 +152,8 @@ where
     }
 }
 
+pub static mut TMP_TICK_RATE: u32 = 20; // tmp
+
 impl<
     'a,
     M: RawMutex + 'static,
@@ -511,6 +513,27 @@ where
                     // swing
                     rx.skip_bytes(1).await?;
                 }
+                6 => {
+                    // chat_command
+                    let command = rx.read_utf8().await?;
+                    info!("Command: \"{}\"", command);
+                    let mut segments = command.split_ascii_whitespace();
+                    match segments.next() {
+                        Some("tick") => match segments.next() {
+                            Some("rate") => {
+                                if let Some(tick_rate) = segments.next()
+                                    && let Ok(tick_rate) = tick_rate.parse::<u32>()
+                                    && tick_rate > 0
+                                {
+                                    info!("Setting tick rate to {}", tick_rate);
+                                    unsafe { TMP_TICK_RATE = tick_rate };
+                                }
+                            }
+                            _ => {}
+                        },
+                        _ => {}
+                    }
+                }
                 _ => {
                     self.skip_unknown_packet(rx, packet_type, packet_length)
                         .await?;
@@ -544,73 +567,80 @@ where
                         .await
                 };
 
-                let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
-                pkt.write_be::<u32>(0).await?; // entity id
-                pkt.write_be(false as u8).await?; // is hardcore
-                pkt.write_varint(1u32).await?; // dimension names
-                pkt.write_utf8("minecraft:overworld").await?;
-                pkt.write_varint(3u32).await?; // max players
-                pkt.write_varint(32u32).await?; // view distance
-                pkt.write_varint(32u32).await?; // sim distance
-                pkt.write_be(false as u8).await?; // reduced debug info
-                pkt.write_be(true as u8).await?; // enable respawn screen
-                pkt.write_be(false as u8).await?; // do limited crafting (unused)
-                pkt.write_varint(0u32).await?; // dimension id
-                pkt.write_utf8("minecraft:overworld").await?; // dimension name
-                pkt.write_be(0u64).await?; // world seed hash
-                pkt.write_be(1u8).await?; // game mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator)
-                pkt.write_be(-1i8).await?; // prev game mode
-                pkt.write_be(false as u8).await?; // is debug mode world
-                pkt.write_be(false as u8).await?; // is flat world
-                pkt.write_be(false as u8).await?; // has death location
-                pkt.write_varint(0u32).await?; // portal cooldown
-                pkt.write_varint(68u32).await?; // sea level
-                pkt.write_be(false as u8).await?; // enforce secure chat
-                self.write_mc_packet(&pkt).await?;
+                let result = async || -> Result<(), MCClientError> {
+                    let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
+                    pkt.write_be::<u32>(0).await?; // entity id
+                    pkt.write_be(false as u8).await?; // is hardcore
+                    pkt.write_varint(1u32).await?; // dimension names
+                    pkt.write_utf8("minecraft:overworld").await?;
+                    pkt.write_varint(3u32).await?; // max players
+                    pkt.write_varint(32u32).await?; // view distance
+                    pkt.write_varint(32u32).await?; // sim distance
+                    pkt.write_be(false as u8).await?; // reduced debug info
+                    pkt.write_be(true as u8).await?; // enable respawn screen
+                    pkt.write_be(false as u8).await?; // do limited crafting (unused)
+                    pkt.write_varint(0u32).await?; // dimension id
+                    pkt.write_utf8("minecraft:overworld").await?; // dimension name
+                    pkt.write_be(0u64).await?; // world seed hash
+                    pkt.write_be(1u8).await?; // game mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator)
+                    pkt.write_be(-1i8).await?; // prev game mode
+                    pkt.write_be(false as u8).await?; // is debug mode world
+                    pkt.write_be(false as u8).await?; // is flat world
+                    pkt.write_be(false as u8).await?; // has death location
+                    pkt.write_varint(0u32).await?; // portal cooldown
+                    pkt.write_varint(68u32).await?; // sea level
+                    pkt.write_be(false as u8).await?; // enforce secure chat
+                    self.write_mc_packet(&pkt).await?;
 
-                let mut pkt = MCPacketBuffer::new(30).await; // entity_event
-                pkt.write_be(0u32).await?;
-                pkt.write_be(28u8).await?; //	Set op permission level to 4
-                self.write_mc_packet(&pkt).await?;
+                    let mut pkt = MCPacketBuffer::new(30).await; // entity_event
+                    pkt.write_be(0u32).await?;
+                    pkt.write_be(28u8).await?; //	Set op permission level to 4
+                    self.write_mc_packet(&pkt).await?;
 
-                let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
-                pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
-                pkt.write_be::<f32>(0.0).await?;
-                self.write_mc_packet(&pkt).await?;
+                    let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
+                    pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
+                    pkt.write_be::<f32>(0.0).await?;
+                    self.write_mc_packet(&pkt).await?;
 
-                let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
-                pkt.write_varint(0u32).await?;
-                pkt.write_varint(0u32).await?;
-                self.write_mc_packet(&pkt).await?;
+                    let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
+                    pkt.write_varint(0u32).await?;
+                    pkt.write_varint(0u32).await?;
+                    self.write_mc_packet(&pkt).await?;
 
-                // for cx in -2i16..=2 {
-                //     for cz in -2i16..=2 {
-                //
-                //     }
-                // }
+                    // for cx in -2i16..=2 {
+                    //     for cz in -2i16..=2 {
+                    //
+                    //     }
+                    // }
 
-                for cx in -2i16..=2 {
-                    for cz in -2i16..=2 {
-                        self.send_chunk(ChunkPos::new(cx, cz)).await?;
+                    for cx in -2i16..=2 {
+                        for cz in -2i16..=2 {
+                            self.send_chunk(ChunkPos::new(cx, cz)).await?;
+                        }
                     }
-                }
 
-                let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
-                pkt.write_varint::<u32>(0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(10.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f64>(0.0).await?;
-                pkt.write_be::<f32>(0.0).await?;
-                pkt.write_be::<f32>(0.0).await?;
-                pkt.write_be::<u32>(0).await?;
-                self.write_mc_packet(&pkt).await?;
+                    let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
+                    pkt.write_varint::<u32>(0).await?;
+                    pkt.write_be::<f64>(0.0).await?;
+                    pkt.write_be::<f64>(10.0).await?;
+                    pkt.write_be::<f64>(0.0).await?;
+                    pkt.write_be::<f64>(0.0).await?;
+                    pkt.write_be::<f64>(0.0).await?;
+                    pkt.write_be::<f64>(0.0).await?;
+                    pkt.write_be::<f32>(0.0).await?;
+                    pkt.write_be::<f32>(0.0).await?;
+                    pkt.write_be::<u32>(0).await?;
+                    self.write_mc_packet(&pkt).await?;
 
-                self.play().await?;
+                    self.play().await?;
+
+                    Ok(())
+                }()
+                .await;
 
                 self.server.remove_player(self.uuid().await).await;
+
+                result?; // gross...
             }
         };
         Ok(())

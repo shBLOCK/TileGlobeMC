@@ -1,5 +1,5 @@
-use crate::utils::Direction;
 use crate::utils::BlockPos;
+use crate::utils::Direction;
 use crate::utils::ResLoc;
 use crate::world::block::{Block, BlockResLocs, BlockState};
 use crate::world::utils::mc_block_id_base;
@@ -16,7 +16,13 @@ impl Block for RedstoneBlock {
         BlockState(mc_block_id_base!("redstone_block"))
     }
 
-    async fn get_signal(&self, world: &_World, pos: BlockPos, blockstate: BlockState, direction: Direction) -> u8 {
+    async fn get_signal(
+        &self,
+        world: &_World,
+        pos: BlockPos,
+        blockstate: BlockState,
+        direction: Direction,
+    ) -> u8 {
         15
     }
 }

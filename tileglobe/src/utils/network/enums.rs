@@ -18,12 +18,13 @@ impl<T: embedded_io_async::Read> ReadIndexedEnum for T {}
 
 #[allow(async_fn_in_trait)]
 pub trait WriteIndexedEnum: embedded_io_async::Write {
-    async fn write_indexed_enum<
-        T: IndexedEnum
-    >(
+    async fn write_indexed_enum<T: IndexedEnum>(
         mut self: &mut Self,
         value: T,
-    ) -> Result<(), EIOError<Self::Error>> where T::Index: ToBytes<Bytes = [u8; size_of::<T::Index>()]> {
+    ) -> Result<(), EIOError<Self::Error>>
+    where
+        T::Index: ToBytes<Bytes = [u8; size_of::<T::Index>()]>,
+    {
         Ok(self.write_be::<T::Index>(value.into()).await?)
     }
 }

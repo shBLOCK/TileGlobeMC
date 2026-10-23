@@ -1,9 +1,11 @@
-use crate::utils::network::{EIOReadExactError, ReadNumPrimitive};
 use crate::utils::BlockPos;
+use crate::utils::network::{EIOReadExactError, ReadNumPrimitive};
 use num_traits::PrimInt;
 
 pub trait ReadBlockPos: embedded_io_async::Read {
-    async fn read_block_pos(mut self: &mut Self) -> Result<BlockPos, EIOReadExactError<Self::Error>> {
+    async fn read_block_pos(
+        mut self: &mut Self,
+    ) -> Result<BlockPos, EIOReadExactError<Self::Error>> {
         let packed = self.read_be::<u64>().await?;
         Ok(BlockPos::new(
             packed.signed_shr(38) as i16,

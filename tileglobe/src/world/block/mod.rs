@@ -1,17 +1,17 @@
 mod block;
 pub use block::*;
 pub mod blocks;
-mod registry;
 mod misc;
+mod registry;
 
+use crate::utils::BlockPos;
+use crate::utils::IndexedEnum;
+use crate::world::world::_World;
 use core::fmt::Debug;
 use core::mem::MaybeUninit;
 use defmt_or_log::maybe_derive_format;
-use smallvec::SmallVec;
 pub use registry::*;
-use crate::utils::IndexedEnum;
-use crate::utils::BlockPos;
-use crate::world::world::_World;
+use smallvec::SmallVec;
 
 pub type BlockStateType = u16;
 #[derive(
@@ -24,7 +24,7 @@ impl BlockState {
     pub fn get_block(self) -> &'static dyn DynifiedBlock {
         Blocks.get_block(self)
     }
-    
+
     pub fn is_air(self) -> bool {
         self.0 == 0 // TODO: include cave_air & void_air
     }
@@ -63,7 +63,9 @@ pub trait SimpleBlockState: BlockStateImpl {
     fn set_state_id(&mut self, id: StateId);
 }
 
-pub trait Property<T, const N: StateIdType, const ID_GROUP_SIZE: StateIdType>: SimpleBlockState {
+pub trait Property<T, const N: StateIdType, const ID_GROUP_SIZE: StateIdType>:
+    SimpleBlockState
+{
     fn get_raw(self) -> StateIdType {
         self.state_id().0 / ID_GROUP_SIZE % N
     }
@@ -97,7 +99,9 @@ pub trait BoolProperty<const ID_GROUP_SIZE: StateIdType>: Property<bool, 2, ID_G
     }
 }
 
-pub trait EnumProperty<T: IndexedEnum<Index = u8>, const ID_GROUP_SIZE: StateIdType>: Property<T, { T::VARIANTS.len() as StateIdType }, ID_GROUP_SIZE> {
+pub trait EnumProperty<T: IndexedEnum<Index = u8>, const ID_GROUP_SIZE: StateIdType>:
+    Property<T, { T::VARIANTS.len() as StateIdType }, ID_GROUP_SIZE>
+{
     fn get(self) -> T {
         T::from(self.get_raw() as u8)
     }

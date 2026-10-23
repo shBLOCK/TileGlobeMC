@@ -14,14 +14,14 @@ tileglobe = { path = "../../tileglobe", features = ["defmt", "rp"] }
 tileglobe_server = { path = "../../tileglobe_server", features = ["defmt"] }
 
 embassy-executor = { workspace = true, features = [
-    "arch-cortex-m",
+    "platform-cortex-m",
     "executor-interrupt",
     "defmt"
 ] }
 embassy-time = { workspace = true, features = ["defmt"] }
 embassy-sync = { workspace = true, features = ["defmt"] }
 embassy-futures = { workspace = true }
-embassy-rp = { version = "0.8.0", path = "../../embassy/embassy-rp", features = [
+embassy-rp = { version = "0.10.0", path = "../../embassy/embassy-rp", features = [
     "rp235xb",
     "unstable-pac",
     "time-driver",
@@ -30,7 +30,7 @@ embassy-rp = { version = "0.8.0", path = "../../embassy/embassy-rp", features = 
     "defmt"
 ] }
 embassy-net = { workspace = true, features = ["defmt", "dhcpv4"] }
-embassy-net-esp-hosted = { version = "0.2.1", path = "../../embassy/embassy-net-esp-hosted", features = ["defmt"] }
+embassy-net-esp-hosted = { version = "0.3.0", path = "../../embassy/embassy-net-esp-hosted", features = ["defmt"] }
 embedded-hal-bus = { version = "0.3.0", features = ["async"] }
 
 static_cell = { workspace = true }

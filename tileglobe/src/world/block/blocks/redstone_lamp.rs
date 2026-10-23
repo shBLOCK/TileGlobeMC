@@ -1,8 +1,11 @@
 use crate::utils::BlockPos;
 use crate::utils::ResLoc;
-use crate::world::block::{Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState, StateId};
+use crate::world::block::{
+    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState,
+    StateId,
+};
 use crate::world::utils::mc_block_id_base;
-use crate::world::world::{World, _World};
+use crate::world::world::{_World, World};
 
 #[derive(Debug)]
 pub struct RedstoneLampBlock;

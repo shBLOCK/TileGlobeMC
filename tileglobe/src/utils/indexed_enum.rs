@@ -1,6 +1,8 @@
 use num_traits::{NumCast, PrimInt, Unsigned};
 
-pub trait IndexedEnum: TryFrom<Self::Index> + From<Self::Index> + Into<Self::Index> + 'static {
+pub trait IndexedEnum:
+    TryFrom<Self::Index> + From<Self::Index> + Into<Self::Index> + 'static
+{
     type Index: PrimInt + Unsigned;
     const VARIANTS: &'static [Self];
 

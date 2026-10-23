@@ -1,8 +1,8 @@
+use crate::utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
 use alloc::vec::Vec;
 use core::cmp::min;
 use core::iter::repeat_n;
 use num_traits::PrimInt;
-use crate::utils::network::{EIOError, WriteNumPrimitive, WriteVarInt};
 
 pub struct BitBuf {
     buf: Vec<u8>,
@@ -21,7 +21,9 @@ impl BitBuf {
     pub fn write_int_as_size<I: PrimInt>(&mut self, value: I, as_size: u8) {
         if as_size != 0 {
             let actual_size = size_of::<I>() as u8 * 8;
-            let additional_bytes = as_size.saturating_sub((8 - (self.write_pos & 0b111) as u8) & 0b111).div_ceil(8);
+            let additional_bytes = as_size
+                .saturating_sub((8 - (self.write_pos & 0b111) as u8) & 0b111)
+                .div_ceil(8);
             self.buf.reserve(additional_bytes as usize);
             self.buf.extend(repeat_n(0, additional_bytes as usize));
             self.write_pos += as_size as usize;
@@ -54,7 +56,10 @@ impl BitBuf {
 
 #[allow(async_fn_in_trait)]
 pub trait WriteBitBuf: embedded_io_async::Write {
-    async fn write_bit_buf(mut self: &mut Self, bit_buf: &BitBuf) -> Result<(), EIOError<Self::Error>> {
+    async fn write_bit_buf(
+        mut self: &mut Self,
+        bit_buf: &BitBuf,
+    ) -> Result<(), EIOError<Self::Error>> {
         let data = bit_buf.buf.as_slice();
         let longs = data.len().div_ceil(8);
         self.write_varint(longs as u32).await?;

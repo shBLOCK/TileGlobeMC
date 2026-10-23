@@ -1,24 +1,24 @@
+mod bitbuf;
+mod block_pos;
+mod bool;
+mod bytebuf;
+mod enums;
 mod mc_packet;
 mod primitives;
 mod string;
 mod uuid;
 mod varint;
-mod enums;
-mod bitbuf;
-mod bytebuf;
-mod block_pos;
-mod bool;
 
+pub use bitbuf::*;
+pub use block_pos::*;
+pub use bool::*;
+pub use enums::*;
 pub use error_wrappers::*;
 pub use mc_packet::*;
 pub use primitives::*;
 pub use string::*;
 pub use uuid::*;
 pub use varint::*;
-pub use enums::*;
-pub use bitbuf::*;
-pub use block_pos::*;
-pub use bool::*;
 
 use core::mem::MaybeUninit;
 
@@ -67,11 +67,11 @@ mod error_wrappers {
     }
 
     impl<E: embedded_io_async::Error> Error for EIOError<E> {}
-    
+
     // pub trait WrapEIOError<T, E: embedded_io_async::Error> {
     //     fn wrap_ioe(self) -> Result<T, EIOError<E>>;
     // }
-    // 
+    //
     // impl<T, E: embedded_io_async::Error> WrapEIOError<T, E> for Result<T, E> {
     //     fn wrap_ioe(self) -> Result<T, EIOError<E>> {
     //         self.map_err(|e| EIOError::from(e))

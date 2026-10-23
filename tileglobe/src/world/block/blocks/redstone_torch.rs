@@ -1,14 +1,14 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId,
 };
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{_World, World};
 use glam::Vec3;
-use crate::utils::Direction;
-use crate::utils::BlockPos;
-use crate::utils::ResLoc;
-use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct RedstoneTorchBlock {
@@ -23,7 +23,9 @@ impl RedstoneTorchBlock {
     }
 
     async fn should_output(world: &_World, pos: BlockPos, state: RedstoneTorchState) -> bool {
-        let input = world.get_signal(pos.offset_dir(state.facing), state.facing.opposite()).await;
+        let input = world
+            .get_signal(pos.offset_dir(state.facing), state.facing.opposite())
+            .await;
         input == 0
     }
 }
@@ -64,7 +66,8 @@ impl Block for RedstoneTorchBlock {
         RedstoneTorchState {
             facing: block_face,
             lit: true,
-        }.block_state()
+        }
+        .block_state()
     }
 
     async fn on_placed(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {

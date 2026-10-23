@@ -1,8 +1,13 @@
+use crate::utils::BlockPos;
+use crate::utils::Direction;
+use crate::utils::IndexedEnum;
+use crate::utils::ResLoc;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
     Block, BlockResLocs, BlockState, BlockStateImpl, EnumProperty, IntProperty, Property,
     SimpleBlockState, StateId,
 };
+use crate::world::utils::mc_block_id_base;
 use crate::world::world::{_World, World};
 use core::cmp::max;
 use core::mem::MaybeUninit;
@@ -11,11 +16,6 @@ use dynify::Dynify;
 use glam::{I16Vec3, Vec3};
 use itertools::iproduct;
 use smallvec::SmallVec;
-use crate::utils::Direction;
-use crate::utils::IndexedEnum;
-use crate::utils::BlockPos;
-use crate::utils::ResLoc;
-use crate::world::utils::mc_block_id_base;
 
 #[derive(Debug)]
 pub struct RedstoneWireBlock;
