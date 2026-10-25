@@ -1,5 +1,5 @@
-mod resloc;
-pub use resloc::*;
+mod rid;
+pub use rid::*;
 mod color;
 pub use color::*;
 mod indexed_enum;

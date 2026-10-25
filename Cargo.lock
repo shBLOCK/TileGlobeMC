@@ -1664,27 +1664,27 @@ dependencies = [
 
 [[package]]
 name = "pymeta"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0e01459e09526d51319d057bccb4008bbafa8891229241d9dca91a61f9a51320"
+checksum = "3631c8eebfb28613c7d20457f84b5874536559018165ff01c33ae6cc5f9bcc78"
 dependencies = [
  "pymeta-proc-macro",
 ]
 
 [[package]]
 name = "pymeta-proc-macro"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0755be8a513d6fe1b7cd3075c3efbb43570edc472a46394e5fb7853c752ab0a7"
+checksum = "a013e170232c9e5427d0d33c6cfabab0e5a66a76fede5ab35d7a1099673aed01"
 dependencies = [
  "pymeta-proc-macro-backend",
 ]
 
 [[package]]
 name = "pymeta-proc-macro-backend"
-version = "1.1.2"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b221249eca086fecf5d40bfbf409089b09c9788c114095646736d3d3f28a2115"
+checksum = "3c5eb5104da0551e33cd85614459b64a20d8c9e0f705487b2cec4bf9ccffe982"
 dependencies = [
  "either",
  "libc",
@@ -2293,6 +2293,7 @@ dependencies = [
  "log",
  "md5",
  "num-traits",
+ "pymeta",
  "smallvec",
  "tileglobe",
  "uuid",

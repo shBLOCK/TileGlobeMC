@@ -22,7 +22,7 @@ use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
 use tileglobe::world::world::_World;
 use tileglobe::world::world::RedstoneOverride;
-use tileglobe_proc_macro::mc_block_id_base;
+use tileglobe_proc_macro::mc_block_index_base;
 use tileglobe_server::MCClient;
 use tileglobe_server::mc_server::MCServer;
 use tileglobe_utils::pos::BlockPos;
@@ -220,16 +220,16 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     }
 
     const ADC_BLOCKS: [BlockState; 4] = [
-        BlockState(mc_block_id_base!("white_wool")),
-        BlockState(mc_block_id_base!("black_wool")),
-        BlockState(mc_block_id_base!("orange_wool")),
-        BlockState(mc_block_id_base!("magenta_wool")),
+        BlockState(mc_block_index_base!("white_wool")),
+        BlockState(mc_block_index_base!("black_wool")),
+        BlockState(mc_block_index_base!("orange_wool")),
+        BlockState(mc_block_index_base!("magenta_wool")),
     ];
     let mut dac_blocks = [
-        (BlockState(mc_block_id_base!("red_wool")), out0),
-        (BlockState(mc_block_id_base!("yellow_wool")), out1),
-        (BlockState(mc_block_id_base!("green_wool")), out2),
-        (BlockState(mc_block_id_base!("blue_wool")), out3),
+        (BlockState(mc_block_index_base!("red_wool")), out0),
+        (BlockState(mc_block_index_base!("yellow_wool")), out1),
+        (BlockState(mc_block_index_base!("green_wool")), out2),
+        (BlockState(mc_block_index_base!("blue_wool")), out3),
     ];
 
     world.redstone_override = Some(Mutex::new(Box::new(GPIORedstoneOverride {

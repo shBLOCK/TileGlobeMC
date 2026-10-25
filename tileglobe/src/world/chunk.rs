@@ -1,4 +1,6 @@
-use crate::utils::network::{EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt};
+use crate::utils::network::{
+    EIOError, MCPacketBuffer, WriteNumPrimitive, WriteVarInt, mc_packet_id,
+};
 use crate::utils::{ChunkLocalPos, ChunkPos};
 use crate::world::block::BlockState;
 use alloc::collections::BTreeSet;
@@ -113,10 +115,10 @@ impl ChunkSection {
     }
 
     pub fn serialized_size(&self) -> usize {
-        2 + if self.non_air_blocks() == 0 {
+        4 + if self.non_air_blocks() == 0 {
             1 + 1
         } else {
-            1 + (16usize * 16 * 16).div_ceil(64 / 15) * 8
+            1 + (16usize * 16 * 16).div_ceil(64 / 16) * 8
         }
     }
 
@@ -127,11 +129,13 @@ impl ChunkSection {
         let non_air_blocks = self.non_air_blocks();
         if non_air_blocks == 0 {
             writer.write_be(0u16).await?;
+            writer.write_be(0u16).await?;
             writer.write_be(0u8).await?;
             writer.write_varint(0u32).await?;
         } else {
             writer.write_be::<u16>(non_air_blocks).await?;
-            let entry_size = 15u8;
+            writer.write_be::<u16>(0).await?; // fluid count
+            let entry_size = 16u8;
             writer.write_be(entry_size).await?;
             let entries_per_long = 64u8 / entry_size;
             let mut data = self.get_data_array().as_slice();
@@ -158,7 +162,7 @@ impl ChunkSection {
         if self.changes.is_empty() {
             return None;
         }
-        let mut pkt = MCPacketBuffer::new(77).await; // section_blocks_update
+        let mut pkt = MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "section_blocks_update")).await;
         pkt.write_be::<u64>(
             (self.section_y as u64 & 0xFFFFF)
                 | ((chunk_pos.y as u64 & 0x3FFFFF) << 20)

@@ -1,12 +1,12 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::blocks::{AttachFace, HorizontalDirection};
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
+    Block, BlockRIDs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId, StateIdType,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 use glam::Vec3;
 
@@ -27,12 +27,12 @@ impl LeverBlock {
     }
 }
 impl Block for LeverBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockResLocs::LEVER
+    fn rid(&self) -> &'static RID<'static> {
+        BlockRIDs::LEVER
     }
 
     fn default_state(&self) -> BlockState {
-        BlockState(mc_block_id_base!("lever") + 9)
+        BlockState(mc_block_index_base!("lever") + 9)
     }
 
     fn is_attract_redstone_wire_connection(
@@ -138,7 +138,7 @@ impl LeverState {
 
 impl BlockStateImpl for LeverState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("lever") + self.state_id().0)
+        BlockState(mc_block_index_base!("lever") + self.state_id().0)
     }
 }
 impl SimpleBlockState for LeverState {
@@ -156,6 +156,6 @@ impl SimpleBlockState for LeverState {
 }
 impl From<BlockState> for LeverState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("lever")))
+        Self(StateId(value.0 - mc_block_index_base!("lever")))
     }
 }

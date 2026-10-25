@@ -20,7 +20,7 @@ embassy-executor = { version = "0.10.0", path = "embassy/embassy-executor", feat
 embassy-time = { version = "0.5.1", path = "embassy/embassy-time" }
 embassy-sync = { version = "0.8.0", path = "embassy/embassy-sync" }
 embassy-futures = { version = "0.1.2", path = "embassy/embassy-futures" }
-embassy-net = { version = "0.9.1", path = "embassy/embassy-net", features = ["tcp", "tcp-listener", "ipv4", "medium-ethernet"] }
+embassy-net = { version = "0.9.1", path = "embassy/embassy-net", features = ["tcp", "tcp-listener", "ipv4", "medium-ethernet", "dhcpv4", "dhcpv4-server", "icmp-ping-reply"] }
 embedded-io-async = "0.7.0"
 critical-section = "1.2.0"
 
@@ -42,7 +42,7 @@ defmt = { version = "1.2.0", features = ["alloc"] }
 log = "0.4.34"
 defmt-or-log = "0.2.3"
 
-pymeta = { version = "1.1.2", features = ["nightly_diagnostic", "dump_source_on_error"] }
+pymeta = { version = "1.2.0", features = ["nightly_diagnostic", "dump_source_on_error"] }
 
 [profile.release]
 debug = true

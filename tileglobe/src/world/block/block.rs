@@ -1,7 +1,7 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
 use crate::utils::RGBA8;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::BlockState;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::misc::MapColor;
@@ -11,7 +11,7 @@ use glam::Vec3;
 
 #[allow(async_fn_in_trait)]
 pub trait Block: Debug + 'static {
-    fn resloc(&self) -> &'static ResLoc<'static>;
+    fn rid(&self) -> &'static RID<'static>;
 
     fn default_state(&self) -> BlockState;
 
@@ -81,7 +81,7 @@ pub trait Block: Debug + 'static {
 }
 
 pub trait DynifiedBlock: Debug + 'static {
-    fn resloc(&self) -> &'static ResLoc<'static>;
+    fn rid(&self) -> &'static RID<'static>;
 
     fn default_state(&self) -> BlockState;
 
@@ -188,8 +188,8 @@ pub trait DynifiedBlock: Debug + 'static {
 }
 
 impl<BlockImplementor: Block> DynifiedBlock for BlockImplementor {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockImplementor::resloc(self)
+    fn rid(&self) -> &'static RID<'static> {
+        BlockImplementor::rid(self)
     }
 
     fn default_state(&self) -> BlockState {

@@ -6,7 +6,7 @@ from mashumaro.config import BaseConfig
 from mashumaro.mixins.json import DataClassJSONMixin
 from mashumaro.types import Discriminator
 
-from .misc import ResLoc, MOD_DATAGEN_ROOT, load_json
+from .misc import RID, MOD_DATAGEN_ROOT, load_json
 
 
 __all__ = (
@@ -21,7 +21,7 @@ __all__ = (
 @dataclass(frozen=True, kw_only=True)
 class Property(DataClassJSONMixin):
     name: str
-    id_group_size: int
+    index_group_size: int
 
     class Config(BaseConfig):
         discriminator = Discriminator(field="type", include_subtypes=True)
@@ -47,30 +47,32 @@ class EnumProperty(Property):
 
 @dataclass(frozen=True, kw_only=True)
 class BlockDef(DataClassJSONMixin):
-    BLOCK_DEF_ROOT: ClassVar[Path] = MOD_DATAGEN_ROOT / "block_def"
+    BLOCK_DEF_ROOT: ClassVar[Path] = MOD_DATAGEN_ROOT / "additional" / "block_def"
 
-    resloc: ResLoc
+    rid: RID
     default_state: int
-    id_base: int
+    index_base: int
     total_states: int
     blockstate_properties: tuple[Property, ...]
 
     @classmethod
-    def load(cls, resloc: ResLoc) -> Self:
-        return cls.from_dict(load_json(cls.BLOCK_DEF_ROOT / resloc))
+    def load(cls, rid: RID) -> Self:
+        return cls.from_dict(load_json(cls.BLOCK_DEF_ROOT / rid))
 
     @classmethod
-    def all_reslocs(cls) -> Iterable[ResLoc]:
-        return ResLoc.list_resloc_files_in_dir(cls.BLOCK_DEF_ROOT)
+    def all_rids(cls) -> Iterable[RID]:
+        return RID.list_rid_files_in_dir(cls.BLOCK_DEF_ROOT)
 
     @classmethod
     def load_all(cls) -> Iterable[Self]:
-        for resloc, _ in cls.all_reslocs():
-            yield cls.load(resloc)
+        for rid, _ in cls.all_rids():
+            yield cls.load(rid)
 
 
 if __name__ == '__main__':
-    print(BlockDef.load(ResLoc("vault")))
-    # for resloc, _ in BlockDef.all_reslocs() {
+    print(BlockDef.load(RID("vault")))
+    mb = max(BlockDef.load_all(), key=lambda b: b.index_base)
+    print(mb.index_base + mb.total_states)
+    # for rid, _ in BlockDef.all_rids() {
     # 
     # }

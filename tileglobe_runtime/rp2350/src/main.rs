@@ -31,6 +31,7 @@ pub static PICOTOOL_ENTRIES: [embassy_rp::binary_info::EntryAddr; 4] = [
     embassy_rp::binary_info::rp_program_build_attribute!(),
 ];
 
+use embassy_net::iface::dhcpv4_server::DhcpServerConfig;
 use embassy_net::tcp::{TcpListener, TcpReader, TcpSocket, TcpWriter};
 use embassy_net::wire::{IpCidr, Ipv4Cidr};
 use embassy_net::{Stack, StaticPool};
@@ -45,7 +46,7 @@ use tileglobe::utils::Direction;
 use tileglobe::utils::{BlockPos, ChunkLocalPos, ChunkPos};
 use tileglobe::world::block::BlockState;
 use tileglobe::world::chunk::Chunk;
-use tileglobe::world::utils::mc_block_id_base;
+use tileglobe::world::utils::mc_block_index_base;
 use tileglobe::world::world::{LocalWorld, World};
 use tileglobe_server::MCClient;
 use tileglobe_server::mc_client::TMP_TICK_RATE;
@@ -277,9 +278,17 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     );
     static DEVICE: StaticCell<setup_net::NetDriver<'static>> = StaticCell::new();
     let iface = stack.add_iface_borrowed(DEVICE.init(net_device)).unwrap();
+    // iface
+    //     .add_ip_addr(IpCidr::new(Ipv4Addr::new(169, 254, 1, 1).into(), 16))
+    //     .unwrap();
     iface
-        .add_ip_addr(IpCidr::new(Ipv4Addr::new(169, 254, 1, 1).into(), 16))
+        .add_ip_addr(IpCidr::new(Ipv4Addr::new(192, 168, 1, 1).into(), 24))
         .unwrap();
+    let dhcp_config = DhcpServerConfig::new(
+        Ipv4Addr::new(192, 168, 1, 2),
+        Ipv4Addr::new(192, 168, 1, 255),
+    );
+    iface.set_dhcpv4_server(Some(dhcp_config)).unwrap();
 
     #[embassy_executor::task(pool_size = 1)]
     async fn net_task(mut runner: embassy_net::Runner<'static>) -> ! {
@@ -353,16 +362,16 @@ async fn main_task(spawner: Spawner, ps: Peripherals) -> ! {
     }
 
     const ADC_BLOCKS: [BlockState; 4] = [
-        BlockState(mc_block_id_base!("white_wool")),
-        BlockState(mc_block_id_base!("black_wool")),
-        BlockState(mc_block_id_base!("orange_wool")),
-        BlockState(mc_block_id_base!("magenta_wool")),
+        BlockState(mc_block_index_base!("white_wool")),
+        BlockState(mc_block_index_base!("black_wool")),
+        BlockState(mc_block_index_base!("orange_wool")),
+        BlockState(mc_block_index_base!("magenta_wool")),
     ];
     let mut dac_blocks = [
-        (BlockState(mc_block_id_base!("red_wool")), out0),
-        (BlockState(mc_block_id_base!("yellow_wool")), out1),
-        (BlockState(mc_block_id_base!("green_wool")), out2),
-        (BlockState(mc_block_id_base!("blue_wool")), out3),
+        (BlockState(mc_block_index_base!("red_wool")), out0),
+        (BlockState(mc_block_index_base!("yellow_wool")), out1),
+        (BlockState(mc_block_index_base!("green_wool")), out2),
+        (BlockState(mc_block_index_base!("blue_wool")), out3),
     ];
 
     world.redstone_override = Some(Mutex::new(Box::new(GPIORedstoneOverride {

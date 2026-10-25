@@ -21,6 +21,8 @@ derive_more = { workspace = true, features = ["debug", "display", "from", "into"
 dynify = { workspace = true }
 const_for = "0.1.5"
 
+pymeta = { workspace = true }
+
 defmt-or-log = { workspace = true }
 defmt = { workspace = true, optional = true }
 log = { workspace = true, optional = true }

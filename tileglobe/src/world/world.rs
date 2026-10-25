@@ -406,7 +406,7 @@ impl World for _World {
             Ok(c) => (-4..20)
                 .map(|y| c.get_section(y).unwrap().serialized_size() + 1 + 1)
                 .sum(),
-            Err(_) => (2 + 1 + 1 + 1 + 1) * 24,
+            Err(_) => (4 + 1 + 1 + 1 + 1) * 24,
         };
         writer.write_varint::<u32>(total_size as u32).await?; // bytes
 
@@ -420,6 +420,7 @@ impl World for _World {
                 Ok(s) => s.serialize_into(writer).await?,
                 Err(_) => {
                     // write empty section
+                    writer.write_be(0u16).await?;
                     writer.write_be(0u16).await?;
                     writer.write_be(0u8).await?;
                     writer.write_varint(0u32).await?;
@@ -454,15 +455,15 @@ impl World for _World {
         //
         // writer.write_varint(0u32).await?;
 
-        writer.write_varint(1u32).await?;
+        writer.write_varint(8u32).await?;
         writer.write_be(0x0u64).await?;
-        writer.write_varint(1u32).await?;
+        writer.write_varint(8u32).await?;
         writer.write_be(0x0u64).await?;
 
-        writer.write_varint(1u32).await?;
-        writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
-        writer.write_varint(1u32).await?;
-        writer.write_be(0xFFFF_FF00_0000_0000u64).await?;
+        writer.write_varint(8u32).await?;
+        writer.write_be(0x0000_0000_0000_0000u64).await?;
+        writer.write_varint(8u32).await?;
+        writer.write_be(0x0000_0000_0000_0000u64).await?;
 
         writer.write_varint(0u32).await?;
         writer.write_varint(0u32).await?;

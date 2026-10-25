@@ -2,6 +2,7 @@ use crate::utils::network::{EIOError, WriteVarInt};
 use alloc::vec::Vec;
 use core::convert::Infallible;
 use defmt_or_log::debug;
+use pymeta::pymeta_func;
 
 pub struct MCPacketBuffer {
     buffer: Vec<u8>,
@@ -70,3 +71,22 @@ pub trait WriteMCPacket: embedded_io_async::Write {
 }
 
 impl<T: embedded_io_async::Write> WriteMCPacket for T {}
+
+#[pymeta_func(state: str, direction: str, rid: str)]
+#[public]
+#[init({
+    CONFIGURATION = "configuration";
+    HANDSHAKE = "handshake";
+    LOGIN = "login";
+    PLAY = "play";
+    STATUS = "status";
+    S2C = "clientbound";
+    C2S = "serverbound";
+})]
+mc_packet_id! {
+    import json;
+    from tg_utils import RID, MOD_DATAGEN_ROOT;
+    rid = RID(rid);
+    fp = open(MOD_DATAGEN_ROOT / "vanilla" / "reports" / "packets.json");
+    return json.load(fp)[state][direction][str(rid)]["protocol_id"];
+}

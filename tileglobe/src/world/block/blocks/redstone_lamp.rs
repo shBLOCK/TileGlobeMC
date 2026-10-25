@@ -1,21 +1,20 @@
 use crate::utils::BlockPos;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState,
-    StateId,
+    Block, BlockRIDs, BlockState, BlockStateImpl, BoolProperty, Property, SimpleBlockState, StateId,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 
 #[derive(Debug)]
 pub struct RedstoneLampBlock;
 impl Block for RedstoneLampBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockResLocs::REDSTONE_LAMP
+    fn rid(&self) -> &'static RID<'static> {
+        BlockRIDs::REDSTONE_LAMP
     }
 
     fn default_state(&self) -> BlockState {
-        BlockState(mc_block_id_base!("redstone_lamp") + 1)
+        BlockState(mc_block_index_base!("redstone_lamp") + 1)
     }
 
     async fn tick(&self, world: &_World, pos: BlockPos, blockstate: BlockState) {
@@ -61,7 +60,7 @@ impl RedstoneLampState {
 }
 impl BlockStateImpl for RedstoneLampState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("redstone_lamp") + self.state_id().0)
+        BlockState(mc_block_index_base!("redstone_lamp") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneLampState {
@@ -79,6 +78,6 @@ impl SimpleBlockState for RedstoneLampState {
 }
 impl From<BlockState> for RedstoneLampState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("redstone_lamp")))
+        Self(StateId(value.0 - mc_block_index_base!("redstone_lamp")))
     }
 }

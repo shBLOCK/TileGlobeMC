@@ -1,13 +1,13 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
 use crate::utils::IndexedEnum;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, IntProperty,
+    Block, BlockRIDs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, IntProperty,
     Property, SimpleBlockState, StateId,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 use glam::{Vec2, Vec3, Vec3Swizzles};
 use ordered_float::OrderedFloat;
@@ -16,7 +16,7 @@ use ordered_float::OrderedFloat;
 pub struct RedstoneRepeaterBlock;
 impl RedstoneRepeaterBlock {
     pub fn is_redstone_repeater(blockstate: BlockState) -> bool {
-        (mc_block_id_base!("repeater")..(mc_block_id_base!("repeater") + 16))
+        (mc_block_index_base!("repeater")..(mc_block_index_base!("repeater") + 16))
             .contains(&blockstate.0)
     }
 
@@ -31,12 +31,12 @@ impl RedstoneRepeaterBlock {
     }
 }
 impl Block for RedstoneRepeaterBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockResLocs::REPEATER
+    fn rid(&self) -> &'static RID<'static> {
+        BlockRIDs::REPEATER
     }
 
     fn default_state(&self) -> BlockState {
-        BlockState(mc_block_id_base!("repeater") + 3)
+        BlockState(mc_block_index_base!("repeater") + 3)
     }
 
     fn is_attract_redstone_wire_connection(
@@ -192,7 +192,7 @@ impl RedstoneRepeaterState {
 
 impl BlockStateImpl for RedstoneRepeaterState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("repeater") + self.state_id().0)
+        BlockState(mc_block_index_base!("repeater") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneRepeaterState {
@@ -210,6 +210,6 @@ impl SimpleBlockState for RedstoneRepeaterState {
 }
 impl From<BlockState> for RedstoneRepeaterState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("repeater")))
+        Self(StateId(value.0 - mc_block_index_base!("repeater")))
     }
 }

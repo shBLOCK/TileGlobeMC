@@ -1,0 +1,42 @@
+{
+	"schemaVersion": 1,
+	"id": "tileglobemc",
+	"version": "${version}",
+	"name": "TileGlobeMC",
+	"description": "TileGlobeMC Utils",
+	"authors": ["shBLOCK"],
+	"contact": {
+		"sources": "https://github.com/shBLOCK/TileGlobeMC"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/tileglobemc/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "dev.shblock.tileglobemc.TileGlobeMC",
+				"adapter": "kotlin"
+			}
+		],
+        "server": [
+            {
+                "value": "dev.shblock.tileglobemc.TileGlobeMC",
+                "adapter": "kotlin"
+            }
+        ],
+		"fabric-datagen": [
+			{
+				"value": "dev.shblock.tileglobemc.TileGlobeMCDataGenerator",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [],
+	"depends": {
+		"fabricloader": ">=0.20.1",
+		"minecraft": "~26.3",
+		"java": ">=25",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	}
+}

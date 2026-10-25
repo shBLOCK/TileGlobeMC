@@ -1,21 +1,21 @@
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::{Block, BlockState, BlockStateType, StateId, StateIdType};
 
 #[derive(derive_more::Debug)]
-#[debug("GenericBlock(\"{}\")", self.resloc)]
+#[debug("GenericBlock(\"{}\")", self.rid)]
 pub struct GenericBlock {
-    pub resloc: &'static ResLoc<'static>,
-    pub id_base: BlockStateType,
+    pub rid: &'static RID<'static>,
+    pub index_base: BlockStateType,
     pub num_states: StateIdType,
     pub default_state: StateId,
 }
 
 impl Block for GenericBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        self.resloc
+    fn rid(&self) -> &'static RID<'static> {
+        self.rid
     }
 
     fn default_state(&self) -> BlockState {
-        BlockState(self.id_base + self.default_state.0)
+        BlockState(self.index_base + self.default_state.0)
     }
 }

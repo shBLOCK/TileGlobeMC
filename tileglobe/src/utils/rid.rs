@@ -9,12 +9,12 @@ use serde::de::{Error, Visitor};
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug, Clone, Eq, PartialEq, Hash)]
-pub struct ResLoc<'a> {
+pub struct RID<'a> {
     pub namespace: Cow<'a, str>,
     pub path: Cow<'a, str>,
 }
 
-impl<'a> ResLoc<'a> {
+impl<'a> RID<'a> {
     pub const fn new(namespace: &'a str, path: &'a str) -> Self {
         Self {
             namespace: Cow::Borrowed(namespace),
@@ -29,28 +29,28 @@ impl<'a> ResLoc<'a> {
         }
     }
 
-    pub fn new_checked(namespace: &'a str, path: &'a str) -> Result<Self, ResLocError> {
-        let resloc = Self::new(namespace, path);
-        resloc.validate()?;
-        Ok(resloc)
+    pub fn new_checked(namespace: &'a str, path: &'a str) -> Result<Self, RIDError> {
+        let rid = Self::new(namespace, path);
+        rid.validate()?;
+        Ok(rid)
     }
 
-    pub fn new_owned_checked(namespace: String, path: String) -> Result<Self, ResLocError> {
-        let resloc = Self::new_owned(namespace, path);
-        resloc.validate()?;
-        Ok(resloc)
+    pub fn new_owned_checked(namespace: String, path: String) -> Result<Self, RIDError> {
+        let rid = Self::new_owned(namespace, path);
+        rid.validate()?;
+        Ok(rid)
     }
 
-    pub fn into_owned(self) -> ResLoc<'static> {
-        ResLoc::new_owned(self.namespace.into_owned(), self.path.into_owned())
+    pub fn into_owned(self) -> RID<'static> {
+        RID::new_owned(self.namespace.into_owned(), self.path.into_owned())
     }
 
-    pub fn validate(&self) -> Result<(), ResLocError> {
+    pub fn validate(&self) -> Result<(), RIDError> {
         if !Self::is_valid_namespace(&self.namespace) {
-            return Err(ResLocError::InvalidNamespace);
+            return Err(RIDError::InvalidNamespace);
         }
         if !Self::is_valid_path(&self.path) {
-            return Err(ResLocError::InvalidPath);
+            return Err(RIDError::InvalidPath);
         }
         Ok(())
     }
@@ -75,14 +75,14 @@ impl<'a> ResLoc<'a> {
     }
 }
 
-impl Display for ResLoc<'_> {
+impl Display for RID<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         write!(f, "{}:{}", self.namespace, self.path)
     }
 }
 
-impl<'a> TryFrom<&'a str> for ResLoc<'a> {
-    type Error = ResLocError;
+impl<'a> TryFrom<&'a str> for RID<'a> {
+    type Error = RIDError;
 
     fn try_from(s: &'a str) -> Result<Self, Self::Error> {
         let namespace: &str;
@@ -101,8 +101,8 @@ impl<'a> TryFrom<&'a str> for ResLoc<'a> {
     }
 }
 
-impl From<ResLoc<'_>> for String {
-    fn from(value: ResLoc) -> Self {
+impl From<RID<'_>> for String {
+    fn from(value: RID) -> Self {
         let mut string = String::with_capacity(value.namespace.len() + 1 + value.path.len());
         string += &value.namespace;
         string += ":";
@@ -113,7 +113,7 @@ impl From<ResLoc<'_>> for String {
 
 #[derive(Debug, derive_more::Display)]
 #[display("{self:?}")]
-pub enum ResLocError {
+pub enum RIDError {
     InvalidNamespace,
     InvalidPath,
 }
@@ -124,14 +124,14 @@ mod _std {
     use super::*;
     use std::path::PathBuf;
 
-    impl From<&ResLoc<'_>> for PathBuf {
-        fn from(value: &ResLoc) -> Self {
+    impl From<&RID<'_>> for PathBuf {
+        fn from(value: &RID) -> Self {
             [&*value.namespace, &*value.path].iter().collect()
         }
     }
 }
 
-impl Serialize for ResLoc<'_> {
+impl Serialize for RID<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
@@ -140,15 +140,15 @@ impl Serialize for ResLoc<'_> {
     }
 }
 
-impl<'de: 'a, 'a> Deserialize<'de> for ResLoc<'a> {
+impl<'de: 'a, 'a> Deserialize<'de> for RID<'a> {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
     {
-        struct ResLocVisitor<'a>(PhantomData<&'a ()>);
+        struct RIDVisitor<'a>(PhantomData<&'a ()>);
 
-        impl<'de: 'a, 'a> Visitor<'de> for ResLocVisitor<'a> {
-            type Value = ResLoc<'a>;
+        impl<'de: 'a, 'a> Visitor<'de> for RIDVisitor<'a> {
+            type Value = RID<'a>;
 
             fn expecting(&self, formatter: &mut Formatter) -> core::fmt::Result {
                 write!(
@@ -161,23 +161,23 @@ impl<'de: 'a, 'a> Deserialize<'de> for ResLoc<'a> {
             where
                 E: Error,
             {
-                Ok(ResLoc::try_from(v).map_err(E::custom)?.into_owned())
+                Ok(RID::try_from(v).map_err(E::custom)?.into_owned())
             }
 
             fn visit_borrowed_str<E>(self, v: &'de str) -> Result<Self::Value, E>
             where
                 E: Error,
             {
-                ResLoc::try_from(v).map_err(E::custom)
+                RID::try_from(v).map_err(E::custom)
             }
         }
 
-        deserializer.deserialize_str(ResLocVisitor(PhantomData))
+        deserializer.deserialize_str(RIDVisitor(PhantomData))
     }
 }
 
-impl ResLoc<'static> {
+impl RID<'static> {
     pub fn de_owned<'de, D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
-        Ok(ResLoc::deserialize(deserializer)?.into_owned())
+        Ok(RID::deserialize(deserializer)?.into_owned())
     }
 }

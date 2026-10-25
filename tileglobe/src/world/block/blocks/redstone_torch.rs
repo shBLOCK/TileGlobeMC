@@ -1,12 +1,12 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
+    Block, BlockRIDs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 use glam::Vec3;
 
@@ -30,10 +30,10 @@ impl RedstoneTorchBlock {
     }
 }
 impl Block for RedstoneTorchBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
+    fn rid(&self) -> &'static RID<'static> {
         match self.torch_type {
-            RedstoneTorchType::Floor => BlockResLocs::REDSTONE_TORCH,
-            RedstoneTorchType::Wall => BlockResLocs::REDSTONE_WALL_TORCH,
+            RedstoneTorchType::Floor => BlockRIDs::REDSTONE_TORCH,
+            RedstoneTorchType::Wall => BlockRIDs::REDSTONE_WALL_TORCH,
         }
     }
 
@@ -160,7 +160,7 @@ impl RedstoneTorchState {
 }
 impl From<BlockState> for RedstoneTorchState {
     fn from(value: BlockState) -> Self {
-        if value.0 < 5918 {
+        if value.0 < mc_block_index_base!("redstone_wall_torch") {
             let state = RedstoneFloorTorchState::from(value);
             Self {
                 facing: Direction::DOWN,
@@ -182,7 +182,7 @@ impl BoolProperty<1> for RedstoneFloorTorchState {} // lit
 impl Property<bool, 2, 1> for RedstoneFloorTorchState {}
 impl BlockStateImpl for RedstoneFloorTorchState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("redstone_torch") + self.state_id().0)
+        BlockState(mc_block_index_base!("redstone_torch") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneFloorTorchState {
@@ -200,7 +200,7 @@ impl SimpleBlockState for RedstoneFloorTorchState {
 }
 impl From<BlockState> for RedstoneFloorTorchState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("redstone_torch")))
+        Self(StateId(value.0 - mc_block_index_base!("redstone_torch")))
     }
 }
 impl Default for RedstoneFloorTorchState {
@@ -217,7 +217,7 @@ impl EnumProperty<HorizontalDirection, 2> for RedstoneWallTorchState {} // facin
 impl Property<HorizontalDirection, 4, 2> for RedstoneWallTorchState {}
 impl BlockStateImpl for RedstoneWallTorchState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("redstone_wall_torch") + self.state_id().0)
+        BlockState(mc_block_index_base!("redstone_wall_torch") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneWallTorchState {
@@ -235,7 +235,9 @@ impl SimpleBlockState for RedstoneWallTorchState {
 }
 impl From<BlockState> for RedstoneWallTorchState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("redstone_wall_torch")))
+        Self(StateId(
+            value.0 - mc_block_index_base!("redstone_wall_torch"),
+        ))
     }
 }
 impl Default for RedstoneWallTorchState {

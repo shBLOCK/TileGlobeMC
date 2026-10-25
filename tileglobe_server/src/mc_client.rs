@@ -18,13 +18,14 @@ use embassy_sync::mutex::{Mutex, MutexGuard};
 use embassy_time::{Duration, Ticker};
 use glam::Vec3;
 use num_traits::{ToPrimitive, abs};
+use pymeta::pymeta;
 use smallvec::SmallVec;
 use tileglobe::utils::ChunkPos;
 use tileglobe::utils::Direction;
 use tileglobe::utils::network::{
     EIOError, EIOReadExactError, MCPacketBuffer, ReadBlockPos, ReadBool, ReadExt, ReadIndexedEnum,
     ReadNumPrimitive, ReadUTF8, ReadUTF8Error, ReadUUID, ReadVarInt, ReadVarIntError, VarIntType,
-    WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt,
+    WriteMCPacket, WriteNumPrimitive, WriteUTF8, WriteUUID, WriteVarInt, mc_packet_id,
 };
 use tileglobe::world::block::BlockState;
 use tileglobe::world::world::{_World, World};
@@ -69,7 +70,8 @@ where
         {
             let mut _block_changes_to_ack = self._block_changes_to_ack.lock().await;
             for seq in &*_block_changes_to_ack {
-                let mut pkt = MCPacketBuffer::new(4).await; // block_changed_ack
+                let mut pkt =
+                    MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "block_changed_ack")).await;
                 let _ = pkt.write_varint(*seq).await;
                 let _ = self.write_mc_packet(&pkt).await;
             }
@@ -141,7 +143,7 @@ where
     }
 
     async fn send_chunk(&self, pos: ChunkPos) -> Result<(), MCClientError> {
-        let mut pkt = MCPacketBuffer::new(39).await; // level_chunk_with_light
+        let mut pkt = MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "level_chunk_with_light")).await;
         pkt.write_be::<i32>(pos.x.to_i32().unwrap()).await?;
         pkt.write_be::<i32>(pos.y.to_i32().unwrap()).await?;
 
@@ -185,7 +187,7 @@ where
         let rx = &mut *self.rx.lock().await;
         let (_, packet_type) = self.read_mc_packet_header(rx).await?;
         match packet_type {
-            0 => {
+            mc_packet_id!(HANDSHAKE, C2S, "intention") => {
                 let protocol_version = rx.read_varint::<i32>().await?;
                 let server_address = rx.read_utf8().await?;
                 let server_port = rx.read_be::<u16>().await?;
@@ -214,18 +216,18 @@ where
         loop {
             let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
             match packet_type {
-                0 => {
-                    // minecraft:status_request
+                mc_packet_id!(STATUS, C2S, "status_request") => {
                     debug!("{} status request", self);
-                    let mut pkt = MCPacketBuffer::new(0).await;
-                    pkt.write_utf8(r#"{"version":{"name":"1.21.8","protocol":772}, "description":{"text":"Hello, world!"}}"#).await?;
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(STATUS, S2C, "status_response")).await;
+                    pkt.write_utf8(r#"{"version":{"name":"26.3","protocol":777}, "description":{"text":"TileGlobeMC"}}"#).await?;
                     self.write_mc_packet(&pkt).await?;
                 }
-                1 => {
-                    // minecraft:ping_request
+                mc_packet_id!(STATUS, C2S, "ping_request") => {
                     debug!("{} ping request", self);
                     let timestamp = rx.read_be::<i64>().await?;
-                    let mut pkt = MCPacketBuffer::new(1).await;
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(STATUS, S2C, "pong_response")).await;
                     pkt.write_be(timestamp).await?;
                     self.write_mc_packet(&pkt).await?;
                 }
@@ -242,8 +244,7 @@ where
         loop {
             let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
             match packet_type {
-                0 => {
-                    // login start (minecraft:hello)
+                mc_packet_id!(LOGIN, C2S, "hello") => {
                     debug!("{} login start", self);
                     {
                         let player_name = rx.read_utf8().await?;
@@ -258,16 +259,24 @@ where
                         }));
                     }
 
-                    let mut pkt = MCPacketBuffer::new(2).await; // minecraft:login_finished
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(LOGIN, S2C, "login_finished")).await;
                     pkt.write_uuid(self.uuid().await).await?;
                     {
                         pkt.write_utf8(&self.player_data().await.name).await?;
                     }
                     pkt.write_varint::<u32>(0).await?; // empty properties array
+
+                    let mut session_id_bytes = [0; 16];
+                    session_id_bytes[6] &= 0x0F;
+                    session_id_bytes[6] |= 0x40;
+                    session_id_bytes[8] &= 0x3F;
+                    session_id_bytes[8] |= 0x80;
+                    pkt.write_uuid(Uuid::from_bytes(session_id_bytes)).await?;
+
                     self.write_mc_packet(&pkt).await?;
                 }
-                3 => {
-                    // minecraft:login_acknowledged
+                mc_packet_id!(LOGIN, C2S, "login_acknowledged") => {
                     debug!("{} login acknowledged", self);
                     return Ok(());
                 }
@@ -280,34 +289,38 @@ where
     }
 
     async fn handle_configure(&mut self) -> Result<(), MCClientError> {
-        let mut pkt = MCPacketBuffer::new(14).await; // minecraft:select_known_packs
+        let mut pkt =
+            MCPacketBuffer::new(mc_packet_id!(CONFIGURATION, S2C, "select_known_packs")).await;
         pkt.write_varint(1u32).await?;
         pkt.write_utf8("minecraft").await?;
         pkt.write_utf8("core").await?;
-        pkt.write_utf8("1.21.8").await?;
+        pkt.write_utf8("26.3").await?;
         self.write_mc_packet(&pkt).await?;
-
-        // let mut pkt = MCPacketBuffer::new(7).await; // minecraft:registry_data
-        //
-        // self.socket.write_mc_packet(pkt).await?;
 
         {
             self.tx
                 .lock()
                 .await
-                .write_all(&REGISTRY_PACKETS_DATA)
+                .write_all(
+                    include_bytes!(
+                        "../../datagen/mod/generated/additional/registry_data_packets.dat"
+                    )
+                    .as_slice(),
+                )
                 .await
                 .map_err(EIOError::from)?;
         }
 
-        self.write_mc_packet(&MCPacketBuffer::new(3).await).await?; // minecraft:finish_configuration
+        self.write_mc_packet(
+            &MCPacketBuffer::new(mc_packet_id!(CONFIGURATION, S2C, "finish_configuration")).await,
+        )
+        .await?;
 
         let rx = &mut *self.rx.lock().await;
         loop {
             let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
             match packet_type {
-                3 => {
-                    // minecraft:finish_configuration
+                mc_packet_id!(CONFIGURATION, C2S, "finish_configuration") => {
                     debug!("{} finish configuration", self);
                     return Ok(());
                 }
@@ -322,7 +335,7 @@ where
     async fn play_keep_alive(&self) -> Result<(), MCClientError> {
         let mut ticker = Ticker::every(Duration::from_secs(5));
         loop {
-            let mut pkt = MCPacketBuffer::new(38).await;
+            let mut pkt = MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "keep_alive")).await;
             pkt.write_be(0u64).await?;
             self.write_mc_packet(&pkt).await?;
             ticker.next().await;
@@ -334,8 +347,7 @@ where
         loop {
             let (packet_length, packet_type) = self.read_mc_packet_header(rx).await?;
             match packet_type {
-                63 => {
-                    // use_item_on
+                mc_packet_id!(PLAY, C2S, "use_item_on") => {
                     let hand = rx.read_varint::<u32>().await?;
                     let pos = rx.read_block_pos().await?;
                     let face = rx.read_indexed_enum::<Direction>().await?;
@@ -368,33 +380,20 @@ where
                             self._block_changes_to_ack.lock().await.push(sequence);
                         }
                     } else {
-                        const ITEM_TO_BLOCK: [BlockState; 1416] = const {
-                            use const_for::const_for;
-                            let mut table = [BlockState(0); 1416];
-
-                            table[1] = BlockState(1); // stone
-                            table[28] = BlockState(10); // dirt
-                            table[688] = BlockState(3042 + 1160); // redstone
-                            table[689] = BlockState(5916); // redstone torch
-                            table[690] = BlockState(10032); // redstone block
-                            table[691] = BlockState(6063); // redstone repeater
-                            table[692] = BlockState(9985); // redstone comparator
-                            table[703] = BlockState(5802 + 9); // lever
-                            table[713] = BlockState(5926 + 9); // stone button
-                            table[715] = BlockState(9396 + 9); // wood button
-                            table[705] = BlockState(10000 + 16); // daylight detector
-                            table[711] = BlockState(8201 + 1); // redstone lamp
-                            table[1407] = BlockState(25768 + 3); // waxed copper bulb
-                            table[712] = BlockState(581 + 1); // note block
-                            table[697] = BlockState(13573 + 5); // observer
-                            table[90] = BlockState(2138); // iron block
-
-                            const_for!(i in 0u16..16 => { // wools
-                                table[(213 + i) as usize] = BlockState(2093 + i);
-                            });
-
-                            table
-                        };
+                        pymeta! {
+                            ${
+                                import json;
+                                from tg_utils import *;
+                                item_registry = json.load(open(MOD_DATAGEN_ROOT / "vanilla" / "reports" / "registries.json"))["minecraft:item"]["entries"];
+                                lut = [{{ BlockState(0) }}] * (max(it["protocol_id"] for it in item_registry.values()) + 1);
+                                for item_rid, block_rid in json.load(open(MOD_DATAGEN_ROOT / "additional" / "tmp_block_items.json")).items():{
+                                    item_id = item_registry[item_rid]["protocol_id"];
+                                    block = BlockDef.load(RID(block_rid));
+                                    lut[item_id] = {{ BlockState($block.index_base + block.default_state$) }};
+                                }
+                            }
+                            const ITEM_TO_BLOCK: [BlockState; $len(lut)$] = [$Punct(',').join(lut)$];
+                        }
 
                         if let Some(&blockstate) = ITEM_TO_BLOCK.get(item as usize) {
                             let block = blockstate.get_block();
@@ -415,13 +414,11 @@ where
                         }
                     }
                 }
-                52 => {
-                    // set_carries_item
+                mc_packet_id!(PLAY, C2S, "set_carried_item") => {
                     let slot = rx.read_be::<i16>().await?;
                     self.player_data().await.selected_hotbar_slot = slot.clamp(0, 8) as u8;
                 }
-                55 => {
-                    // set_creative_mode_slot
+                mc_packet_id!(PLAY, C2S, "set_creative_mode_slot") => {
                     let mut pkt_consumed = packet_type.varint_size();
                     let slot = rx.read_be::<i16>().await?;
                     pkt_consumed += 2;
@@ -438,8 +435,7 @@ where
                     self.player_data().await.inventory_items[slot as usize] = item_id;
                     info!("slot: {} item: {}", slot, item_id);
                 }
-                4 => {
-                    // change_game_mode
+                mc_packet_id!(PLAY, C2S, "change_game_mode") => {
                     let mode = rx.read_varint::<u32>().await?;
 
                     let mut pkt = MCPacketBuffer::new(34).await;
@@ -447,8 +443,7 @@ where
                     pkt.write_be(mode as f32).await?;
                     self.write_mc_packet(&pkt).await?;
                 }
-                29 => {
-                    // move_player_pos
+                mc_packet_id!(PLAY, C2S, "move_player_pos") => {
                     let (_x, _y, _z) = (
                         rx.read_be::<f64>().await?,
                         rx.read_be::<f64>().await?,
@@ -456,8 +451,7 @@ where
                     );
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                30 => {
-                    // move_player_pos_rot
+                mc_packet_id!(PLAY, C2S, "move_player_pos_rot") => {
                     let (_x, _y, _z) = (
                         rx.read_be::<f64>().await?,
                         rx.read_be::<f64>().await?,
@@ -466,27 +460,21 @@ where
                     let (_yaw, _pitch) = (rx.read_be::<f32>().await?, rx.read_be::<f32>().await?);
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                31 => {
-                    // move_player_rot
+                mc_packet_id!(PLAY, C2S, "move_player_rot") => {
                     let (_yaw, _pitch) = (rx.read_be::<f32>().await?, rx.read_be::<f32>().await?);
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                32 => {
-                    // move_player_status_only
+                mc_packet_id!(PLAY, C2S, "move_player_status_only") => {
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                12 => { // client_tick_end
-                }
-                27 => {
-                    // keep_alive
+                mc_packet_id!(PLAY, C2S, "client_tick_end") => {}
+                mc_packet_id!(PLAY, C2S, "keep_alive") => {
                     let _id = rx.read_be::<u64>().await?;
                 }
-                42 => {
-                    // player_input
+                mc_packet_id!(PLAY, C2S, "player_input") => {
                     let _flags = rx.read_be::<u8>().await?;
                 }
-                40 => {
-                    // player_action
+                mc_packet_id!(PLAY, C2S, "player_action") => {
                     let action = rx.read_varint::<u32>().await?;
                     let pos = rx.read_block_pos().await?;
                     let _face = rx.read_indexed_enum::<Direction>().await?;
@@ -509,12 +497,7 @@ where
                         _ => {}
                     }
                 }
-                60 => {
-                    // swing
-                    rx.skip_bytes(1).await?;
-                }
-                6 => {
-                    // chat_command
+                mc_packet_id!(PLAY, C2S, "chat_command") => {
                     let command = rx.read_utf8().await?;
                     info!("Command: \"{}\"", command);
                     let mut segments = command.split_ascii_whitespace();
@@ -568,8 +551,8 @@ where
                 };
 
                 let result = async || -> Result<(), MCClientError> {
-                    let mut pkt = MCPacketBuffer::new(43).await; // minecraft:login
-                    pkt.write_be::<u32>(0).await?; // entity id
+                    let mut pkt = MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "login")).await;
+                    pkt.write_be::<u32>(1).await?; // entity id
                     pkt.write_be(false as u8).await?; // is hardcore
                     pkt.write_varint(1u32).await?; // dimension names
                     pkt.write_utf8("minecraft:overworld").await?;
@@ -583,26 +566,30 @@ where
                     pkt.write_utf8("minecraft:overworld").await?; // dimension name
                     pkt.write_be(0u64).await?; // world seed hash
                     pkt.write_be(1u8).await?; // game mode (0: Survival, 1: Creative, 2: Adventure, 3: Spectator)
-                    pkt.write_be(-1i8).await?; // prev game mode
+                    pkt.write_be(0i8).await?; // prev game mode
                     pkt.write_be(false as u8).await?; // is debug mode world
                     pkt.write_be(false as u8).await?; // is flat world
                     pkt.write_be(false as u8).await?; // has death location
                     pkt.write_varint(0u32).await?; // portal cooldown
                     pkt.write_varint(68u32).await?; // sea level
+                    pkt.write_be(false as u8).await?; // online mode
                     pkt.write_be(false as u8).await?; // enforce secure chat
                     self.write_mc_packet(&pkt).await?;
 
-                    let mut pkt = MCPacketBuffer::new(30).await; // entity_event
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "entity_event")).await;
                     pkt.write_be(0u32).await?;
                     pkt.write_be(28u8).await?; //	Set op permission level to 4
                     self.write_mc_packet(&pkt).await?;
 
-                    let mut pkt = MCPacketBuffer::new(34).await; // minecraft:game_event
+                    let mut pkt = MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "game_event")).await;
                     pkt.write_be::<u8>(13).await?; // Start waiting for level chunks
                     pkt.write_be::<f32>(0.0).await?;
                     self.write_mc_packet(&pkt).await?;
 
-                    let mut pkt = MCPacketBuffer::new(87).await; // set_chunk_cache_center
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "set_chunk_cache_center"))
+                            .await;
                     pkt.write_varint(0u32).await?;
                     pkt.write_varint(0u32).await?;
                     self.write_mc_packet(&pkt).await?;
@@ -619,7 +606,8 @@ where
                         }
                     }
 
-                    let mut pkt = MCPacketBuffer::new(65).await; // minecraft:player_position
+                    let mut pkt =
+                        MCPacketBuffer::new(mc_packet_id!(PLAY, S2C, "player_position")).await;
                     pkt.write_varint::<u32>(0).await?;
                     pkt.write_be::<f64>(0.0).await?;
                     pkt.write_be::<f64>(10.0).await?;
@@ -731,65 +719,3 @@ impl From<ReadUTF8Error> for MCClientError {
         }
     }
 }
-
-const REGISTRY_PACKETS_DATA: [u8; 942] = [
-    0x42, 0x07, 0x0e, 0x64, 0x69, 0x6d, 0x65, 0x6e, 0x73, 0x69, 0x6f, 0x6e, 0x5f, 0x74, 0x79, 0x70,
-    0x65, 0x04, 0x09, 0x6f, 0x76, 0x65, 0x72, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x00, 0x0f, 0x6f, 0x76,
-    0x65, 0x72, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x5f, 0x63, 0x61, 0x76, 0x65, 0x73, 0x00, 0x07, 0x74,
-    0x68, 0x65, 0x5f, 0x65, 0x6e, 0x64, 0x00, 0x0a, 0x74, 0x68, 0x65, 0x5f, 0x6e, 0x65, 0x74, 0x68,
-    0x65, 0x72, 0x00, 0x13, 0x07, 0x0b, 0x63, 0x61, 0x74, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x6e,
-    0x74, 0x01, 0x03, 0x72, 0x65, 0x64, 0x00, 0x1d, 0x07, 0x0f, 0x63, 0x68, 0x69, 0x63, 0x6b, 0x65,
-    0x6e, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x01, 0x09, 0x74, 0x65, 0x6d, 0x70, 0x65,
-    0x72, 0x61, 0x74, 0x65, 0x00, 0x19, 0x07, 0x0b, 0x63, 0x6f, 0x77, 0x5f, 0x76, 0x61, 0x72, 0x69,
-    0x61, 0x6e, 0x74, 0x01, 0x09, 0x74, 0x65, 0x6d, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x00, 0x1a,
-    0x07, 0x0c, 0x66, 0x72, 0x6f, 0x67, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x01, 0x09,
-    0x74, 0x65, 0x6d, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x00, 0x18, 0x07, 0x10, 0x70, 0x61, 0x69,
-    0x6e, 0x74, 0x69, 0x6e, 0x67, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x01, 0x03, 0x6f,
-    0x72, 0x62, 0x00, 0x19, 0x07, 0x0b, 0x70, 0x69, 0x67, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61, 0x6e,
-    0x74, 0x01, 0x09, 0x74, 0x65, 0x6d, 0x70, 0x65, 0x72, 0x61, 0x74, 0x65, 0x00, 0x1a, 0x07, 0x12,
-    0x77, 0x6f, 0x6c, 0x66, 0x5f, 0x73, 0x6f, 0x75, 0x6e, 0x64, 0x5f, 0x76, 0x61, 0x72, 0x69, 0x61,
-    0x6e, 0x74, 0x01, 0x03, 0x62, 0x69, 0x67, 0x00, 0x15, 0x07, 0x0c, 0x77, 0x6f, 0x6c, 0x66, 0x5f,
-    0x76, 0x61, 0x72, 0x69, 0x61, 0x6e, 0x74, 0x01, 0x04, 0x70, 0x61, 0x6c, 0x65, 0x00, 0xd7, 0x04,
-    0x07, 0x0b, 0x64, 0x61, 0x6d, 0x61, 0x67, 0x65, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x31, 0x05, 0x61,
-    0x72, 0x72, 0x6f, 0x77, 0x00, 0x11, 0x62, 0x61, 0x64, 0x5f, 0x72, 0x65, 0x73, 0x70, 0x61, 0x77,
-    0x6e, 0x5f, 0x70, 0x6f, 0x69, 0x6e, 0x74, 0x00, 0x06, 0x63, 0x61, 0x63, 0x74, 0x75, 0x73, 0x00,
-    0x08, 0x63, 0x61, 0x6d, 0x70, 0x66, 0x69, 0x72, 0x65, 0x00, 0x08, 0x63, 0x72, 0x61, 0x6d, 0x6d,
-    0x69, 0x6e, 0x67, 0x00, 0x0d, 0x64, 0x72, 0x61, 0x67, 0x6f, 0x6e, 0x5f, 0x62, 0x72, 0x65, 0x61,
-    0x74, 0x68, 0x00, 0x05, 0x64, 0x72, 0x6f, 0x77, 0x6e, 0x00, 0x07, 0x64, 0x72, 0x79, 0x5f, 0x6f,
-    0x75, 0x74, 0x00, 0x0b, 0x65, 0x6e, 0x64, 0x65, 0x72, 0x5f, 0x70, 0x65, 0x61, 0x72, 0x6c, 0x00,
-    0x09, 0x65, 0x78, 0x70, 0x6c, 0x6f, 0x73, 0x69, 0x6f, 0x6e, 0x00, 0x04, 0x66, 0x61, 0x6c, 0x6c,
-    0x00, 0x0d, 0x66, 0x61, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x5f, 0x61, 0x6e, 0x76, 0x69, 0x6c, 0x00,
-    0x0d, 0x66, 0x61, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x5f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x00, 0x12,
-    0x66, 0x61, 0x6c, 0x6c, 0x69, 0x6e, 0x67, 0x5f, 0x73, 0x74, 0x61, 0x6c, 0x61, 0x63, 0x74, 0x69,
-    0x74, 0x65, 0x00, 0x08, 0x66, 0x69, 0x72, 0x65, 0x62, 0x61, 0x6c, 0x6c, 0x00, 0x09, 0x66, 0x69,
-    0x72, 0x65, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x00, 0x0d, 0x66, 0x6c, 0x79, 0x5f, 0x69, 0x6e, 0x74,
-    0x6f, 0x5f, 0x77, 0x61, 0x6c, 0x6c, 0x00, 0x06, 0x66, 0x72, 0x65, 0x65, 0x7a, 0x65, 0x00, 0x07,
-    0x67, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63, 0x00, 0x0c, 0x67, 0x65, 0x6e, 0x65, 0x72, 0x69, 0x63,
-    0x5f, 0x6b, 0x69, 0x6c, 0x6c, 0x00, 0x09, 0x68, 0x6f, 0x74, 0x5f, 0x66, 0x6c, 0x6f, 0x6f, 0x72,
-    0x00, 0x0e, 0x69, 0x6e, 0x64, 0x69, 0x72, 0x65, 0x63, 0x74, 0x5f, 0x6d, 0x61, 0x67, 0x69, 0x63,
-    0x00, 0x07, 0x69, 0x6e, 0x5f, 0x66, 0x69, 0x72, 0x65, 0x00, 0x07, 0x69, 0x6e, 0x5f, 0x77, 0x61,
-    0x6c, 0x6c, 0x00, 0x04, 0x6c, 0x61, 0x76, 0x61, 0x00, 0x0e, 0x6c, 0x69, 0x67, 0x68, 0x74, 0x6e,
-    0x69, 0x6e, 0x67, 0x5f, 0x62, 0x6f, 0x6c, 0x74, 0x00, 0x0a, 0x6d, 0x61, 0x63, 0x65, 0x5f, 0x73,
-    0x6d, 0x61, 0x73, 0x68, 0x00, 0x05, 0x6d, 0x61, 0x67, 0x69, 0x63, 0x00, 0x0a, 0x6d, 0x6f, 0x62,
-    0x5f, 0x61, 0x74, 0x74, 0x61, 0x63, 0x6b, 0x00, 0x13, 0x6d, 0x6f, 0x62, 0x5f, 0x61, 0x74, 0x74,
-    0x61, 0x63, 0x6b, 0x5f, 0x6e, 0x6f, 0x5f, 0x61, 0x67, 0x67, 0x72, 0x6f, 0x00, 0x0e, 0x6d, 0x6f,
-    0x62, 0x5f, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x69, 0x6c, 0x65, 0x00, 0x07, 0x6f, 0x6e,
-    0x5f, 0x66, 0x69, 0x72, 0x65, 0x00, 0x0e, 0x6f, 0x75, 0x74, 0x73, 0x69, 0x64, 0x65, 0x5f, 0x62,
-    0x6f, 0x72, 0x64, 0x65, 0x72, 0x00, 0x0c, 0x6f, 0x75, 0x74, 0x5f, 0x6f, 0x66, 0x5f, 0x77, 0x6f,
-    0x72, 0x6c, 0x64, 0x00, 0x0d, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x5f, 0x61, 0x74, 0x74, 0x61,
-    0x63, 0x6b, 0x00, 0x10, 0x70, 0x6c, 0x61, 0x79, 0x65, 0x72, 0x5f, 0x65, 0x78, 0x70, 0x6c, 0x6f,
-    0x73, 0x69, 0x6f, 0x6e, 0x00, 0x0a, 0x73, 0x6f, 0x6e, 0x69, 0x63, 0x5f, 0x62, 0x6f, 0x6f, 0x6d,
-    0x00, 0x04, 0x73, 0x70, 0x69, 0x74, 0x00, 0x0a, 0x73, 0x74, 0x61, 0x6c, 0x61, 0x67, 0x6d, 0x69,
-    0x74, 0x65, 0x00, 0x06, 0x73, 0x74, 0x61, 0x72, 0x76, 0x65, 0x00, 0x05, 0x73, 0x74, 0x69, 0x6e,
-    0x67, 0x00, 0x10, 0x73, 0x77, 0x65, 0x65, 0x74, 0x5f, 0x62, 0x65, 0x72, 0x72, 0x79, 0x5f, 0x62,
-    0x75, 0x73, 0x68, 0x00, 0x06, 0x74, 0x68, 0x6f, 0x72, 0x6e, 0x73, 0x00, 0x06, 0x74, 0x68, 0x72,
-    0x6f, 0x77, 0x6e, 0x00, 0x07, 0x74, 0x72, 0x69, 0x64, 0x65, 0x6e, 0x74, 0x00, 0x15, 0x75, 0x6e,
-    0x61, 0x74, 0x74, 0x72, 0x69, 0x62, 0x75, 0x74, 0x65, 0x64, 0x5f, 0x66, 0x69, 0x72, 0x65, 0x62,
-    0x61, 0x6c, 0x6c, 0x00, 0x0b, 0x77, 0x69, 0x6e, 0x64, 0x5f, 0x63, 0x68, 0x61, 0x72, 0x67, 0x65,
-    0x00, 0x06, 0x77, 0x69, 0x74, 0x68, 0x65, 0x72, 0x00, 0x0c, 0x77, 0x69, 0x74, 0x68, 0x65, 0x72,
-    0x5f, 0x73, 0x6b, 0x75, 0x6c, 0x6c, 0x00, 0x46, 0x07, 0x0e, 0x77, 0x6f, 0x72, 0x6c, 0x64, 0x67,
-    0x65, 0x6e, 0x2f, 0x62, 0x69, 0x6f, 0x6d, 0x65, 0x05, 0x06, 0x70, 0x6c, 0x61, 0x69, 0x6e, 0x73,
-    0x00, 0x0e, 0x6d, 0x61, 0x6e, 0x67, 0x72, 0x6f, 0x76, 0x65, 0x5f, 0x73, 0x77, 0x61, 0x6d, 0x70,
-    0x00, 0x06, 0x64, 0x65, 0x73, 0x65, 0x72, 0x74, 0x00, 0x0c, 0x73, 0x6e, 0x6f, 0x77, 0x79, 0x5f,
-    0x70, 0x6c, 0x61, 0x69, 0x6e, 0x73, 0x00, 0x05, 0x62, 0x65, 0x61, 0x63, 0x68, 0x00,
-];

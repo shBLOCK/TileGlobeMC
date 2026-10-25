@@ -11,18 +11,20 @@ from mashumaro.types import SerializableType
 
 __all__ = (
     "PROJECT_ROOT",
+    "DATAGEN_ROOT",
     "MOD_DATAGEN_ROOT",
-    "ResLoc",
+    "RID",
     "load_json",
 )
 
 PROJECT_ROOT = Path(__file__).parents[3]
-MOD_DATAGEN_ROOT = PROJECT_ROOT / "neoforge/serverData/tileglobemc/"
+DATAGEN_ROOT = PROJECT_ROOT / "datagen"
+MOD_DATAGEN_ROOT = DATAGEN_ROOT / "mod" / "generated"
 
 
 @final
 @dataclass(init=False, frozen=True, slots=True)
-class ResLoc(SerializableType):
+class RID(SerializableType):
     MINECRAFT: ClassVar[str] = "minecraft"
 
     namespace: str
@@ -43,7 +45,7 @@ class ResLoc(SerializableType):
             case (string, ):
                 match string.count(':'):
                     case 0:
-                        namespace = ResLoc.MINECRAFT
+                        namespace = RID.MINECRAFT
                         path = string
                     case 1:
                         namespace, path = string.split(':')
@@ -66,21 +68,21 @@ class ResLoc(SerializableType):
         return cls(value)
 
     @classmethod
-    def list_resloc_files_in_dir(cls, root: PathLike) -> Iterable[tuple[ResLoc, Path]]:
+    def list_rid_files_in_dir(cls, root: PathLike) -> Iterable[tuple[RID, Path]]:
         root = Path(root)
         for path in root.rglob("*"):
             if not path.is_file():
                 continue
             parts = path.relative_to(root).with_suffix("").parts
-            resloc = ResLoc(parts[0], "/".join(parts[1:]))
-            yield resloc, path
+            rid = RID(parts[0], "/".join(parts[1:]))
+            yield rid, path
     
     def is_minecraft(self):
-        return self.namespace == ResLoc.MINECRAFT
+        return self.namespace == RID.MINECRAFT
     
     def as_ident(self) -> str:
         ident = self.path.replace("/", "_")
-        if self.namespace != ResLoc.MINECRAFT:
+        if self.namespace != RID.MINECRAFT:
             ident = f"{self.namespace}_{ident}"
         return ident
 

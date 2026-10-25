@@ -1,13 +1,13 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
 use crate::utils::IndexedEnum;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, EnumProperty, IntProperty, Property,
+    Block, BlockRIDs, BlockState, BlockStateImpl, EnumProperty, IntProperty, Property,
     SimpleBlockState, StateId,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 use core::cmp::max;
 use core::mem::MaybeUninit;
@@ -21,7 +21,7 @@ use smallvec::SmallVec;
 pub struct RedstoneWireBlock;
 impl RedstoneWireBlock {
     pub fn is_redstone_wire(blockstate: BlockState) -> bool {
-        (mc_block_id_base!("redstone_wire")..(mc_block_id_base!("redstone_wire") + 1296))
+        (mc_block_index_base!("redstone_wire")..(mc_block_index_base!("redstone_wire") + 1296))
             .contains(&blockstate.0)
     }
 
@@ -243,8 +243,8 @@ impl RedstoneWireBlock {
     }
 }
 impl Block for RedstoneWireBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockResLocs::REDSTONE_WIRE
+    fn rid(&self) -> &'static RID<'static> {
+        BlockRIDs::REDSTONE_WIRE
     }
 
     fn default_state(&self) -> BlockState {
@@ -435,7 +435,7 @@ impl Default for RedstoneWireState {
 }
 impl BlockStateImpl for RedstoneWireState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("redstone_wire") + self.state_id().0)
+        BlockState(mc_block_index_base!("redstone_wire") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneWireState {
@@ -453,6 +453,6 @@ impl SimpleBlockState for RedstoneWireState {
 }
 impl From<BlockState> for RedstoneWireState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("redstone_wire")))
+        Self(StateId(value.0 - mc_block_index_base!("redstone_wire")))
     }
 }

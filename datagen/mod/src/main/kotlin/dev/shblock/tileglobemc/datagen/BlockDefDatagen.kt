@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.properties.EnumProperty
 import net.minecraft.world.level.block.state.properties.IntegerProperty
 import java.util.concurrent.CompletableFuture
 
-private val BlockState.id get() = Block.getId(this)
+private val BlockState.index get() = Block.getId(this)
 
 class BlockDefDatagen(
     val packOutput: PackOutput,
@@ -23,24 +23,24 @@ class BlockDefDatagen(
     override fun run(cachedOutput: CachedOutput) = registries.thenCompose { registries ->
         CompletableFuture.allOf(
             *registries.lookupOrThrow(Registries.BLOCK).listElements().map { entry ->
-                val resLoc = entry.key().location()
+                val rid = entry.key().identifier()
                 val block = entry.value()
 
                 val blockData = JsonObject()
 
-                blockData.addProperty("resloc", resLoc.toString())
+                blockData.addProperty("rid", rid.toString())
 
                 val possibleStates = block.stateDefinition.possibleStates.toMutableList()
-                    .apply { sortBy { it.id } }
+                    .apply { sortBy { it.index } }
                 val statePropertyCombinations = if (block.stateDefinition.properties.isNotEmpty()) {
                     block.stateDefinition.properties.map { it.possibleValues.size }.reduce(Int::times)
                 } else 1
                 check(possibleStates.size == statePropertyCombinations) {
                     "Number of possible states (${possibleStates.size}) doesn't match the number of state property combinations ($statePropertyCombinations)"
                 }
-                val idBase = possibleStates.first().id.also { blockData.addProperty("id_base", it) }
+                val indexBase = possibleStates.first().index.also { blockData.addProperty("index_base", it) }
                 blockData.addProperty("total_states", possibleStates.size)
-                blockData.addProperty("default_state", block.defaultBlockState().id - idBase)
+                blockData.addProperty("default_state", block.defaultBlockState().index - indexBase)
 
                 val blockstatePropertiesData = JsonArray().also { blockData.add("blockstate_properties", it) }
                 for (property in block.stateDefinition.properties) {
@@ -74,13 +74,13 @@ class BlockDefDatagen(
                         }
                     }
 
-                    val idGroupSize =
+                    val indexGroupSize =
                         possibleStates.takeWhile { it.getValue(property) == property.possibleValues.first() }.size
 
-                    blockstatePropertyData.addProperty("id_group_size", idGroupSize)
+                    blockstatePropertyData.addProperty("index_group_size", indexGroupSize)
 
                     // check validity
-                    possibleStates.forEach { check(it.getValue(property) == property.possibleValues[(it.id - idBase) / idGroupSize % property.possibleValues.size]) }
+                    possibleStates.forEach { check(it.getValue(property) == property.possibleValues[(it.index - indexBase) / indexGroupSize % property.possibleValues.size]) }
                 }
 
                 DataProvider.saveStable(
@@ -88,8 +88,8 @@ class BlockDefDatagen(
                     blockData,
                     packOutput.outputFolder
                         .resolve("block_def")
-                        .resolve(resLoc.namespace)
-                        .resolve("${resLoc.path}.json")
+                        .resolve(rid.namespace)
+                        .resolve("${rid.path}.json")
                 )
             }.toArray { n -> arrayOfNulls<CompletableFuture<*>>(n) }
         )

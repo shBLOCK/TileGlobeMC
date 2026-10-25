@@ -1,15 +1,15 @@
 use crate::utils::BlockPos;
 use crate::utils::Direction;
 use crate::utils::IndexedEnum;
-use crate::utils::ResLoc;
+use crate::utils::RID;
 use crate::world::block::blocks::HorizontalDirection;
 use crate::world::block::blocks::redstone_repeater::RedstoneRepeaterBlock;
 use crate::world::block::blocks::redstone_wire::RedstoneWireBlock;
 use crate::world::block::{
-    Block, BlockResLocs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
+    Block, BlockRIDs, BlockState, BlockStateImpl, BoolProperty, EnumProperty, Property,
     SimpleBlockState, StateId,
 };
-use crate::world::utils::mc_block_id_base;
+use crate::world::utils::mc_block_index_base;
 use crate::world::world::{_World, World};
 use alloc::collections::BTreeMap;
 use core::cmp::max;
@@ -25,7 +25,7 @@ static SIGNALS: Mutex<CriticalSectionRawMutex, BTreeMap<BlockPos, u8>> =
 pub struct RedstoneComparatorBlock;
 impl RedstoneComparatorBlock {
     pub fn is_redstone_comparator(blockstate: BlockState) -> bool {
-        (mc_block_id_base!("comparator")..(mc_block_id_base!("comparator") + 16))
+        (mc_block_index_base!("comparator")..(mc_block_index_base!("comparator") + 16))
             .contains(&blockstate.0)
     }
 
@@ -54,7 +54,7 @@ impl RedstoneComparatorBlock {
                 RedstoneRepeaterBlock
                     .get_signal(world, pos, blockstate, direction.direction().opposite())
                     .await
-            } else if blockstate.0 == mc_block_id_base!("redstone_block") {
+            } else if blockstate.0 == mc_block_index_base!("redstone_block") {
                 15
             } else {
                 0
@@ -83,12 +83,12 @@ impl RedstoneComparatorBlock {
     }
 }
 impl Block for RedstoneComparatorBlock {
-    fn resloc(&self) -> &'static ResLoc<'static> {
-        BlockResLocs::COMPARATOR
+    fn rid(&self) -> &'static RID<'static> {
+        BlockRIDs::COMPARATOR
     }
 
     fn default_state(&self) -> BlockState {
-        BlockState(mc_block_id_base!("comparator") + 1)
+        BlockState(mc_block_index_base!("comparator") + 1)
     }
 
     fn is_attract_redstone_wire_connection(
@@ -252,7 +252,7 @@ impl RedstoneComparatorState {
 
 impl BlockStateImpl for RedstoneComparatorState {
     fn block_state(self) -> BlockState {
-        BlockState(mc_block_id_base!("comparator") + self.state_id().0)
+        BlockState(mc_block_index_base!("comparator") + self.state_id().0)
     }
 }
 impl SimpleBlockState for RedstoneComparatorState {
@@ -270,6 +270,6 @@ impl SimpleBlockState for RedstoneComparatorState {
 }
 impl From<BlockState> for RedstoneComparatorState {
     fn from(value: BlockState) -> Self {
-        Self(StateId(value.0 - mc_block_id_base!("comparator")))
+        Self(StateId(value.0 - mc_block_index_base!("comparator")))
     }
 }
